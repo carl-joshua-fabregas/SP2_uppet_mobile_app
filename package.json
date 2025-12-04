@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mongodb": "^6.21.0",
+    "mongoose": "^8.20.1"
+  },
+  "scripts": {
+    "run": "npm start --prefix backend",
+    "start": "node backend/script.js",
+    "dev": "nodemon backend/script.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

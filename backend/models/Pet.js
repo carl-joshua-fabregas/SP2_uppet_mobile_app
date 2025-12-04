@@ -36,7 +36,7 @@ const petSchema = new mongoose.Schema({
     required: true,
   },
   weight: {
-    type: String,
+    type: Number,
     required: true,
   },
   vaccination: {

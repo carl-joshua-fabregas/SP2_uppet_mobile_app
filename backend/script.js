@@ -1,20 +1,14 @@
 const express = require("express");
-const { cp } = require("fs");
 const mongoose = require("mongoose");
 const app = express();
+const connectToDatabase = require("./config/database");
+
 require("dotenv").config();
 
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/sp2_uppet";
 
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((err) => {
-    console.error("Error connecting to MongoDB:", err);
-  });
+connectToDatabase(MONGODB_URI);
 
 app.use(express.json());
 

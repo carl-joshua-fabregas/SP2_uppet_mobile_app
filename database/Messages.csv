@@ -1,20 +1,20 @@
-thread_1a,user_A,Sending the final proposal draft.,"{""url\"": \"https://drive.com/proposal_v5.pdf\", ""type"": ""image""}",12/05/2025 09:30:00 AM
-thread_1a,user_B,Got it. Here is the contract video summary.,"{""url\"": \"https://youtube.com/contract_summary\", ""type"": \"video\"}",12/05/2025 09:32:15 AM
-thread_1b,user_C,Look at this screenshot of the error log.,"{""url\"": \"https://imgur.com/log_error.png\", ""type"": ""image""}",12/05/2025 10:05:00 AM
-thread_1b,user_D,Found the bug! Sending a clip of the fix.,"{""url\"": \"https://vimeo.com/fix_clip_01\", ""type"": \"video\"}",12/05/2025 10:07:30 AM
-thread_2a,user_A,Planning the team lunch menu now.,"{""url\"": \"https://menu.com/lunch_options.jpg\", ""type"": ""image""}",12/05/2025 11:15:00 AM
-thread_2a,user_C,I prefer the Italian place. Here's their video ad.,"{""url\"": \"https://youtube.com/italian_ad\", ""type"": \"video\"}",12/05/2025 11:17:45 AM
-thread_2b,user_E,Did you send the meeting follow-up notes?,"{""url\"": \"https://notes.com/followup_v1.doc\", ""type"": ""image""}",12/05/2025 01:00:00 PM
-thread_2b,user_F,Attached is the summary video of the discussion.,"{""url\"": \"https://vimeo.com/summary_vid_02\", ""type"": \"video\"}",12/05/2025 01:02:20 PM
-thread_3a,user_B,Found a cute picture of my new pet.,"{""url\"": \"https://example.com/pets/puppy_01.jpg\", ""type"": ""image""}",12/05/2025 02:30:00 PM
-thread_3a,user_D,So sweet! Send me a video of them playing.,"{""url\"": \"https://example.com/pets/puppy_play.mp4\", ""type"": \"video\"}",12/05/2025 02:32:15 PM
-thread_3b,user_E,The quarterly report is due next week.,"{""url\"": \"https://drive.com/reports/Q3_timeline.png\", ""type"": ""image""}",12/05/2025 03:45:00 PM
-thread_3b,user_F,Attached is the performance review video from Q2.,"{""url\"": \"https://youtube.com/q2_review_vid\", ""type"": \"video\"}",12/05/2025 03:47:30 PM
-thread_4a,user_A,I am traveling this weekend. See my travel route.,"{""url\"": \"https://map.com/travel_route.jpg\", ""type"": ""image""}",12/05/2025 04:00:00 PM
-thread_4a,user_C,Drive safe! Here is a video of traffic conditions.,"{""url\"": \"https://traffic.com/current_view.mp4\", ""type"": \"video\"}",12/05/2025 04:02:15 PM
-thread_4b,user_G,New product design mockups are ready.,"{""url\"": \"https://invision.com/mockups/v1.png\", ""type"": ""image""}",12/05/2025 05:15:00 PM
-thread_4b,user_H,I see them. Send the introductory product video.,"{""url\"": \"https://youtube.com/product_intro_vid\", ""type"": \"video\"}",12/05/2025 05:17:30 PM
-thread_5a,user_B,Reminder about the security update patch.,"{""url\"": \"https://docs.com/security_patch.pdf\", ""type"": ""image""}",12/05/2025 06:20:00 PM
-thread_5a,user_D,Applied it successfully. Sending confirmation screenshot.,"{""url\"": \"https://example.com/screenshots/patch_confirm.png\", ""type"": ""image""}",12/05/2025 06:22:15 PM
-thread_5b,user_G,Saw this funny clip about coding.,"{""url\"": \"https://tiktok.com/coding_fail\", ""type"": \"video\"}",12/05/2025 07:30:00 PM
-thread_5b,user_H,Hilarious! Sharing the related article image.,"{""url\"": \"https://article.com/related_story.jpg\", ""type"": ""image""}",12/05/2025 07:32:15 PM
+thread_1a,user_A,Sending the final proposal draft.,"{"url": "https://drive.com/proposal_v5.pdf\", "type": "image"}",12/05/2025 09:30:00 AM
+thread_1a,user_B,Got it. Here is the contract video summary.,"{"url":"https://youtube.com/contract_summary\", "type":"video"}",12/05/2025 09:32:15 AM
+thread_1b,user_C,Look at this screenshot of the error log.,"{"url":"https://imgur.com/log_error.png\", "type":"image"}",12/05/2025 10:05:00 AM
+thread_1b,user_D,Found the bug! Sending a clip of the fix.,"{"url":"https://vimeo.com/fix_clip_01\", "type":"video"}",12/05/2025 10:07:30 AM
+thread_2a,user_A,Planning the team lunch menu now.,"{"url":"https://menu.com/lunch_options.jpg\", "type":"image"}",12/05/2025 11:15:00 AM
+thread_2a,user_C,I prefer the Italian place. Here's their video ad.,"{"url":"https://youtube.com/italian_ad\", "type":"video"}",12/05/2025 11:17:45 AM
+thread_2b,user_E,Did you send the meeting follow-up notes?,"{"url":"https://notes.com/followup_v1.doc\", "type":"image"}",12/05/2025 01:00:00 PM
+thread_2b,user_F,Attached is the summary video of the discussion.,"{"url":"https://vimeo.com/summary_vid_02\", "type":"video"}",12/05/2025 01:02:20 PM
+thread_3a,user_B,Found a cute picture of my new pet.,"{"url":"https://example.com/pets/puppy_01.jpg\", "type":"image"}",12/05/2025 02:30:00 PM
+thread_3a,user_D,So sweet! Send me a video of them playing.,"{"url":"https://example.com/pets/puppy_play.mp4\", "type":"video"}",12/05/2025 02:32:15 PM
+thread_3b,user_E,The quarterly report is due next week.,"{"url":"https://drive.com/reports/Q3_timeline.png\", "type":"image"}",12/05/2025 03:45:00 PM
+thread_3b,user_F,Attached is the performance review video from Q2.,"{"url":"https://youtube.com/q2_review_vid\", "type":"video"}",12/05/2025 03:47:30 PM
+thread_4a,user_A,I am traveling this weekend. See my travel route.,"{"url":"https://map.com/travel_route.jpg\", "type":"image"}",12/05/2025 04:00:00 PM
+thread_4a,user_C,Drive safe! Here is a video of traffic conditions.,"{"url":"https://traffic.com/current_view.mp4\", "type":"video"}",12/05/2025 04:02:15 PM
+thread_4b,user_G,New product design mockups are ready.,"{"url":"https://invision.com/mockups/v1.png\", "type":"image"}",12/05/2025 05:15:00 PM
+thread_4b,user_H,I see them. Send the introductory product video.,"{"url":"https://youtube.com/product_intro_vid\", "type":"video"}",12/05/2025 05:17:30 PM
+thread_5a,user_B,Reminder about the security update patch.,"{"url":"https://docs.com/security_patch.pdf\", "type":"image"}",12/05/2025 06:20:00 PM
+thread_5a,user_D,Applied it successfully. Sending confirmation screenshot.,"{"url":"https://example.com/screenshots/patch_confirm.png\", "type":"image"}",12/05/2025 06:22:15 PM
+thread_5b,user_G,Saw this funny clip about coding.,"{"url":"https://tiktok.com/coding_fail\", "type":"video"}",12/05/2025 07:30:00 PM
+thread_5b,user_H,Hilarious! Sharing the related article image.,"{"url":"https://article.com/related_story.jpg\", "type":"image"}",12/05/2025 07:32:15 PM

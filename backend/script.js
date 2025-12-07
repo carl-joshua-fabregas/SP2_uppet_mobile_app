@@ -2,8 +2,11 @@ const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
 const connectToDatabase = require("./config/database");
-
 require("dotenv").config();
+
+const petRouter = require("./routes/PetRoutes");
+
+app.use("/api/pet", petRouter);
 
 const MONGODB_URI =
 	process.env.MONGODB_URI || "mongodb://localhost:27017/sp2_uppet";

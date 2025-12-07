@@ -1,5 +1,5 @@
 MembersID,LastMessageID,timestamp
-user-A,user-B,msg-1245,12/05/2025 09:00:15 AM
+[user-A,user-B],msg-1245,12/05/2025 09:00:15 AM
 user-C,user-D,msg-9876,12/05/2025 09:02:40 AM
 user-A,user-C,user-E,msg-4512,12/05/2025 09:05:05 AM
 user-F,user-G,user-H,msg-3390,12/05/2025 09:07:30 AM

@@ -1,4 +1,5 @@
 const AdoptionApplication = require("../models/AdoptionApplication");
+const Pet = require("../models/Pet");
 
 const createAdoptApp = async (req, res) => {
 	try {
@@ -11,7 +12,7 @@ const createAdoptApp = async (req, res) => {
 			timeStamp: timestamp,
 		});
 
-		const adoptStat = adoptionApplication.save();
+		const adoptStat = await adoptionApplication.save();
 
 		return res.status(200).json({
 			message: "Successfully created Adoption Application",
@@ -27,7 +28,7 @@ const createAdoptApp = async (req, res) => {
 
 const findAllAdoptApp = async (req, res) => {
 	try {
-		const allApp = AdoptionApplication.find({});
+		const allApp = await AdoptionApplication.find({});
 		if (!allApp) {
 			res.status(404).json({
 				message: "Nothing Found",
@@ -46,7 +47,7 @@ const findAllAdoptApp = async (req, res) => {
 
 const findAdoptAppByID = async (req, res) => {
 	try {
-		const adoptApp = AdoptionApplication.find(req.params.id);
+		const adoptApp = await AdoptionApplication.findById(req.params.id);
 		if (!adoptApp) {
 			return res.status(404).json({
 				message: "Nothing Found",
@@ -59,6 +60,56 @@ const findAdoptAppByID = async (req, res) => {
 	} catch (err) {
 		return res.status(500).json({
 			message: "Server Erro",
+			body: err.message,
+		});
+	}
+};
+
+//can also be used to all the pets it depends on the frotend
+const findMyListAdoptApp = async (req, res) => {
+	try {
+		const adoptAppList = await AdoptionApplication.find({
+			applicant: req.user.id,
+		});
+		if (!adoptAppList) {
+			return res.status(404).json({
+				message: "Nothing Found",
+			});
+		}
+		return res.status(200).json({
+			message: "Sucessfully obtained your list of adoption applications",
+			body: adoptAppList,
+		});
+	} catch (err) {
+		return res.status(500).json({
+			message: "Server Error",
+			body: err.message,
+		});
+	}
+};
+
+const findMyListAdoptees = async (req, res) => {
+	try {
+		const adoptAppList = await Pet.find({ ownerId: req.user.id }).select("_id");
+		const adoptAppListID = adoptAppList.map((petID) => petID._id);
+
+		if (!adoptAppListID) {
+			return res.status(404).json({
+				message: "Nothing Found",
+			});
+		}
+
+		const petAdoptList = await AdoptionApplication.find({
+			petToAdopt: { $in: adoptAppListID },
+		}).populate();
+
+		return res.status(200).json({
+			message: "Sucessfully obtained your list of adoption applications",
+			body: adoptAppList,
+		});
+	} catch (err) {
+		return res.status(500).json({
+			message: "Server Error",
 			body: err.message,
 		});
 	}

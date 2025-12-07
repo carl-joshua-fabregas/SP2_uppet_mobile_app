@@ -137,10 +137,31 @@ const findByFilter = async (req, res) => {
 	}
 };
 
+const findAllAvailPets = async (req, res) => {
+	try {
+		const avail = await Pet.find({ adoptedStatus: 1 });
+
+		if (!avail) {
+			return res.status(404).json({
+				message: "No pets found",
+			});
+		}
+		return res.status(200).json({
+			message: "Successfully found all available pets",
+			body: avail,
+		});
+	} catch (err) {
+		return res.status(500).json({
+			message: "Server Error Meow",
+			body: err.message,
+		});
+	}
+};
+
 const deleteByID = async (req, res) => {
 	try {
-		const userID = req.userID;
-		const pet = Pet.findById(req.params.id);
+		const userID = req.user.id;
+		const pet = await Pet.findById(req.params.id);
 
 		if (!pet) {
 			return res.status(404).json({
@@ -198,9 +219,9 @@ const updatePet = async (req, res) => {
 			runValidators: true,
 		};
 
-		const userID = req.userID;
+		const userID = req.user.id;
 
-		const pet = Pet.findById(req.params.id);
+		const pet = await Pet.findById(req.params.id);
 
 		if (!pet) {
 			return res.status(404).json({
@@ -235,4 +256,10 @@ const updatePet = async (req, res) => {
 	}
 };
 
-module.exports = { createPet, findAll, findByID, findByFilter };
+module.exports = {
+	createPet,
+	findAll,
+	findByID,
+	findByFilter,
+	findAllAvailPets,
+};

@@ -3,11 +3,10 @@ const Message = require("../models/Messages");
 
 const createChatThread = async (req, res) => {
   try {
-    const { members, lastMessage, timeStamp } = req.body;
+    const { members, lastMessage } = req.body;
     const chatThread = new ChatThread({
       members: members,
       lastMessage: lastMessage,
-      timeStamp: timeStamp,
     });
 
     const newChatThread = await chatThread.save();
@@ -16,7 +15,7 @@ const createChatThread = async (req, res) => {
       body: newChatThread,
     });
   } catch (err) {
-    return res.send(500).json({
+    return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });
@@ -31,6 +30,11 @@ const findAllChatThread = async (req, res) => {
       });
     }
     const chatThread = await ChatThread.find({});
+    if (chatThread.length == 0) {
+      return res.status(404).json({
+        message: "Not Found",
+      });
+    }
     return res.status(200).json({
       message: "Successfully obtained all chat threads",
       body: chatThread,
@@ -45,17 +49,17 @@ const findAllChatThread = async (req, res) => {
 
 const findChatThreadByID = async (req, res) => {
   try {
-    const chatThread = await ChatThread.findById(req.user.id);
+    const chatThread = await ChatThread.findById(req.params.id);
     if (!chatThread) {
       return res.status(404).json({
         message: "Not Found",
       });
     }
     const isMember = chatThread.members.some((memberID) => {
-      memberID.toString() === req.user.id.toString();
+      return memberID.toString() === req.user.id.toString();
     });
 
-    if (!isMember || req.user.role.toString() !== "admin") {
+    if (!isMember && req.user.role.toString() !== "admin") {
       return res.status(403).json({
         message: "Forbidden",
       });
@@ -83,7 +87,7 @@ const deleteChatThread = async (req, res) => {
     }
 
     const isMember = chatThread.members.some((memberID) => {
-      req.user.id.toString() === memberID.toString();
+      return req.user.id.toString() === memberID.toString();
     });
 
     if (!isMember) {
@@ -100,7 +104,13 @@ const deleteChatThread = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       message: "Server Error",
+      body: err.message,
     });
   }
 };
-module.exports = {};
+module.exports = {
+  createChatThread,
+  findAllChatThread,
+  findChatThreadByID,
+  deleteChatThread,
+};

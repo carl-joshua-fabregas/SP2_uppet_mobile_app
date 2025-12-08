@@ -3,13 +3,11 @@ const Pet = require("../models/Pet");
 
 const createAdoptApp = async (req, res) => {
   try {
-    const { petToAdopt, applicant, status, timestamp } = req.body;
+    const { petToAdopt, applicant } = req.body;
 
     const adoptionApplication = new AdoptionApplication({
       petToAdopt: petToAdopt,
       applicant: applicant,
-      status: status,
-      timeStamp: timestamp,
     });
 
     const adoptStat = await adoptionApplication.save();
@@ -34,8 +32,8 @@ const findAllAdoptApp = async (req, res) => {
       });
     }
     const allApp = await AdoptionApplication.find({});
-    if (!allApp) {
-      res.status(404).json({
+    if (allApp.length == 0) {
+      return res.status(404).json({
         message: "Nothing Found",
       });
     }
@@ -46,6 +44,7 @@ const findAllAdoptApp = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       message: "Server Error",
+      body: err.message,
     });
   }
 };
@@ -64,19 +63,19 @@ const findAdoptAppByID = async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({
-      message: "Server Erro",
+      message: "Server Error",
       body: err.message,
     });
   }
 };
 
-//can also be used to all the pets it depends on the frotend
+//can also be used to all the pets it depends on the frontend
 const findMyListAdoptApp = async (req, res) => {
   try {
     const adoptAppList = await AdoptionApplication.find({
       applicant: req.user.id,
     });
-    if (!adoptAppList) {
+    if (adoptAppList.length == 0) {
       return res.status(404).json({
         message: "Nothing Found",
       });
@@ -98,7 +97,7 @@ const findMyListAdoptees = async (req, res) => {
     const adoptAppList = await Pet.find({ ownerId: req.user.id }).select("_id");
     const adoptAppListID = adoptAppList.map((petID) => petID._id);
 
-    if (!adoptAppListID) {
+    if (adoptAppListID.length == 0) {
       return res.status(404).json({
         message: "Nothing Found",
       });
@@ -106,11 +105,11 @@ const findMyListAdoptees = async (req, res) => {
 
     const petAdoptList = await AdoptionApplication.find({
       petToAdopt: { $in: adoptAppListID },
-    }).populate();
+    }).populate("applicant");
 
     return res.status(200).json({
       message: "Sucessfully obtained your list of adoption applications",
-      body: adoptAppList,
+      body: petAdoptList,
     });
   } catch (err) {
     return res.status(500).json({
@@ -120,42 +119,63 @@ const findMyListAdoptees = async (req, res) => {
   }
 };
 
-const updateAdoptionApp = async (req,res) => {
+const updateAdoptionApp = async (req, res) => {
   try {
-
     const options = {
       new: true,
-      runValidators: true
+      runValidators: true,
+    };
+
+    const adoptionApp = await AdoptionApplication.findById(req.params.id);
+    if (!adoptionApp) {
+      return res.status(404).json({
+        message: "Not found",
+      });
     }
 
-    const adoptionApp = await AdoptionApplication.findById(req.params.id)
-    if(!adoptionApp) {
+    const pet = await Pet.findById(adoptionApp.petToAdopt);
+    if (!pet) {
       return res.status(404).json({
-        message: "Not found"
-      })
+        message: "Pet not found",
+      });
     }
 
-    const pet = await Pet.findById(adoptionApp.petToAdopt.id)
-    if(!pet) {
-      return res.status(404).json({
-        message: "Pet not found"
-      })
-    }
-  
-    if(pet.ownerId.toString()!==req.user.id.toString() || req.user.role.toString()!=="admin"){
+    if (
+      pet.ownerId.toString() !== req.user.id.toString() &&
+      req.user.role.toString() !== "admin" &&
+      adoptionApp.applicant.toString() !== req.user.id.toString()
+    ) {
       return res.status(403).json({
-        message: "Forbidden"
-      })
+        message: "Forbidden",
+      });
     }
 
-    const newAdoptionApp = AdoptionApplication.findByIdAndUpdate(req.params.id, { $set: req.body }, options)
-    
+    if (
+      adoptionApp.applicant.toString() === req.user.id.toString() &&
+      req.body.status.toString() !== "Cancelled"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden",
+      });
+    }
+
+    const newAdoptionApp = await AdoptionApplication.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      options
+    );
+
     return res.status(200).json({
       message: "Successfully updated adoption app",
-      body: newAdoptionApp
-    })
+      body: newAdoptionApp,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
+    });
   }
-}
+};
 
 const deleteAdoptApp = async (req, res) => {
   try {
@@ -196,4 +216,13 @@ const deleteAllAdoptApp = async (req, res) => {
   }
 };
 
-module.exports = {};
+module.exports = {
+  createAdoptApp,
+  findAllAdoptApp,
+  findAdoptAppByID,
+  findMyListAdoptApp,
+  findMyListAdoptees,
+  updateAdoptionApp,
+  deleteAdoptApp,
+  deleteAllAdoptApp,
+};

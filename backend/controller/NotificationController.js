@@ -2,12 +2,10 @@ const Notification = require("../models/Notification");
 
 const createNotification = async (req, res) => {
   try {
-    const { notifRecipient, body, isRead, timeStamp, notifType } = req.body;
-    const newNotif = await Notification({
+    const { notifRecipient, body, notifType } = req.body;
+    const newNotif = new Notification({
       notifRecipient: notifRecipient,
       body: body,
-      isRead: isRead,
-      timeStamp: timeStamp,
       notifType,
     });
 
@@ -27,16 +25,16 @@ const createNotification = async (req, res) => {
 
 const findAllNotification = async (req, res) => {
   try {
-    const notifcations = await Notification.find({});
+    const notifications = await Notification.find({});
 
-    if (!notifcations) {
+    if (notifications.length == 0) {
       return res.status(404).json({
         message: "No notifications found",
       });
     }
 
     return res.status(200).json({
-      message: "Successfully obtained Notifcations",
+      message: "Successfully obtained Notifications",
       body: notifications,
     });
   } catch (err) {
@@ -49,20 +47,13 @@ const findAllNotification = async (req, res) => {
 
 const findAllUserNotification = async (req, res) => {
   try {
-    const notifcations = await Notification.find(req.user.id);
+    const notifications = await Notification.find({
+      notifRecipient: req.user.id,
+    });
 
-    if (!notifcations) {
+    if (notifications.length == 0) {
       return res.status(404).json({
         message: "No notifications found",
-      });
-    }
-
-    if (
-      req.user.id.toString() !== notifcations.notifRecipient.toString() ||
-      req.user.role.toString() !== "admin"
-    ) {
-      return res.status(403).json({
-        message: "Forbidden",
       });
     }
 
@@ -80,7 +71,7 @@ const findAllUserNotification = async (req, res) => {
 
 const deleteAllNotification = async (req, res) => {
   try {
-    if (req.userRole.toString() !== "admin") {
+    if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
         message: "Forbidden",
       });
@@ -99,13 +90,7 @@ const deleteAllNotification = async (req, res) => {
 
 const deleteAllUserNotification = async (req, res) => {
   try {
-    const user = await Notification.findOne({ notifRecipient: req.user.id });
-    if (!user || req.user.role.toString() !== "admin") {
-      return res.status(403).json({
-        message: "Forbidden",
-      });
-    }
-    const notification = await Notification.deleteMany({
+    const userNotif = await Notification.deleteMany({
       notifRecipient: req.user.id,
     });
 
@@ -113,7 +98,7 @@ const deleteAllUserNotification = async (req, res) => {
       message: "Successfully deleted Notification",
     });
   } catch (err) {
-    return res.status(200).json({
+    return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });
@@ -125,7 +110,7 @@ const deleteUserNotification = async (req, res) => {
     const user = await Notification.findById(req.params.id);
 
     if (
-      req.user.id.toString !== user.notifRecipient.toString() ||
+      req.user.id.toString() !== user.notifRecipient.toString() &&
       req.user.role.toString() !== "admin"
     ) {
       return res.status(403).json({
@@ -138,10 +123,17 @@ const deleteUserNotification = async (req, res) => {
       message: "Successfully deleted Notification",
     });
   } catch (err) {
-    return res.status(200).json({
+    return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });
   }
 };
-modules.export = {};
+module.exports = {
+  createNotification,
+  findAllNotification,
+  findAllUserNotification,
+  deleteAllNotification,
+  deleteAllUserNotification,
+  deleteUserNotification,
+};

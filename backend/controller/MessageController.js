@@ -7,14 +7,13 @@ const sendMessage = async (req, res) => {
       new: true,
       runValidator: true,
     };
-    const { chatThreadOrigin, sender, body, media, timeStamp } = req.body;
+    const { chatThreadOrigin, sender, body, media } = req.body;
 
     const message = new Message({
       chatThreadOrigin: chatThreadOrigin,
       sender: sender,
       body: body,
       media: media,
-      timeStamp: timeStamp,
     });
 
     const newMessage = await message.save();
@@ -23,8 +22,8 @@ const sendMessage = async (req, res) => {
       message.chatThreadOrigin,
       {
         $set: {
-          lastMessage: message.sender,
-          timeStamp: message.timeStamp,
+          lastMessage: message._id,
+          timeStamp: Date.now(),
         },
       },
       options
@@ -32,7 +31,7 @@ const sendMessage = async (req, res) => {
 
     return res.status(200).json({
       message: "Succsefully",
-      body: message,
+      body: newMessage,
     });
   } catch (err) {
     return res.status(500).json({
@@ -44,15 +43,15 @@ const sendMessage = async (req, res) => {
 
 const findMessageById = async (req, res) => {
   try {
-    const chatThread = await ChatThread.findById(req.body.chatThreadId);
+    const chatThread = await ChatThread.findById(req.params.chatThreadId);
     if (!chatThread) {
-      res.status(404).json({
+      return res.status(404).json({
         message: "Not Found",
       });
     }
 
     const isMember = await chatThread.members.some((memberID) => {
-      memberID.toString() === req.user.id.toString();
+      return memberID.toString() === req.user.id.toString();
     });
 
     if (!isMember) {
@@ -77,7 +76,7 @@ const findMessageById = async (req, res) => {
   }
 };
 
-const deleteAllMessage = async (req, res) => {
+const deleteAMessage = async (req, res) => {
   try {
     const message = await Message.findById(req.params.id);
 
@@ -87,7 +86,10 @@ const deleteAllMessage = async (req, res) => {
       });
     }
 
-    if (message.sender.toString() !== req.user.id.toString()) {
+    if (
+      message.sender.toString() !== req.user.id.toString() &&
+      req.user.role.toString() !== "admin"
+    ) {
       return res.status(403).json({
         message: "Forbidden",
       });
@@ -96,7 +98,7 @@ const deleteAllMessage = async (req, res) => {
     await Message.findByIdAndDelete(req.params.id);
 
     return res.status(200).json({
-      message: "Successfully deleted all user",
+      message: "Successfully deleted user message",
     });
   } catch (err) {
     return res.status(500).json({
@@ -106,4 +108,4 @@ const deleteAllMessage = async (req, res) => {
   }
 };
 
-module.exports = {};
+module.exports = { sendMessage, findMessageById, deleteAMessage };

@@ -62,6 +62,13 @@ const findAllUser = async (req, res) => {
         message: "Forbidden",
       });
     }
+
+    const user = await Adopter.find({});
+    if (user.length == 0) {
+      return res.status(404).json({
+        message: "Not Found",
+      });
+    }
     return res.status(200).json({
       message: "Successfully found all user",
       body: user,
@@ -110,7 +117,7 @@ const updateUser = async (req, res) => {
     }
 
     if (
-      req.user.id.toString() !== user.id.toString() ||
+      req.user.id.toString() !== user.id.toString() &&
       req.user.role.toString() !== "admin"
     ) {
       return res.status(403).json({
@@ -120,7 +127,7 @@ const updateUser = async (req, res) => {
 
     const newUser = await Adopter.findByIdAndUpdate(
       req.params.id,
-      { $set: req.params.body },
+      { $set: req.body },
       options
     );
 
@@ -148,7 +155,7 @@ const deleteAllUser = async (req, res) => {
       message: "Successfully deleted all user",
     });
   } catch (err) {
-    return res.send(500).json({
+    return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });
@@ -166,7 +173,7 @@ const deleteUser = async (req, res) => {
     }
 
     if (
-      req.user.id.toString() !== user.id.toString() ||
+      req.user.id.toString() !== user.id.toString() &&
       req.user.role !== "admin"
     ) {
       return res.status(403).json({
@@ -186,4 +193,11 @@ const deleteUser = async (req, res) => {
     });
   }
 };
-module.exports = {};
+module.exports = {
+  createAdopter,
+  findAllUser,
+  findUserByID,
+  updateUser,
+  deleteAllUser,
+  deleteUser,
+};

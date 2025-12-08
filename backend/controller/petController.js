@@ -59,7 +59,7 @@ const createPet = async (req, res) => {
 const findAll = async (req, res) => {
   try {
     const allPets = await Pet.find({});
-    if (!allPets) {
+    if (allPets.length == 0) {
       return res.status(404).json({
         message: "Not found",
       });
@@ -82,15 +82,13 @@ const findByID = async (req, res) => {
     const petID = req.params.id;
     const pet = await Pet.findById(petID);
 
-    if (pet) {
-      return res.status(200).json({
-        message: "Successfully found Pet",
-        body: pet,
+    if (!pet) {
+      return res.status(404).json({
+        message: "Pet not found",
       });
     }
-
-    return res.status(404).json({
-      message: "Pet not found",
+    return res.status(200).json({
+      message: "Successfully found Pet",
       body: pet,
     });
   } catch (err) {
@@ -118,15 +116,14 @@ const findByFilter = async (req, res) => {
 
     const pet = await Pet.find(filter);
 
-    if (pet) {
-      return res.status(200).json({
-        message: "Found these pets",
+    if (pet.length == 0) {
+      return res.status(400).json({
+        message: "No pets found",
         body: pet,
       });
     }
-
-    return res.status(400).json({
-      message: "No pets found",
+    return res.status(200).json({
+      message: "Found these pets",
       body: pet,
     });
   } catch (err) {
@@ -141,7 +138,7 @@ const findAllAvailPets = async (req, res) => {
   try {
     const avail = await Pet.find({ adoptedStatus: 1 });
 
-    if (!avail) {
+    if (avail.length == 0) {
       return res.status(404).json({
         message: "No pets found",
       });
@@ -169,8 +166,8 @@ const deleteByID = async (req, res) => {
     }
 
     if (
-      req.user.id.toString() !== pet.ownerId.toString() ||
-      req.userRole !== "admin"
+      req.user.id.toString() !== pet.ownerId.toString() &&
+      req.user.role !== "admin"
     ) {
       return res.status(403).json({
         message: "FORBIDDEN",
@@ -192,7 +189,7 @@ const deleteByID = async (req, res) => {
 
 const deleteAll = async (req, res) => {
   try {
-    if (req.userRole !== "admin") {
+    if (req.user.role !== "admin") {
       return res.status(403).json({
         message: "Forbidden",
       });
@@ -229,8 +226,8 @@ const updatePet = async (req, res) => {
     }
 
     if (
-      pet.ownerId.toString() !== userID.toString ||
-      req.userRole !== "admin"
+      pet.ownerId.toString() !== userID.toString() &&
+      req.user.role !== "admin"
     ) {
       return res.status(403).json({
         message: "Forbidden",
@@ -239,7 +236,7 @@ const updatePet = async (req, res) => {
 
     const updatedPet = await Pet.findByIdAndUpdate(
       req.params.id,
-      { $set: req.params.body },
+      { $set: req.body },
       options
     );
 
@@ -255,10 +252,83 @@ const updatePet = async (req, res) => {
   }
 };
 
+const uploadPetPhoto = async (req, res) => {
+  try {
+    const pet = await Pet.findById(req.params.id);
+
+    if (!pet) {
+      return res.status(404).json({
+        message: "Not found",
+      });
+    }
+
+    const photo = {
+      url: req.body.url,
+      caption: req.body.caption,
+      isProfile: req.body.isProfile,
+      timeStamp: Date.now(),
+    };
+
+    pet.photos.push(photo);
+
+    const newPhoto = await pet.save();
+
+    return res.status(200).json({
+      message: "Succesfully uploaded photo",
+      body: newPhoto,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+};
+
+const deletePetPhoto = async (req, res) => {
+  try {
+    const options = {
+      new: true,
+      runValidators: true,
+    };
+    const pet = await Pet.findByIdAndUpdate(
+      req.params.id,
+      {
+        $pull: {
+          photos: {
+            _id: req.params.photoId,
+          },
+        },
+      },
+      options
+    );
+
+    if (!pet) {
+      return res.status(404).json({
+        message: "Not Found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Successfully deleted Photo",
+      body: pet,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
+
 module.exports = {
   createPet,
   findAll,
   findByID,
   findByFilter,
   findAllAvailPets,
+  deleteByID,
+  deleteAll,
+  updatePet,
+  uploadPetPhoto,
+  deletePetPhoto,
 };

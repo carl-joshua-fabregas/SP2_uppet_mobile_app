@@ -1,5 +1,6 @@
 const Pet = require("../models/Pet");
 const AdoptionApplication = require("../models/AdoptionApplication");
+const { json } = require("express");
 
 const createPet = async (req, res) => {
   try {
@@ -242,7 +243,7 @@ const updatePet = async (req, res) => {
 
     return res.status(200).json({
       message: "Successfully updated a pet",
-      body: updatePet,
+      body: updatedPet,
     });
   } catch (err) {
     return res.status(500).json({
@@ -300,7 +301,23 @@ const deletePetPhoto = async (req, res) => {
       new: true,
       runValidators: true,
     };
-    const pet = await Pet.findByIdAndUpdate(
+
+    const pet = await Pet.findById(req.params.id);
+
+    if (!pet) {
+      return res.status(404).json({
+        message: "Not found",
+      });
+    }
+    if (
+      pet.ownerId.toString() !== req.user.id.toString() &&
+      req.user.role.toString() !== "admin"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden",
+      });
+    }
+    const newPet = await Pet.findByIdAndUpdate(
       req.params.id,
       {
         $pull: {
@@ -312,19 +329,14 @@ const deletePetPhoto = async (req, res) => {
       options
     );
 
-    if (!pet) {
-      return res.status(404).json({
-        message: "Not Found",
-      });
-    }
-
     return res.status(200).json({
       message: "Successfully deleted Photo",
-      body: pet,
+      body: newPet,
     });
   } catch (err) {
     return res.status(500).json({
       message: "Server Error",
+      body: err.message,
     });
   }
 };
@@ -353,19 +365,20 @@ const updatePhotoCaption = async (req, res) => {
       { _id: req.params.id, "photos._id": req.params.photoId },
       {
         $set: {
-          "photos:$.caption": req.body.caption,
+          "photos.$.caption": req.body.caption,
         },
-      }
+      },
+      options
     );
 
-    if (!updatePet) {
+    if (!updatedPet) {
       return res.status(404).json({
         message: "Not Found",
       });
     }
     return res.status(200).json({
       message: "Sucessfully changed Caption",
-      json: updatedPet,
+      body: updatedPet,
     });
   } catch (err) {
     return res.status(500).json({

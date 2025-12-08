@@ -1,4 +1,5 @@
 const Pet = require("../models/Pet");
+const AdoptionApplication = require("../models/AdoptionApplication");
 
 const createPet = async (req, res) => {
   try {
@@ -174,6 +175,7 @@ const deleteByID = async (req, res) => {
       });
     }
 
+    await AdoptionApplication.deleteMany({ petToAdopt: req.params.id });
     await Pet.findByIdAndDelete(req.params.id);
 
     return res.status(200).json({
@@ -194,7 +196,7 @@ const deleteAll = async (req, res) => {
         message: "Forbidden",
       });
     }
-
+    await AdoptionApplication.deleteMany({});
     await Pet.deleteMany({});
 
     return res.status(200).json({
@@ -215,8 +217,6 @@ const updatePet = async (req, res) => {
       runValidators: true,
     };
 
-    const userID = req.user.id;
-
     const pet = await Pet.findById(req.params.id);
 
     if (!pet) {
@@ -226,8 +226,8 @@ const updatePet = async (req, res) => {
     }
 
     if (
-      pet.ownerId.toString() !== userID.toString() &&
-      req.user.role !== "admin"
+      pet.ownerId.toString() !== req.user.id.toString() &&
+      req.user.role.toString() !== "admin"
     ) {
       return res.status(403).json({
         message: "Forbidden",
@@ -242,7 +242,7 @@ const updatePet = async (req, res) => {
 
     return res.status(200).json({
       message: "Successfully updated a pet",
-      body: pet,
+      body: updatePet,
     });
   } catch (err) {
     return res.status(500).json({
@@ -259,6 +259,15 @@ const uploadPetPhoto = async (req, res) => {
     if (!pet) {
       return res.status(404).json({
         message: "Not found",
+      });
+    }
+
+    if (
+      pet.ownerId.toString() !== req.user.id.toString() &&
+      req.user.role.toString() !== "admin"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden",
       });
     }
 
@@ -316,6 +325,52 @@ const deletePetPhoto = async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       message: "Server Error",
+    });
+  }
+};
+
+const updatePhotoCaption = async (req, res) => {
+  try {
+    const pet = await Pet.findById(req.params.id);
+    const options = {
+      new: true,
+      runValidators: true,
+    };
+    if (!pet) {
+      return res.status(404).json({
+        message: "Not Found",
+      });
+    }
+    if (
+      req.user.id.toString() !== pet.ownerId.toString() &&
+      req.user.role.toString() !== "admin"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden",
+      });
+    }
+    const updatedPet = await Pet.findOneAndUpdate(
+      { _id: req.params.id, "photos._id": req.params.photoId },
+      {
+        $set: {
+          "photos:$.caption": req.body.caption,
+        },
+      }
+    );
+
+    if (!updatePet) {
+      return res.status(404).json({
+        message: "Not Found",
+      });
+    }
+    return res.status(200).json({
+      message: "Sucessfully changed Caption",
+      json: updatedPet,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
     });
   }
 };

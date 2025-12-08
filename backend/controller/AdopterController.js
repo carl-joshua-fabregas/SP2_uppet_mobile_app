@@ -1,4 +1,10 @@
 const Adopter = require("../models/Adopter");
+const AdoptionApplication = require("../models/AdoptionApplication");
+const ChatThread = require("../models/ChatThread");
+const Message = require("../models/Messages");
+const Notification = require("../models/Notification");
+const Pet = require("../models/Pet");
+const Rating = require("../models/Rating");
 
 const createAdopter = async (req, res) => {
   try {
@@ -117,7 +123,7 @@ const updateUser = async (req, res) => {
     }
 
     if (
-      req.user.id.toString() !== user.id.toString() &&
+      req.user.id.toString() !== user._id.toString() &&
       req.user.role.toString() !== "admin"
     ) {
       return res.status(403).json({
@@ -173,13 +179,21 @@ const deleteUser = async (req, res) => {
     }
 
     if (
-      req.user.id.toString() !== user.id.toString() &&
+      req.user.id.toString() !== user._id.toString() &&
       req.user.role !== "admin"
     ) {
       return res.status(403).json({
         message: "Forbidden",
       });
     }
+
+    await AdoptionApplication.deleteMany({ applicant: req.params.id });
+    await Notification.deleteMany({ notifRecipient: req.params.id });
+    await Pet.deleteMany({ ownerId: req.params.id });
+    await Message.deleteMany({ sender: req.params.id });
+    await ChatThread.deleteMany({ members: req.params.id });
+    await Rating.deleteMany({ reviewer: req.params.id });
+    await Rating.deleteMany({ ratedUser: req.params.id });
 
     await Adopter.findByIdAndDelete(req.params.id);
 

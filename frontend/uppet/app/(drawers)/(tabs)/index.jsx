@@ -5,15 +5,15 @@ export default function Index() {
     <View style={styles.container}>
       <View>
         <Image
-          source={require("../../assets/images/doggoe.jpg")}
+          source={require("../../../assets/images/doggoe.jpg")}
           style={styles.image}
         ></Image>
       </View>
 
       <View>
         <Text>Name: CJ</Text>
-        <Text>Age: Carley</Text>
-        <Text>Joshua</Text>
+        <Text>Age: 23</Text>
+        <Text>Breed: Shiba Inu</Text>
       </View>
     </View>
   );

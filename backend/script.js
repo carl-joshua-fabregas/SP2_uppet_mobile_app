@@ -1,16 +1,25 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 const app = express();
 const connectToDatabase = require("./config/database");
 require("dotenv").config();
 
-const petRouter = require("./routes/PetRoutes");
-const mockmidware = require("./middleware/authMiddleware");
+const corsOption = {
+  origin: "*",
+  methods: "GET, POST, PUT, PATCH, DELETE",
+  credentials: true,
+};
 
+const petRouter = require("./routes/PetRoutes");
+const authMiddleWare = require("./middleware/authMiddleware");
+const authGoogle = require("./routes/authRouter");
+
+app.use(cors(corsOption));
 app.use(express.json());
-app.use(mockmidware);
 
 app.use("/api/pet", petRouter);
+app.use("/api/auth", authGoogle);
 
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/sp2_uppet";
@@ -24,6 +33,6 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log("server is running on port " + PORT);
 });

@@ -1,4 +1,11 @@
-import { View, StyleSheet, Pressable } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Pressable,
+  Image,
+  Platform,
+  Button,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
@@ -34,16 +41,25 @@ export default function Login() {
     setIsSigningIn(true);
 
     try {
-      await GoogleSignin.hasPlayServices();
+      if (Platform.OS === "android") {
+        await GoogleSignin.hasPlayServices();
+      }
       const response = await GoogleSignin.signIn();
       if (response) {
         console.log(response.data.user);
         setIsSignedIn(true);
+        navigation.navigate("(drawers)");
       }
 
       console.log("Success");
     } catch (err) {
-      console.error(err);
+      if (err.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log("CANCELLED");
+      } else if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.log("PLAY SERVICE UNAVAILALE");
+      } else {
+        console.error(err);
+      }
     } finally {
       setIsSigningIn(false);
     }
@@ -51,7 +67,7 @@ export default function Login() {
 
   const handleSignOut = async () => {
     try {
-      console.log("Signin OUT");
+      console.log("Signed OUT");
       await GoogleSignin.signOut();
     } catch (err) {
       console.error(err);
@@ -59,27 +75,36 @@ export default function Login() {
       setIsSignedIn(false);
     }
   };
-
+  const CrossSignInButton = () => {
+    if (Platform.OS === "web") {
+      return (
+        <Button title="Sign In With Google" onPress={handleSignIn}></Button>
+      );
+    } else {
+      return (
+        <GoogleSigninButton
+          onPress={handleSignIn}
+          title="Sign In with Google"
+        ></GoogleSigninButton>
+      );
+    }
+  };
   return (
-    <View>
-      <Pressable
-        style={styles.myprofile}
-        onPress={() => navigation.navigate("(drawers)")}
-      >
-        <Ionicons name="grid-outline" size={50}></Ionicons>
-      </Pressable>
-      <GoogleSigninButton
-        onPress={handleSignIn}
-        title="Sign In with Google"
-      ></GoogleSigninButton>
-      <Pressable
-        style={styles.myprofile}
-        title="Sign Out"
-        onPress={handleSignOut}
-        disabled={!isSignedIn}
-      >
-        <Ionicons name="grid-outline" size={50}></Ionicons>
-      </Pressable>
+    <View style={styles.fullScreenContainer}>
+      <View style={styles.logoContainer}>
+        <Image source={require("../assets/images/react-logo.png")}></Image>
+      </View>
+      <View style={styles.googleContainer}>
+        <CrossSignInButton></CrossSignInButton>
+        <Pressable
+          style={styles.myprofile}
+          title="Sign Out"
+          onPress={handleSignOut}
+          disabled={!isSignedIn}
+        >
+          <Ionicons name="grid-outline" size={50}></Ionicons>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -90,5 +115,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
     display: "flex",
     margin: 0,
+  },
+  logoContainer: {
+    display: "flex",
+    alignContent: "center",
+    justifyContent: "space-around",
+    alignItems: "center",
+    margin: 2,
+    padding: 10,
+    height: "100%",
+    width: "100%",
+    borderColor: "blue",
+    borderWidth: 2,
+    flex: 1,
+  },
+  fullScreenContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
+    borderColor: "red",
+    borderWidth: 2,
+    backgroundColor: "#efb07d",
+  },
+  googleContainer: {
+    flex: 1,
+    height: "100%",
+    width: "100%",
+    borderWidth: 2,
+    borderColor: "yellow",
+    alignItems: "center",
+    display: "flex",
+    justifyContent: "Center",
   },
 });

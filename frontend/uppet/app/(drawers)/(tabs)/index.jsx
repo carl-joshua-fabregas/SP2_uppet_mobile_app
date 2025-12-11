@@ -11,7 +11,7 @@ export default function Index() {
       </View>
 
       <View>
-        <Text>Name: CJ</Text>
+        <Text>Name: Hi</Text>
         <Text>Age: 23</Text>
         <Text>Breed: Shiba Inu</Text>
       </View>

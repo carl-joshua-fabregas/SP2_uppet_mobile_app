@@ -27,6 +27,13 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.uppet.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
     "plugins": [
       "expo-router",
       [

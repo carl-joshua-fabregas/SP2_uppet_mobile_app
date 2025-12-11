@@ -5,9 +5,12 @@ import { Ionicons } from "@expo/vector-icons";
 
 export default function RootLayout() {
   const navigation = useNavigation();
+
+  console.log("HEHEHE ROOT");
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="login"></Stack.Screen>
+      <Stack.Screen name="index"></Stack.Screen>
+      {/* <Stack.Screen name="(drawers)"></Stack.Screen> */}
     </Stack>
   );
 }

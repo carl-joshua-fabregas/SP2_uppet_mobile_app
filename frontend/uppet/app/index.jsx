@@ -15,6 +15,8 @@ import {
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 
+const axios = require("axios");
+
 // WebBrowser.maybeCompleteAuthSession();
 // https://expo.dev/accounts/seafret/projects/uppet/builds/bbc888c4-30ba-4995-ae01-c564006f8b7b
 
@@ -46,8 +48,17 @@ export default function Login() {
       }
       const response = await GoogleSignin.signIn();
       if (response) {
-        console.log(response.data.user);
+        console.log(response);
         setIsSignedIn(true);
+        const jwtres = await axios.post(
+          "http://10.20.24.170:5000/api/auth/google",
+          {
+            token: {
+              idToken: response.data.idToken,
+            },
+          }
+        );
+        console.log(jwtres.userid);
         navigation.navigate("(drawers)");
       }
 

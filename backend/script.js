@@ -18,8 +18,13 @@ const authGoogle = require("./routes/authRouter");
 app.use(cors(corsOption));
 app.use(express.json());
 
-app.use("/api/pet", petRouter);
 app.use("/api/auth", authGoogle);
+
+
+app.use(authMiddleWare)
+app.use("/api/pet", petRouter);
+
+
 
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/sp2_uppet";

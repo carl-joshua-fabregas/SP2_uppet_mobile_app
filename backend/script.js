@@ -11,10 +11,11 @@ const corsOption = {
   credentials: true,
 };
 
-const petRouter = require("./routes/PetRoutes");
+const petRouter = require("./routes/PetRouter");
 const authMiddleWare = require("./middleware/authMiddleware");
 const authGoogle = require("./routes/authRouter");
 const adoptionAppRouter = require("./routes/adoptionAppRouter");
+const notificationRouter = require("./routes/notificationRouter");
 
 app.use(cors(corsOption));
 app.use(express.json());
@@ -24,6 +25,7 @@ app.use("/api/auth", authGoogle);
 app.use(authMiddleWare);
 app.use("/api/pet", petRouter);
 app.use("/api/adoptionApp", adoptionAppRouter);
+app.use("/api/notification", notificationRouter);
 
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/sp2_uppet";

@@ -49,7 +49,9 @@ const findAllUserNotification = async (req, res) => {
   try {
     const notifications = await Notification.find({
       notifRecipient: req.user.id,
-    });
+    })
+      .skip((req.params.page - 1) * 10)
+      .limit(10);
 
     if (notifications.length == 0) {
       return res.status(404).json({

@@ -29,7 +29,6 @@ const api = require("../api/axios");
 export default function Login() {
   const router = useNavigation();
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(false);
 
   GoogleSignin.configure({
     webClientId:
@@ -50,7 +49,6 @@ export default function Login() {
       const resGoogle = await GoogleSignin.signIn();
       if (resGoogle) {
         console.log(resGoogle.data);
-        setIsSignedIn(true);
         const { idToken } = resGoogle.data;
         const { email } = resGoogle.data.user;
 
@@ -74,21 +72,9 @@ export default function Login() {
       } else {
         console.error(err);
       }
-    } finally {
-      setIsSigningIn(false);
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      console.log("Signed OUT");
-      await GoogleSignin.signOut();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSignedIn(false);
-    }
-  };
   const CrossSignInButton = () => {
     if (Platform.OS === "web") {
       return (

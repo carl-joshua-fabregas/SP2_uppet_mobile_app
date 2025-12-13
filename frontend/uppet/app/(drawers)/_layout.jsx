@@ -1,7 +1,8 @@
 import { Drawer } from "expo-router/drawer";
-
+import ProfileDrawer from "../../component/DrawerContentCard";
 export default function Menu() {
   console.log("THEY SEE ME ROLLING");
+  c;
   return (
     <Drawer
       screenOptions={{
@@ -10,6 +11,7 @@ export default function Menu() {
           width: "60%",
         },
       }}
+      drawerContent={ProfileDrawer}
     >
       <Drawer.Screen
         name="(tabs)"

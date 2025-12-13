@@ -14,8 +14,9 @@ import {
   GoogleSigninButton,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const axios = require("axios");
+const api = require("../api/axios");
 
 // WebBrowser.maybeCompleteAuthSession();
 // https://expo.dev/accounts/seafret/projects/uppet/builds/bbc888c4-30ba-4995-ae01-c564006f8b7b
@@ -26,7 +27,7 @@ const axios = require("axios");
 //   "6734110788-dsgk74dm16ddm73bsuce679vcqif92pe.apps.googleusercontent.com",
 
 export default function Login() {
-  const navigation = useNavigation();
+  const router = useNavigation();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
@@ -46,20 +47,22 @@ export default function Login() {
       if (Platform.OS === "android") {
         await GoogleSignin.hasPlayServices();
       }
-      const response = await GoogleSignin.signIn();
-      if (response) {
-        console.log(response);
+      const resGoogle = await GoogleSignin.signIn();
+      if (resGoogle) {
+        console.log(resGoogle.data);
         setIsSignedIn(true);
-        const jwtres = await axios.post(
-          "http://10.20.24.170:5000/api/auth/google",
-          {
-            token: {
-              idToken: response.data.idToken,
-            },
-          }
-        );
-        console.log(jwtres.userid);
-        navigation.navigate("(drawers)");
+        const { idToken } = resGoogle.data;
+        const { email } = resGoogle.data.user;
+
+        const res = await api.post("/api/auth/google", {
+          token: {
+            idToken: idToken,
+          },
+        });
+
+        await AsyncStorage.setItem("token", res.data.token);
+        await AsyncStorage.setItem("email", JSON.stringify(email));
+        router.replace("(drawers)");
       }
 
       console.log("Success");
@@ -107,14 +110,6 @@ export default function Login() {
       </View>
       <View style={styles.googleContainer}>
         <CrossSignInButton></CrossSignInButton>
-        <Pressable
-          style={styles.myprofile}
-          title="Sign Out"
-          onPress={handleSignOut}
-          disabled={!isSignedIn}
-        >
-          <Ionicons name="grid-outline" size={50}></Ionicons>
-        </Pressable>
       </View>
     </View>
   );

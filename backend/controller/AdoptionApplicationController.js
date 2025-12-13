@@ -105,8 +105,10 @@ const findMyListAdoptees = async (req, res) => {
 
     const petAdoptList = await AdoptionApplication.find({
       petToAdopt: { $in: adoptAppListID },
-    }).populate("applicant");
-
+    })
+      .populate("applicant")
+      .skip((req.query.page - 1) * 10)
+      .limit(10);
     return res.status(200).json({
       message: "Sucessfully obtained your list of adoption applications",
       body: petAdoptList,

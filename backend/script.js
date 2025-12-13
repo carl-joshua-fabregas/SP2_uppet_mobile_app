@@ -14,17 +14,16 @@ const corsOption = {
 const petRouter = require("./routes/PetRoutes");
 const authMiddleWare = require("./middleware/authMiddleware");
 const authGoogle = require("./routes/authRouter");
+const adoptionAppRouter = require("./routes/adoptionAppRouter");
 
 app.use(cors(corsOption));
 app.use(express.json());
 
 app.use("/api/auth", authGoogle);
 
-
-app.use(authMiddleWare)
+app.use(authMiddleWare);
 app.use("/api/pet", petRouter);
-
-
+app.use("/api/adoptionApp", adoptionAppRouter);
 
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/sp2_uppet";

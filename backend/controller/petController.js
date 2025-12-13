@@ -60,10 +60,13 @@ const createPet = async (req, res) => {
 
 const findAll = async (req, res) => {
   try {
-    const allPets = await Pet.find({});
+    const allPets = await Pet.find({})
+      .skip((req.query.page - 1) * 10)
+      .limit(10);
     if (allPets.length == 0) {
       return res.status(404).json({
         message: "Not found",
+        body: [],
       });
     }
     return res.status(200).json({
@@ -138,16 +141,42 @@ const findByFilter = async (req, res) => {
 
 const findAllAvailPets = async (req, res) => {
   try {
-    const avail = await Pet.find({ adoptedStatus: 1 });
+    const avail = await Pet.find({ adoptedStatus: 1 })
+      .skip((req.query.page - 1) * 10)
+      .limit(10);
 
     if (avail.length == 0) {
       return res.status(404).json({
         message: "No pets found",
+        body: [],
       });
     }
     return res.status(200).json({
       message: "Successfully found all available pets",
       body: avail,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error Meow",
+      body: err.message,
+    });
+  }
+};
+const findMyPets = async (req, res) => {
+  try {
+    const myPets = await Pet.find({ ownerId: req.user.id })
+      .skip((req.query.page - 1) * 10)
+      .limit(10);
+
+    if (myPets.length == 0) {
+      return res.status(404).json({
+        message: "No pets found",
+        body: [],
+      });
+    }
+    return res.status(200).json({
+      message: "Successfully found all your pets",
+      body: myPets,
     });
   } catch (err) {
     return res.status(500).json({
@@ -394,6 +423,7 @@ module.exports = {
   findByID,
   findByFilter,
   findAllAvailPets,
+  findMyPets,
   deleteByID,
   deleteAll,
   updatePet,

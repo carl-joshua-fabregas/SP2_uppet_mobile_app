@@ -8,6 +8,8 @@ router.post("/post", petController.createPet);
 // GET Requests
 router.get("/all", petController.findAll);
 router.get("/avail", petController.findAllAvailPets);
+router.get("/myPets", petController.findMyPets);
+
 router.get("/", petController.findByFilter);
 router.get("/:id", petController.findByID);
 

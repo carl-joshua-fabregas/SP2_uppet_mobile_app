@@ -8,9 +8,11 @@ import {
   Dimensions,
 } from "react-native";
 import { useState, useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
 import PetCard from "../../../component/PetCard";
 const api = require("../../../api/axios");
 export default function Index() {
+  const router = useNavigation();
   const [pets, setPets] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -91,7 +93,10 @@ export default function Index() {
       <View style={styles.buttonContainer}>
         <Button
           title="POST"
-          onPress={() => console.log("Pressed home button")}
+          onPress={() => {
+            console.log("Pressed home button");
+            router.navigate("createPetProfile");
+          }}
         ></Button>
       </View>
     </View>

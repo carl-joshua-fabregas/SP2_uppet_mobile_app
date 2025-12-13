@@ -25,7 +25,7 @@ const createPet = async (req, res) => {
     } = req.body;
 
     const newPet = new Pet({
-      ownerId: ownerId,
+      ownerId: req.user.id,
       name: name,
       age: age,
       bio: bio,

@@ -21,7 +21,7 @@ const petSchema = new mongoose.Schema({
   sex: {
     type: String,
     enum: ["Male", "Female"],
-    required: false,
+    required: true,
   },
   species: {
     type: String,
@@ -40,7 +40,7 @@ const petSchema = new mongoose.Schema({
     required: true,
   },
   vaccination: {
-    type: [String],
+    type: String,
     required: true,
   },
   sn: {
@@ -62,6 +62,7 @@ const petSchema = new mongoose.Schema({
   adoptedStatus: {
     type: Number,
     required: true,
+    default: 0,
   },
   otherInfo: {
     type: String,

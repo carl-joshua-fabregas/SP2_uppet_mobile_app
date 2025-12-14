@@ -3,22 +3,18 @@ const router = express.Router();
 const adopterController = require("../controller/AdopterController");
 
 // POST Requests
-router.post("/post", adopterController.createPet);
+router.post("/post", adopterController.createAdopter);
 
 // GET Requests
-router.get("/all", adopterController.findAll);
-router.get("/avail", adopterController.findAllAvailPets);
-router.get("/", adopterController.findByFilter);
-router.get("/:id", adopterController.findByID);
+router.get("/all", adopterController.findAllUser);
+router.get("/me", adopterController.findCurrentUser);
+router.get("/:id", adopterController.findUserByID);
 
 // UPDATE Reqiests
 
-router.patch("/:id", adopterController.updatePet);
-router.patch("/:id/photo", adopterController.uploadPetPhoto);
-
+router.patch("/update", adopterController.updateUser);
 //Delete Requests
-router.delete("/", adopterController.deleteAll);
-router.delete("/:id", adopterController.deleteByID);
-router.delete("/:id/photo/:photoId", adopterController.deletePetPhoto);
+router.delete("/:id", adopterController.deleteUser);
+router.delete("/all", adopterController.deleteAllUser);
 
 module.exports = router;

@@ -12,6 +12,7 @@ const corsOption = {
 };
 
 const petRouter = require("./routes/PetRouter");
+const adopterRouter = require("./routes/UserRouter");
 const authMiddleWare = require("./middleware/authMiddleware");
 const authGoogle = require("./routes/authRouter");
 const adoptionAppRouter = require("./routes/adoptionAppRouter");
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use("/api/auth", authGoogle);
 
 app.use(authMiddleWare);
+app.use("/api/user", adopterRouter);
 app.use("/api/pet", petRouter);
 app.use("/api/adoptionApp", adoptionAppRouter);
 app.use("/api/notification", notificationRouter);

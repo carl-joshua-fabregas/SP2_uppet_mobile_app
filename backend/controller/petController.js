@@ -1,11 +1,9 @@
 const Pet = require("../models/Pet");
 const AdoptionApplication = require("../models/AdoptionApplication");
-const { json } = require("express");
 
 const createPet = async (req, res) => {
   try {
     const {
-      ownerId,
       name,
       age,
       bio,
@@ -19,7 +17,6 @@ const createPet = async (req, res) => {
       healthCond,
       behavior,
       specialNeeds,
-      adoptedStatus,
       otherInfo,
       photos,
     } = req.body;
@@ -27,19 +24,18 @@ const createPet = async (req, res) => {
     const newPet = new Pet({
       ownerId: req.user.id,
       name: name,
-      age: age,
+      age: Number(age),
       bio: bio,
       sex: sex,
       species: species,
       breed: breed,
       size: size,
-      weight: weight,
+      weight: Number(weight),
       vaccination: vaccination,
       sn: sn,
       healthCond: healthCond,
       behavior: behavior,
       specialNeeds: specialNeeds,
-      adoptedStatus: adoptedStatus,
       otherInfo: otherInfo,
       photos: photos,
     });

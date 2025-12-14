@@ -108,6 +108,27 @@ const findUserByID = async (req, res) => {
   }
 };
 
+const findCurrentUser = async (req, res) => {
+  try {
+    const user = await Adopter.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        message: "Not found",
+        body: [],
+      });
+    }
+    return res.status(200).json({
+      message: "User Found",
+      body: user,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Errorr",
+      body: err.message,
+    });
+  }
+};
+
 const updateUser = async (req, res) => {
   try {
     const options = {
@@ -211,6 +232,7 @@ module.exports = {
   createAdopter,
   findAllUser,
   findUserByID,
+  findCurrentUser,
   updateUser,
   deleteAllUser,
   deleteUser,

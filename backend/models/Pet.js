@@ -62,7 +62,7 @@ const petSchema = new mongoose.Schema({
   adoptedStatus: {
     type: Number,
     required: true,
-    default: 0,
+    default: 1,
   },
   otherInfo: {
     type: String,

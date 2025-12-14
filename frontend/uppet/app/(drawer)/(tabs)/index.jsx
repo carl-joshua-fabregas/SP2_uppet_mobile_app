@@ -95,6 +95,7 @@ export default function Index() {
           title="POST"
           onPress={() => {
             console.log("Pressed home button");
+            // router.navigate("createPetProfile");
             router.navigate("createPetProfile");
           }}
         ></Button>

@@ -47,10 +47,12 @@ export default function Login() {
         await GoogleSignin.hasPlayServices();
       }
       const resGoogle = await GoogleSignin.signIn();
+
       if (resGoogle) {
         console.log(resGoogle.data);
         const { idToken } = resGoogle.data;
         const { email } = resGoogle.data.user;
+        console.log("PACK NA PACK");
 
         const res = await api.post("/api/auth/google", {
           token: {
@@ -60,7 +62,8 @@ export default function Login() {
 
         await AsyncStorage.setItem("token", res.data.token);
         await AsyncStorage.setItem("email", JSON.stringify(email));
-        router.replace("(drawers)");
+
+        router.replace("(drawer)");
       }
 
       console.log("Success");

@@ -10,7 +10,15 @@ export default function RootLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index"></Stack.Screen>
-      {/* <Stack.Screen name="(drawers)"></Stack.Screen> */}
+      <Stack.Screen name="(drawer)"></Stack.Screen>
+      <Stack.Screen
+        name="createPetProfile"
+        options={{ headerShown: true, title: "Create Pet Profile" }}
+      ></Stack.Screen>
+      <Stack.Screen
+        name="viewProfile"
+        options={{ headerShown: true, title: "Profile" }}
+      ></Stack.Screen>
     </Stack>
   );
 }

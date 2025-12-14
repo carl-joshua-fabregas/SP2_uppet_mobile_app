@@ -4,7 +4,6 @@ import { useNavigation } from "@react-navigation/native";
 const api = require("../api/axios");
 export default function CreatePetCard(props) {
   const router = useNavigation();
-  //   const [submittable, setSubmittable] = useState(false);
   const [error, setError] = useState({});
   const [form, setForm] = useState({
     name: "",
@@ -23,7 +22,7 @@ export default function CreatePetCard(props) {
     otherInfo: "",
     photos: [
       {
-        uri: "https://lh3.googleusercontent.com/a/ACg8ocL0iPaGNeyu9wgGzyUvGbyEh-ooGF5FzvbNG9xnUwUd4TuB=s96-c",
+        url: "https://lh3.googleusercontent.com/a/ACg8ocL0iPaGNeyu9wgGzyUvGbyEh-ooGF5FzvbNG9xnUwUd4TuB=s96-c",
         isProfile: 0,
       },
     ],
@@ -33,7 +32,7 @@ export default function CreatePetCard(props) {
     setForm({ ...form, [field]: value });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newErrors = {};
 
     if (!form.name.trim()) {
@@ -68,9 +67,21 @@ export default function CreatePetCard(props) {
 
     setError(newErrors);
     console.log(newErrors);
+
     if (Object.keys(newErrors).length === 0) {
       console.log("Create Pet Profile Valid");
-      //   setSubmittable(true);
+      try {
+        const res = await api.post("/api/pet/post", form);
+        if (!res.data.body) {
+          console.log("DID NOT POST");
+        } else {
+          console.log("DID POST");
+
+          router.replace("(drawer)");
+        }
+      } catch (err) {
+        console.log(err);
+      }
     }
   };
   return (

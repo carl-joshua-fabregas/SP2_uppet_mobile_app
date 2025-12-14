@@ -1,4 +1,4 @@
-import { View, Text, Image, StyleSheet, Button } from "react-native";
+import { View, Text, Image, StyleSheet, Button, Pressable } from "react-native";
 import { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
@@ -21,6 +21,11 @@ export default function ProfileDrawer(props) {
     getEmail();
   }, []);
 
+  const handleProfileClick = () => {
+    console.log("IT HAS BEEN PRESSED");
+    router.navigate("viewProfile");
+  };
+
   const handleSignOut = async () => {
     try {
       console.log("Signed OUT");
@@ -32,7 +37,7 @@ export default function ProfileDrawer(props) {
   };
   return (
     <View style={styles.profileDrawerContainer}>
-      <View style={styles.profileContainer}>
+      <Pressable style={styles.profileContainer} onPress={handleProfileClick}>
         <Image
           source={{
             uri: "https://lh3.googleusercontent.com/a/ACg8ocL0iPaGNeyu9wgGzyUvGbyEh-ooGF5FzvbNG9xnUwUd4TuB=s96-c",
@@ -40,7 +45,7 @@ export default function ProfileDrawer(props) {
           style={styles.profileImageContainer}
         ></Image>
         <Text>{email}</Text>
-      </View>
+      </Pressable>
       <View>
         <Button title="Sign Out" onPress={handleSignOut}></Button>
       </View>
@@ -53,6 +58,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "cyan",
     width: "100%",
+    padding: 100,
   },
   profileContainer: {
     borderColor: "red",

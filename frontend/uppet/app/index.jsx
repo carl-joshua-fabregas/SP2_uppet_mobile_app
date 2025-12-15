@@ -59,11 +59,20 @@ export default function Login() {
             idToken: idToken,
           },
         });
+        console.log("here");
+        if (res.data.token) {
+          await AsyncStorage.setItem("token", res.data.token);
+          await AsyncStorage.setItem("email", JSON.stringify(email));
+        }
+        if (res.data.status.toString() === "new_user") {
+          console.log("new user");
 
-        await AsyncStorage.setItem("token", res.data.token);
-        await AsyncStorage.setItem("email", JSON.stringify(email));
+          router.navigate("createAdopterProfile", { type: "new_user" });
+        } else {
+          console.log(res);
 
-        router.replace("(drawer)");
+          router.replace("(drawer)");
+        }
       }
 
       console.log("Success");

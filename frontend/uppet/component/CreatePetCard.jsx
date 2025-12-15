@@ -38,7 +38,7 @@ export default function CreatePetCard(props) {
     if (!form.name.trim()) {
       newErrors.name = "Name Error";
     }
-    const ageInt = parseInt(form.age, 10);
+    const ageInt = Number(form.age, 10);
     if (isNaN(ageInt)) {
       newErrors.age = "Age Error";
     }
@@ -51,7 +51,7 @@ export default function CreatePetCard(props) {
     if (!form.breed.trim()) {
       newErrors.breed = "Breed Error";
     }
-    const weightNum = parseInt(form.weight, 10);
+    const weightNum = Number(form.weight, 10);
     if (isNaN(weightNum)) {
       newErrors.weightNum = "Weight Error";
     }

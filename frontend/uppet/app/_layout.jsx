@@ -19,6 +19,10 @@ export default function RootLayout() {
         name="viewProfile"
         options={{ headerShown: true, title: "Profile" }}
       ></Stack.Screen>
+      <Stack.Screen
+        name="createAdopterProfile"
+        options={{ headerShown: true, title: "Profile" }}
+      ></Stack.Screen>
     </Stack>
   );
 }

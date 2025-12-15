@@ -32,15 +32,15 @@ const createAdopter = async (req, res) => {
       middleName: middleName,
       lastName: lastName,
       bio: bio,
-      age: age,
+      age: parseInt(age),
       occupation: occupation,
-      income: income,
+      income: parseInt(income),
       address: address,
       contactInfo: contactInfo,
       livingCon: livingCon,
       lifeStyle: lifeStyle,
-      householdMem: householdMem,
-      currentOwnedPets: currentOwnedPets,
+      householdMem: parseInt(householdMem),
+      currentOwnedPets: parseInt(currentOwnedPets),
       hobies: hobies,
       userType: userType,
       googleId: googleId,
@@ -48,7 +48,7 @@ const createAdopter = async (req, res) => {
     });
 
     const newAdopter = await adopter.save();
-
+    console.log("ADOPTER GOT SAVED", newAdopter);
     return res.status(200).json({
       message: "Successfully added user",
       body: newAdopter,

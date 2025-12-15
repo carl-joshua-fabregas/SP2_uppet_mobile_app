@@ -59,8 +59,8 @@ const AdopterSchema = new mongoose.Schema({
   },
   userType: {
     type: String,
-    required: true,
     enum: ["admin", "user"],
+    default: "user",
   },
   googleId: {
     type: String,
@@ -69,7 +69,7 @@ const AdopterSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
-    enum: ["Male", "Female", "Other"],
+    enum: ["male", "female", "other"],
     required: true,
   },
 });

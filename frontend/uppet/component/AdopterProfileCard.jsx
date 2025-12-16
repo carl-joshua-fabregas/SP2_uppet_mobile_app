@@ -2,6 +2,8 @@ import { Text, ScrollView, Image, View } from "react-native";
 
 export default function ProfileCard(props) {
   const { adopter } = props;
+  console.log("THIS IS ADOPTER PROFILE CARD");
+  console.log(adopter);
   const form = {
     firstName: adopter.firstName,
     middleName: adopter.middleName,

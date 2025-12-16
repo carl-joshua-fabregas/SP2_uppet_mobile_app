@@ -6,31 +6,44 @@ import {
   Image,
   FlatList,
 } from "react-native";
-import ViewAdopteesCard from "../../../component/ViewMyAdopteesCard";
+import ViewApplicantsCard from "../component/ViewApplicantsCard";
 import { useState, useEffect } from "react";
-const api = require("../../../api/axios");
+import { useRoute } from "@react-navigation/native";
+const api = require("../api/axios");
 
-export default function MyAdoptee() {
-  const [pets, setPets] = useState([]);
+export default function ViewApplicantList(props) {
+  console.log(`HEY THIS IS THE PAGE FOR View Applicants in My Adoptees`);
+  const router = useRoute();
+  console.log(props);
+  console.log(router);
+  console.log(router);
+
+  const [applicants, setApplicants] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [refresh, setRefresh] = useState(false);
-  console.log(`HEY THIS IS THE PAGE FOR MYPETS ${page}`);
 
-  const getPets = async (pageNum = 1) => {
+  const getApplicants = async (pageNum = 1) => {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-      const res = await api.get("/api/pet/myPets", {
-        params: {
-          page: pageNum,
-        },
-      });
-      const myAdoptees = res.data.body;
-      setPets([...pets, ...myAdoptees]);
-      console.log(pets);
-      if (myAdoptees.length < 10) {
+      console.log("THESE ARE THE APPLICANTS");
+      console.log(applicantsArr);
+
+      const res = await api.get(
+        `/api/adoptionApp/${router.params.petID}/applicants`,
+        {
+          params: {
+            page: pageNum,
+          },
+        }
+      );
+      const applicantsArr = res.data.body;
+      console.log("HERE ARE THE RESULTING Applicant array", applicantsArr);
+      setApplicants([...applicants, ...applicantsArr]);
+
+      if (applicantsArr.length < 10) {
         setHasMore(false);
       }
     } catch (err) {
@@ -43,7 +56,7 @@ export default function MyAdoptee() {
   const onRefresh = () => {
     setRefresh(true);
     setHasMore(true);
-    setPets([]);
+    setApplicants([]);
     setPage(1);
   };
   const loadMore = () => {
@@ -54,18 +67,18 @@ export default function MyAdoptee() {
   };
 
   useEffect(() => {
-    getPets(page);
-  }, [page, getPets]);
+    getApplicants(page);
+  }, [page, getApplicants]);
   return (
     <View>
       <FlatList
-        data={pets}
+        data={applicants}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => {
           console.log(item);
-          return <ViewAdopteesCard pet={item}></ViewAdopteesCard>;
+          return <ViewApplicantsCard adoptionApp={item}></ViewApplicantsCard>;
         }}
-        ListEmptyComponent={<Text>No Pets found</Text>}
+        ListEmptyComponent={<Text>No Applicants found</Text>}
         ListFooterComponent={
           loading ? (
             <ActivityIndicator size="large" />
@@ -77,6 +90,7 @@ export default function MyAdoptee() {
         onEndReachedThreshold={0.1}
         refreshing={refresh}
         onRefresh={onRefresh}
+        removeClippedSubviews={false}
       ></FlatList>
     </View>
   );

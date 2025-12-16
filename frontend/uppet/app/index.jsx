@@ -67,7 +67,7 @@ export default function Login() {
         if (res.data.status.toString() === "new_user") {
           console.log("new user");
 
-          router.navigate("createAdopterProfile", { type: "new_user" });
+          router.replace("createAdopterProfile", { type: "new_user" });
         } else {
           console.log(res);
 

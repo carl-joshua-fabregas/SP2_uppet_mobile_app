@@ -120,7 +120,30 @@ const findMyListAdoptees = async (req, res) => {
     });
   }
 };
-
+const findPetApplicants = async (req, res) => {
+  try {
+    console.log("FINDING PET", req.params.id);
+    const adoptAppList = await AdoptionApplication.find({
+      petToAdopt: req.params.id,
+    })
+      .populate("applicant")
+      .select("name address");
+    if (adoptAppList.length == 0) {
+      return res.status(404).json({
+        message: "Nothing Found",
+      });
+    }
+    return res.status(200).json({
+      message: "Sucessfully obtained your list of adoption applications",
+      body: adoptAppList,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+};
 const updateAdoptionApp = async (req, res) => {
   try {
     const options = {
@@ -218,13 +241,141 @@ const deleteAllAdoptApp = async (req, res) => {
   }
 };
 
+const approveAdoption = async (req, res) => {
+  const options = {
+    new: true,
+    runValidators: true,
+  };
+  try {
+    if (
+      req.user.role.toString() !== "user" &&
+      req.user.role.toString() !== "admin"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden",
+      });
+    }
+
+    const acceptedApplication = await AdoptionApplication.findById(
+      req.params.id
+    );
+    if (!acceptedApplication) {
+      return res.status(404).json({
+        message: "Adoption Application not found",
+      });
+    }
+
+    const pet = await Pet.findById(acceptedApplication.petToAdopt);
+    if (!pet) {
+      return res.status(404).json({
+        message: "Pet to adopt not found",
+      });
+    }
+
+    if (pet.ownerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "Forbidden",
+      });
+    }
+
+    if (acceptedApplication.status.toString() === "Pending") {
+      const accept = await AdoptionApplication.findByIdAndUpdate(
+        acceptedApplication.id,
+        { status: "Approved" },
+        options
+      );
+      const updatePet = await Pet.findById(
+        pet.id,
+        { adoptedStatus: "Accepted" },
+        options
+      );
+
+      const reject = await AdoptionApplication.updateMany(
+        {
+          petToAdopt: pet.id,
+          _id: { $ne: req.params.id },
+          status: { $ne: "Approved", $ne: "Rejected", $ne: "Cancelled" },
+        },
+        { status: "Rejected" },
+        options
+      );
+      return res.status(200).json({
+        message: "Approved",
+        body: accept,
+      });
+    } else {
+      return res.status(400).json({
+        message: "Application Already Approved",
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+};
+
+const rejectApplicant = async (req, res) => {
+  const options = {
+    new: true,
+    runValidators: true,
+  };
+  try {
+    const application = await AdoptionApplication.findById(req.params.id);
+
+    if (!application) {
+      return res.status(404).json({
+        message: "Application not found",
+      });
+    }
+
+    const pet = await Pet.findById(application.petToAdopt);
+
+    if (!pet) {
+      return res.status(404).json({
+        message: "Pet not found",
+      });
+    }
+
+    if (
+      pet.ownerId.toString() !== req.user.id.toString() &&
+      req.user.role !== "admin"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden",
+      });
+    }
+
+    const rejectApplication = await AdoptionApplication.findByIdAndUpdate(
+      application.id,
+      {
+        status: "Rejected",
+      },
+      options
+    );
+
+    return res.status(200).json({
+      message: "Application Rejected",
+      body: application,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+};
 module.exports = {
   createAdoptApp,
   findAllAdoptApp,
   findAdoptAppByID,
   findMyListAdoptApp,
   findMyListAdoptees,
+  findPetApplicants,
   updateAdoptionApp,
   deleteAdoptApp,
   deleteAllAdoptApp,
+  approveAdoption,
+  rejectApplicant,
 };

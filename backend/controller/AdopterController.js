@@ -90,6 +90,8 @@ const findAllUser = async (req, res) => {
 const findUserByID = async (req, res) => {
   try {
     const user = await Adopter.findById(req.params.id);
+    console.log("FIND BY USER ID");
+    console.log(user);
     if (!user) {
       return res.status(404).json({
         message: "Not found",

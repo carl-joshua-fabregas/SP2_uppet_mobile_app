@@ -12,24 +12,62 @@ import { useRoute } from "@react-navigation/native";
 const api = require("../api/axios");
 
 export default function ViewApplicantList(props) {
-  console.log(`HEY THIS IS THE PAGE FOR View Applicants in My Adoptees`);
   const router = useRoute();
-  console.log(props);
-  console.log(router);
-  console.log(router);
-
   const [applicants, setApplicants] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [refresh, setRefresh] = useState(false);
 
+  const handleAccept = async (id) => { 
+    try{
+      console.log("before accept", applicants)
+      const res = await api.post(`api/adoptionApp/${id}/approve`)
+      const updatedApplicant = res.data.body
+      console.log("Updated Applicant is", updatedApplicant)
+      // setApplicants(updatedApplicant)
+      setApplicants((currentList) => {
+      const updateMap = new Map(updatedApplicant.map(item => [item._id, item]));
+
+      return currentList.map((item) => {
+        if (updateMap.has(item._id)) {
+          return { ...item, ...updateMap.get(item._id) };
+        }
+        return item;
+      });
+    });
+      console.log("after accept", applicants)
+
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const handleReject = async (id) => {
+    try{
+      const res = await api.patch(`api/adoptionApp/${id}/reject`)
+      const updatedApplicant = res.data.body
+      // setApplicants(updatedApplicant)
+      setApplicants((currentList) => {
+      const updateMap = new Map(updatedApplicant.map(item => [item._id, item]));
+
+      return currentList.map((item) => {
+        if (updateMap.has(item._id)) {
+          return { ...item, ...updateMap.get(item._id) };
+        }
+        return item;
+      });
+    });
+    } catch (err) {
+      console.log(err)
+    }
+    
+  }
   const getApplicants = async (pageNum = 1) => {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-      console.log("THESE ARE THE APPLICANTS");
-      console.log(applicantsArr);
+
 
       const res = await api.get(
         `/api/adoptionApp/${router.params.petID}/applicants`,
@@ -40,8 +78,7 @@ export default function ViewApplicantList(props) {
         }
       );
       const applicantsArr = res.data.body;
-      console.log("HERE ARE THE RESULTING Applicant array", applicantsArr);
-      setApplicants([...applicants, ...applicantsArr]);
+      setApplicants((prev) => [...prev, ...applicantsArr]);
 
       if (applicantsArr.length < 10) {
         setHasMore(false);
@@ -68,15 +105,14 @@ export default function ViewApplicantList(props) {
 
   useEffect(() => {
     getApplicants(page);
-  }, [page, getApplicants]);
+  }, [page, hasMore, loading, refresh]);
   return (
     <View>
       <FlatList
         data={applicants}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => {
-          console.log(item);
-          return <ViewApplicantsCard adoptionApp={item}></ViewApplicantsCard>;
+          return <ViewApplicantsCard adoptionApp={item} handleAccept={ () => handleAccept(item._id) } handleReject={ () => handleReject(item._id) }></ViewApplicantsCard>;
         }}
         ListEmptyComponent={<Text>No Applicants found</Text>}
         ListFooterComponent={

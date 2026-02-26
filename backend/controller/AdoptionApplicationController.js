@@ -1,13 +1,13 @@
-const AdoptionApplication = require("../models/AdoptionApplication");
-const Pet = require("../models/Pet");
+import AdoptionApplication from "../models/AdoptionApplication.js";
+import Pet from "../models/Pet.js";
 
-const createAdoptApp = async (req, res) => {
+export async function createAdoptApp (req, res) {
   try {
-    const { petToAdopt, applicant } = req.body;
+    const { petToAdopt } = req.body;
 
     const adoptionApplication = new AdoptionApplication({
       petToAdopt: petToAdopt,
-      applicant: applicant,
+      applicant: req.user.id,
     });
 
     const adoptStat = await adoptionApplication.save();
@@ -24,7 +24,7 @@ const createAdoptApp = async (req, res) => {
   }
 };
 
-const findAllAdoptApp = async (req, res) => {
+export async function findAllAdoptApp (req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -49,7 +49,7 @@ const findAllAdoptApp = async (req, res) => {
   }
 };
 
-const findAdoptAppByID = async (req, res) => {
+export async function findAdoptAppByID (req, res) {
   try {
     const adoptApp = await AdoptionApplication.findById(req.params.id);
     if (!adoptApp) {
@@ -70,7 +70,7 @@ const findAdoptAppByID = async (req, res) => {
 };
 
 //can also be used to all the pets it depends on the frontend
-const findMyListAdoptApp = async (req, res) => {
+export async function findMyListAdoptApp (req, res) {
   try {
     const adoptAppList = await AdoptionApplication.find({
       applicant: req.user.id,
@@ -92,7 +92,7 @@ const findMyListAdoptApp = async (req, res) => {
   }
 };
 
-const findMyListAdoptees = async (req, res) => {
+export async function findMyListAdoptees (req, res) {
   try {
     const adoptAppList = await Pet.find({ ownerId: req.user.id }).select("_id");
     const adoptAppListID = adoptAppList.map((petID) => petID._id);
@@ -120,14 +120,14 @@ const findMyListAdoptees = async (req, res) => {
     });
   }
 };
-const findPetApplicants = async (req, res) => {
+export async function findPetApplicants (req, res) {
   try {
     console.log("FINDING PET", req.params.id);
     const adoptAppList = await AdoptionApplication.find({
       petToAdopt: req.params.id,
     })
-      .populate("applicant")
-      .select("name address");
+      .populate("applicant", "firstName address")
+      .select("status");
     if (adoptAppList.length == 0) {
       return res.status(404).json({
         message: "Nothing Found",
@@ -144,7 +144,29 @@ const findPetApplicants = async (req, res) => {
     });
   }
 };
-const updateAdoptionApp = async (req, res) => {
+
+export async function findPetUserApplication (req, res) {
+  try{
+    console.log("FINDING PET USER ID APPLICATION")
+    const app = await AdoptionApplication.findOne({applicant: req.user.id, petToAdopt: req.params.id})
+    const pet = await Pet.findById(req.params.id);
+    console.log("FINDING PET USER ID APPLICATION END")
+
+    const isOwner = pet.ownerId.toString() === req.user.id.toString() ? true : false;
+    const status = app? app.status: false
+    
+    return res.status(200).json({
+      status: status,
+      isOwner: isOwner
+    })
+   } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message
+    })
+  }
+}
+export async function updateAdoptionApp (req, res) {
   try {
     const options = {
       new: true,
@@ -202,16 +224,11 @@ const updateAdoptionApp = async (req, res) => {
   }
 };
 
-const deleteAdoptApp = async (req, res) => {
+export async function cancelAdoptApp (req, res) {
   try {
-    if (req.user.role.toString() !== "admin") {
-      return res.status(403).json({
-        message: "Forbidden",
-      });
-    }
-    await AdoptionApplication.findByIdAndDelete(req.params.id);
+    const app = await AdoptionApplication.findOneAndDelete({applicant: req.user.id, petToAdopt: req.params.id});
     return res.status(200).json({
-      message: "Deleted Adoption App",
+      message: "Cancelled Adoption App",
     });
   } catch (err) {
     return res.status(500).json({
@@ -221,7 +238,7 @@ const deleteAdoptApp = async (req, res) => {
   }
 };
 
-const deleteAllAdoptApp = async (req, res) => {
+export async function deleteAllAdoptApp (req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -241,7 +258,7 @@ const deleteAllAdoptApp = async (req, res) => {
   }
 };
 
-const approveAdoption = async (req, res) => {
+export async function approveAdoption (req, res) {
   const options = {
     new: true,
     runValidators: true,
@@ -299,12 +316,19 @@ const approveAdoption = async (req, res) => {
         { status: "Rejected" },
         options
       );
+
+      const updatedList = await AdoptionApplication.find({petToAdopt: acceptedApplication.petToAdopt}).populate("applicant", " firstName address")
+      if(updatedList.length === 0 ) {
+        return res.status(500).json({
+          message: "Error Retrieving Updated List"
+        })
+      }
       return res.status(200).json({
         message: "Approved",
-        body: accept,
+        body: updatedList,
       });
     } else {
-      return res.status(400).json({
+      return res.status(425).json({
         message: "Application Already Approved",
       });
     }
@@ -316,7 +340,7 @@ const approveAdoption = async (req, res) => {
   }
 };
 
-const rejectApplicant = async (req, res) => {
+export async function rejectApplicant (req, res) {
   const options = {
     new: true,
     runValidators: true,
@@ -354,10 +378,16 @@ const rejectApplicant = async (req, res) => {
       },
       options
     );
+    const updatedList = await AdoptionApplication.find({petToAdopt: rejectApplication.petToAdopt}).populate("applicant", " firstName address")
+      if(updatedList.length === 0 ) {
+        return res.status(500).json({
+          message: "Error Retrieving Updated List"
+        })
+      }
 
     return res.status(200).json({
       message: "Application Rejected",
-      body: application,
+      body: updatedList,
     });
   } catch (err) {
     return res.status(500).json({
@@ -365,17 +395,4 @@ const rejectApplicant = async (req, res) => {
       body: err.message,
     });
   }
-};
-module.exports = {
-  createAdoptApp,
-  findAllAdoptApp,
-  findAdoptAppByID,
-  findMyListAdoptApp,
-  findMyListAdoptees,
-  findPetApplicants,
-  updateAdoptionApp,
-  deleteAdoptApp,
-  deleteAllAdoptApp,
-  approveAdoption,
-  rejectApplicant,
 };

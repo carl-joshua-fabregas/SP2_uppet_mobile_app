@@ -1,7 +1,7 @@
-const Message = require("../models/Messages");
-const ChatThread = require("../models/ChatThread");
+import ChatThread from "../models/ChatThread.js";
+import Message from "../models/Messages.js";
 
-const sendMessage = async (req, res) => {
+export async function sendMessage (req, res) {
   try {
     const options = {
       new: true,
@@ -41,7 +41,7 @@ const sendMessage = async (req, res) => {
   }
 };
 
-const findMessageById = async (req, res) => {
+export async function findMessageById (req, res) {
   try {
     const chatThread = await ChatThread.findById(req.params.chatThreadId);
     if (!chatThread) {
@@ -76,7 +76,7 @@ const findMessageById = async (req, res) => {
   }
 };
 
-const deleteAMessage = async (req, res) => {
+export async function deleteAMessage (req, res) {
   try {
     const message = await Message.findById(req.params.id);
 
@@ -108,4 +108,3 @@ const deleteAMessage = async (req, res) => {
   }
 };
 
-module.exports = { sendMessage, findMessageById, deleteAMessage };

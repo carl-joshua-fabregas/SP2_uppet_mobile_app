@@ -30,6 +30,8 @@ export default function ProfileDrawer(props) {
     try {
       console.log("Signed OUT");
       await GoogleSignin.signOut();
+      await AsyncStorage.removeItem("token")
+      await AsyncStorage.removeItem("email")
       router.replace("index");
     } catch (err) {
       console.error(err);

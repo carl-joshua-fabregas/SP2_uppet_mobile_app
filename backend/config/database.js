@@ -1,9 +1,9 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 // const seed = require("../../database/seed")
 
 // seed();
 
-const connectToDatabase = async (dbURI) => {
+export default async function connectToDatabase(dbURI) {
 	try {
 		await mongoose.connect(dbURI);
 		console.log("Connected to MongoDB");
@@ -13,4 +13,3 @@ const connectToDatabase = async (dbURI) => {
 	}
 };
 
-module.exports = connectToDatabase;

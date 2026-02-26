@@ -1,6 +1,6 @@
-const Notification = require("../models/Notification");
+import Notification from "../models/Notification.js";
 
-const createNotification = async (req, res) => {
+export async function createNotification (req, res) {
   try {
     const { notifRecipient, body, notifType } = req.body;
     const newNotif = new Notification({
@@ -23,7 +23,7 @@ const createNotification = async (req, res) => {
   }
 };
 
-const findAllNotification = async (req, res) => {
+export async function findAllNotification (req, res) {
   try {
     const notifications = await Notification.find({});
 
@@ -45,7 +45,7 @@ const findAllNotification = async (req, res) => {
   }
 };
 
-const findAllUserNotification = async (req, res) => {
+export async function findAllUserNotification (req, res) {
   try {
     const notifications = await Notification.find({
       notifRecipient: req.user.id,
@@ -71,7 +71,7 @@ const findAllUserNotification = async (req, res) => {
   }
 };
 
-const deleteAllNotification = async (req, res) => {
+export async function deleteAllNotification (req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -90,7 +90,7 @@ const deleteAllNotification = async (req, res) => {
   }
 };
 
-const deleteAllUserNotification = async (req, res) => {
+export async function deleteAllUserNotification (req, res) {
   try {
     const userNotif = await Notification.deleteMany({
       notifRecipient: req.user.id,
@@ -107,7 +107,7 @@ const deleteAllUserNotification = async (req, res) => {
   }
 };
 
-const deleteUserNotification = async (req, res) => {
+export async function deleteUserNotification (req, res) {
   try {
     const user = await Notification.findById(req.params.id);
 
@@ -130,12 +130,4 @@ const deleteUserNotification = async (req, res) => {
       body: err.message,
     });
   }
-};
-module.exports = {
-  createNotification,
-  findAllNotification,
-  findAllUserNotification,
-  deleteAllNotification,
-  deleteAllUserNotification,
-  deleteUserNotification,
 };

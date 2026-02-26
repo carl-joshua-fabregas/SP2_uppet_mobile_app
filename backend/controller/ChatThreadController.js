@@ -1,7 +1,8 @@
-const ChatThread = require("../models/ChatThread");
-const Message = require("../models/Messages");
 
-const createChatThread = async (req, res) => {
+import ChatThread from "../models/ChatThread.js";
+import Message from "../models/Messages.js";
+
+export async function createChatThread (req, res) {
   try {
     const { members, lastMessage } = req.body;
     const chatThread = new ChatThread({
@@ -22,7 +23,7 @@ const createChatThread = async (req, res) => {
   }
 };
 
-const findAllChatThread = async (req, res) => {
+export async function findAllChatThread (req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -47,7 +48,7 @@ const findAllChatThread = async (req, res) => {
   }
 };
 
-const findChatThreadByID = async (req, res) => {
+export async function findChatThreadByID (req, res) {
   try {
     const chatThread = await ChatThread.findById(req.params.id);
     if (!chatThread) {
@@ -77,7 +78,7 @@ const findChatThreadByID = async (req, res) => {
   }
 };
 
-const deleteChatThread = async (req, res) => {
+export async function deleteChatThread (req, res) {
   try {
     const chatThread = await ChatThread.findById(req.params.id);
     if (!chatThread) {
@@ -108,9 +109,4 @@ const deleteChatThread = async (req, res) => {
     });
   }
 };
-module.exports = {
-  createChatThread,
-  findAllChatThread,
-  findChatThreadByID,
-  deleteChatThread,
-};
+

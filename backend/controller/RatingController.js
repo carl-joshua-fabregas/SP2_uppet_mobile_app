@@ -1,6 +1,6 @@
-const Rating = require("../models/Rating");
+import Rating from "../models/Rating.js";
 
-const createRating = async (req, res) => {
+export async function createRating (req, res) {
   try {
     const { ratedUser, score, reviewer, body } = req.body;
 
@@ -25,7 +25,7 @@ const createRating = async (req, res) => {
   }
 };
 
-const findAllRating = async (req, res) => {
+export async function findAllRating (req, res) {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({
@@ -50,7 +50,7 @@ const findAllRating = async (req, res) => {
   }
 };
 
-const findRatingsOfUser = async (req, res) => {
+export async function findRatingsOfUser (req, res) {
   try {
     const notification = await Rating.find({ ratedUser: req.user.id });
     if (notification.length == 0) {
@@ -70,7 +70,7 @@ const findRatingsOfUser = async (req, res) => {
   }
 };
 
-const findAllRatedUser = async (req, res) => {
+export async function findAllRatedUser (req, res) {
   try {
     const ratedUser = await Rating.find({ reviewer: req.user.id });
 
@@ -92,7 +92,7 @@ const findAllRatedUser = async (req, res) => {
   }
 };
 
-const updateRating = async (req, res) => {
+export async function updateRating (req, res) {
   try {
     const options = {
       new: true,
@@ -130,7 +130,7 @@ const updateRating = async (req, res) => {
   }
 };
 
-const deleteAllRating = async (req, res) => {
+export async function deleteAllRating (req, res) {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({
@@ -151,7 +151,7 @@ const deleteAllRating = async (req, res) => {
   }
 };
 
-const deleteRating = async (req, res) => {
+export async function deleteRating (req, res) {
   try {
     const rating = await Rating.findById(req.params.id);
 
@@ -179,12 +179,4 @@ const deleteRating = async (req, res) => {
       body: err.message,
     });
   }
-};
-module.exports = {
-  createRating,
-  findAllRating,
-  findRatingsOfUser,
-  updateRating,
-  deleteAllRating,
-  deleteRating,
 };

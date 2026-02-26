@@ -1,12 +1,12 @@
-const Adopter = require("../models/Adopter");
-const AdoptionApplication = require("../models/AdoptionApplication");
-const ChatThread = require("../models/ChatThread");
-const Message = require("../models/Messages");
-const Notification = require("../models/Notification");
-const Pet = require("../models/Pet");
-const Rating = require("../models/Rating");
+import Adopter from "../models/Adopter.js";
+import AdoptionApplication from "../models/AdoptionApplication.js";
+import ChatThread from "../models/ChatThread.js";
+import Message from "../models/Messages.js";
+import Notification from "../models/Notification.js";
+import Pet from "../models/Pet.js";
+import Rating from "../models/Rating.js";
 
-const createAdopter = async (req, res) => {
+export async function createAdopter (req, res) {
   try {
     const {
       firstName,
@@ -61,7 +61,7 @@ const createAdopter = async (req, res) => {
   }
 };
 
-const findAllUser = async (req, res) => {
+export async function findAllUser (req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -87,7 +87,7 @@ const findAllUser = async (req, res) => {
   }
 };
 
-const findUserByID = async (req, res) => {
+export async function findUserByID (req, res) {
   try {
     const user = await Adopter.findById(req.params.id);
     console.log("FIND BY USER ID");
@@ -110,7 +110,7 @@ const findUserByID = async (req, res) => {
   }
 };
 
-const findCurrentUser = async (req, res) => {
+export async function findCurrentUser (req, res) {
   try {
     const user = await Adopter.findById(req.user.id);
     if (!user) {
@@ -131,7 +131,7 @@ const findCurrentUser = async (req, res) => {
   }
 };
 
-const updateUser = async (req, res) => {
+export async function updateUser (req, res) {
   try {
     const options = {
       new: true,
@@ -172,7 +172,7 @@ const updateUser = async (req, res) => {
   }
 };
 
-const deleteAllUser = async (req, res) => {
+export async function deleteAllUser (req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -191,7 +191,7 @@ const deleteAllUser = async (req, res) => {
   }
 };
 
-const deleteUser = async (req, res) => {
+export async function deleteUser (req, res) {
   try {
     const user = await Adopter.findById(req.params.id);
 
@@ -230,12 +230,4 @@ const deleteUser = async (req, res) => {
     });
   }
 };
-module.exports = {
-  createAdopter,
-  findAllUser,
-  findUserByID,
-  findCurrentUser,
-  updateUser,
-  deleteAllUser,
-  deleteUser,
-};
+

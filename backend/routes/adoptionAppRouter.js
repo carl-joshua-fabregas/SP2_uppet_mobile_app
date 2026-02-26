@@ -1,10 +1,16 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const adoptionAppController = require("../controller/AdoptionApplicationController");
+import {findMyListAdoptApp, findPetApplicants, findPetUserApplication, createAdoptApp, approveAdoption, rejectApplicant, cancelAdoptApp} from "../controller/AdoptionApplicationController.js";
 
-router.get("/myAdoptees", adoptionAppController.findMyListAdoptees);
-router.get("/:id/applicants", adoptionAppController.findPetApplicants);
-router.patch("/:id/approve", adoptionAppController.approveAdoption);
-router.patch("/:id/reject", adoptionAppController.rejectApplicant);
+router.get("/myAdoptees", findMyListAdoptApp);
+router.get("/:id/applicants", findPetApplicants);
+router.get("/:id/applied", findPetUserApplication);   
+router.post("/applied", createAdoptApp);
 
-module.exports = router;
+router.post("/:id/approve", approveAdoption);
+router.patch("/:id/reject", rejectApplicant);
+
+router.delete("/:id/cancelled", cancelAdoptApp)
+
+
+export default router;

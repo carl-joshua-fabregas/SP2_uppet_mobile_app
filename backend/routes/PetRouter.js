@@ -1,26 +1,28 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const petController = require("../controller/petController");
+import {createPet, presignUploadURL, uploadPetPhoto, findAll, findAllAvailPets, findMyPets, findByFilter, findByID, updatePet,deleteAll, deleteByID, deletePetPhoto} from "../controller/PetController.js";
 
 // POST Requests
-router.post("/post", petController.createPet);
+router.post("/post", createPet);
+router.post("/presignUploadURL", presignUploadURL);
+router.post("/:id/photo", uploadPetPhoto);
 
 // GET Requests
-router.get("/all", petController.findAll);
-router.get("/avail", petController.findAllAvailPets);
-router.get("/myPets", petController.findMyPets);
+router.get("/all", findAll);
+router.get("/avail", findAllAvailPets);
+router.get("/myPets", findMyPets);
 
-router.get("/", petController.findByFilter);
-router.get("/:id", petController.findByID);
+router.get("/", findByFilter);
+router.get("/:id", findByID);
 
-// UPDATE Reqiests
+// UPDATE Requests
 
-router.patch("/:id", petController.updatePet);
-router.patch("/:id/photo", petController.uploadPetPhoto);
+router.patch("/:id", updatePet);
+router.patch("/:id/photo", uploadPetPhoto);
 
 //Delete Requests
-router.delete("/", petController.deleteAll);
-router.delete("/:id", petController.deleteByID);
-router.delete("/:id/photo/:photoId", petController.deletePetPhoto);
+router.delete("/", deleteAll);
+router.delete("/:id", deleteByID);
+router.delete("/:id/photo/:photoId", deletePetPhoto);
 
-module.exports = router;
+export default router;

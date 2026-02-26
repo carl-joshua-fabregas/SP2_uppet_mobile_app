@@ -1,7 +1,20 @@
-const Pet = require("../models/Pet");
-const AdoptionApplication = require("../models/AdoptionApplication");
+import Pet from "../models/Pet.js";
+import AdoptionApplication from "../models/AdoptionApplication.js";
+import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
+import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
 
-const createPet = async (req, res) => {
+console.log("AWS REGION:", process.env.AWS_REGION);
+console.log("AWS ACCESS KEY ID:", process.env.AWS_ACCESS_KEY_ID);
+console.log("AWS SECRET ACCESS KEY:", process.env.AWS_SECRET_ACCESS_KEY);
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: { 
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+export async function createPet (req, res) {
   try {
     const {
       name,
@@ -39,9 +52,11 @@ const createPet = async (req, res) => {
       otherInfo: otherInfo,
       photos: photos,
     });
+    console.log("REQUEST BODY", req.body);
+    console.log("BEFORE PET GOT SAVED");
 
     const status = await newPet.save();
-
+    console.log("PET GOT SAVED", status);
     return res.status(200).json({
       message: "Succesfully Added",
       body: status,
@@ -54,7 +69,7 @@ const createPet = async (req, res) => {
   }
 };
 
-const findAll = async (req, res) => {
+export async function findAll (req, res) {
   try {
     const allPets = await Pet.find({})
       .skip((req.query.page - 1) * 10)
@@ -78,7 +93,7 @@ const findAll = async (req, res) => {
   }
 };
 
-const findByID = async (req, res) => {
+export async function findByID (req, res) {
   try {
     const petID = req.params.id;
     const pet = await Pet.findById(petID);
@@ -100,7 +115,8 @@ const findByID = async (req, res) => {
   }
 };
 
-const findByFilter = async (req, res) => {
+export async function findByFilter (req, res) {
+  console.log("FIND BY FILTER CALLED");
   try {
     const { age, breed, species, sex, size, weight, adoptionStatus } =
       req.query;
@@ -135,10 +151,11 @@ const findByFilter = async (req, res) => {
   }
 };
 
-const findAllAvailPets = async (req, res) => {
+export async function findAllAvailPets (req, res) {
   try {
+    const page = parseInt(req.query.page) || 1;
     const avail = await Pet.find({ adoptedStatus: 1 })
-      .skip((req.query.page - 1) * 10)
+      .skip((page - 1) * 10)
       .limit(10);
 
     if (avail.length == 0) {
@@ -158,7 +175,8 @@ const findAllAvailPets = async (req, res) => {
     });
   }
 };
-const findMyPets = async (req, res) => {
+
+export async function findMyPets (req, res) {
   try {
     const myPets = await Pet.find({ ownerId: req.user.id })
       .skip((req.query.page - 1) * 10)
@@ -182,7 +200,7 @@ const findMyPets = async (req, res) => {
   }
 };
 
-const deleteByID = async (req, res) => {
+export async function deleteByID (req, res) {
   try {
     const pet = await Pet.findById(req.params.id);
 
@@ -215,7 +233,7 @@ const deleteByID = async (req, res) => {
   }
 };
 
-const deleteAll = async (req, res) => {
+export async function deleteAll (req, res) {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({
@@ -236,7 +254,7 @@ const deleteAll = async (req, res) => {
   }
 };
 
-const updatePet = async (req, res) => {
+export async function updatePet (req, res) {
   try {
     const options = {
       new: true,
@@ -278,10 +296,44 @@ const updatePet = async (req, res) => {
   }
 };
 
-const uploadPetPhoto = async (req, res) => {
+export async function presignUploadURL (req, res) {
   try {
-    const pet = await Pet.findById(req.params.id);
+    const key = `pets/${req.body.petId}/${Date.now()}_${req.body.fileName}`;
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+      ContentType: req.body.fileType
+      // Metadata:{
+      //   uri: req.body.uri || "",
+      //   name: req.body.name || ""
+      // }
+    });
+    console.log(process.env.AWS_BUCKET_NAME, process.env.AWS_REGION, process.env.AWS_ACCESS_KEY_ID, process.env.AWS_SECRET_ACCESS_KEY );
+    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
+    console.log("WITH COMMAND:", command);
+    
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    console.log("PRESIGNED URL GENERATED:", url);
 
+    return res.status(200).json({
+      message: "Successfully obtained presigned URL",
+      body: {url: url, key: key},
+    });
+  } catch (err) {
+    console.log("ERROR IN GENERATING PRESIGNED URL:", err);
+    return res.status(505).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+}
+
+export async function uploadPetPhoto (req, res) {
+  console.log("UPLOAD PET PHOTO CONTROLLER CALLED");
+  try {
+    console.log("PET ID IN UPLOAD PET PHOTO CONTROLLER", req.params.id);
+
+    const pet = await Pet.findById(req.params.id);
     if (!pet) {
       return res.status(404).json({
         message: "Not found",
@@ -296,9 +348,11 @@ const uploadPetPhoto = async (req, res) => {
         message: "Forbidden",
       });
     }
+    const url = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${req.body.key}`;
 
     const photo = {
-      url: req.body.url,
+      url: url,
+      key: req.body.key,
       caption: req.body.caption,
       isProfile: req.body.isProfile,
       timeStamp: Date.now(),
@@ -313,6 +367,7 @@ const uploadPetPhoto = async (req, res) => {
       body: newPhoto,
     });
   } catch (err) {
+    console.log("ERROR IN UPLOADING PET PHOTO:", err);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
@@ -320,7 +375,7 @@ const uploadPetPhoto = async (req, res) => {
   }
 };
 
-const deletePetPhoto = async (req, res) => {
+export async function deletePetPhoto (req, res) {
   try {
     const options = {
       new: true,
@@ -366,7 +421,7 @@ const deletePetPhoto = async (req, res) => {
   }
 };
 
-const updatePhotoCaption = async (req, res) => {
+export async function updatePhotoCaption (req, res) {
   try {
     const pet = await Pet.findById(req.params.id);
     const options = {
@@ -411,18 +466,4 @@ const updatePhotoCaption = async (req, res) => {
       body: err.message,
     });
   }
-};
-
-module.exports = {
-  createPet,
-  findAll,
-  findByID,
-  findByFilter,
-  findAllAvailPets,
-  findMyPets,
-  deleteByID,
-  deleteAll,
-  updatePet,
-  uploadPetPhoto,
-  deletePetPhoto,
 };

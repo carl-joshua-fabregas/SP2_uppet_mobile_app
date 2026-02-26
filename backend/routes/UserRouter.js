@@ -1,20 +1,20 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const adopterController = require("../controller/AdopterController");
+import {createAdopter, findAllUser, findCurrentUser, findUserByID, updateUser, deleteAllUser, deleteUser} from "../controller/AdopterController.js";
 
 // POST Requests
-router.post("/post", adopterController.createAdopter);
+router.post("/post",    createAdopter);
 
 // GET Requests
-router.get("/all", adopterController.findAllUser);
-router.get("/me", adopterController.findCurrentUser);
-router.get("/:id", adopterController.findUserByID);
+router.get("/all", findAllUser);
+router.get("/me", findCurrentUser);
+router.get("/:id", findUserByID);
 
-// UPDATE Reqiests
+// UPDATE Requests
 
-router.patch("/update", adopterController.updateUser);
+router.patch("/update", updateUser);
 //Delete Requests
-router.delete("/:id", adopterController.deleteUser);
-router.delete("/all", adopterController.deleteAllUser);
+router.delete("/:id", deleteUser);
+router.delete("/all", deleteAllUser);
 
-module.exports = router;
+export default router;

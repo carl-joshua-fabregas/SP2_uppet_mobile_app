@@ -1,14 +1,14 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const chatThreadSchema = new mongoose.Schema({
   members: {
-    type: [mongoose.SchemaTypes.ObjectID],
+    type: [mongoose.SchemaTypes.ObjectId],
     ref: "Adopter",
     required: true,
   },
 
   lastMessage: {
-    type: mongoose.SchemaTypes.ObjectID,
+    type: mongoose.SchemaTypes.ObjectId,
     ref: "Message",
     required: false,
     index: true,
@@ -21,4 +21,5 @@ const chatThreadSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("ChatThread", chatThreadSchema);
+const ChatThread = mongoose.model("ChatThread", chatThreadSchema);
+export default ChatThread;

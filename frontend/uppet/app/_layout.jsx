@@ -31,6 +31,10 @@ export default function RootLayout() {
         name="viewAdopterProfile"
         options={{ headerShown: true, title: "Profile" }}
       ></Stack.Screen>
+      <Stack.Screen
+        name="viewPetProfile"
+        options={{ headerShown: true, title: "Pet Profile" }}
+      ></Stack.Screen>
     </Stack>
   );
 }

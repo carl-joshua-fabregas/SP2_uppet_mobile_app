@@ -1,10 +1,10 @@
-const Adopter = require("../models/Adopter");
-const jwt = require("jsonwebtoken");
-const { OAuth2Client } = require("google-auth-library");
+import Adopter from "../models/Adopter.js";
+import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 const CLIENT_ID =
   "6734110788-rn5ibmvbnn7tf00hmr0lihi6ph9ma1fs.apps.googleusercontent.com";
 
-const authGoogle = async (req, res) => {
+export async function authGoogle (req, res) {
   try {
     const client = new OAuth2Client(CLIENT_ID);
     const { token } = req.body;
@@ -69,4 +69,3 @@ const authGoogle = async (req, res) => {
   }
 };
 
-module.exports = authGoogle;

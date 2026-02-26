@@ -50,7 +50,7 @@ export default function Notification() {
 
   useEffect(() => {
     getNotification(page);
-  }, [page]);
+  }, [page, getNotification]);
   return (
     <View style={{ flex: 1 }}>
       <FlatList

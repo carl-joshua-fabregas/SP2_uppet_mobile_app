@@ -1,14 +1,14 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const adoptionApplicationSchema = new mongoose.Schema({
   petToAdopt: {
-    type: mongoose.SchemaTypes.ObjectID,
+    type: mongoose.SchemaTypes.ObjectId,
     ref: "Pet",
     required: true,
     index: true,
   },
   applicant: {
-    type: mongoose.SchemaTypes.ObjectID,
+    type: mongoose.SchemaTypes.ObjectId,
     ref: "Adopter",
     required: true,
     index: true,
@@ -29,7 +29,9 @@ const adoptionApplicationSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model(
+const AdoptionApplication = mongoose.model(
   "AdoptionApplication",
   adoptionApplicationSchema
 );
+
+export default AdoptionApplication;

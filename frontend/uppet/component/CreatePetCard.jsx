@@ -5,6 +5,7 @@ const api = require("../api/axios");
 export default function CreatePetCard(props) {
   const router = useNavigation();
   const [error, setError] = useState({});
+  const [res, setRes] = useState(null);
   const [form, setForm] = useState({
     name: "",
     age: "",
@@ -20,12 +21,7 @@ export default function CreatePetCard(props) {
     behavior: "",
     specialNeeds: "",
     otherInfo: "",
-    photos: [
-      {
-        url: "https://lh3.googleusercontent.com/a/ACg8ocL0iPaGNeyu9wgGzyUvGbyEh-ooGF5FzvbNG9xnUwUd4TuB=s96-c",
-        isProfile: 0,
-      },
-    ],
+    photos: [],
   });
 
   const handleOnChange = (field, value) => {
@@ -53,7 +49,7 @@ export default function CreatePetCard(props) {
     }
     const weightNum = Number(form.weight, 10);
     if (isNaN(weightNum)) {
-      newErrors.weightNum = "Weight Error";
+      newErrors.weight = "Weight Error";
     }
     if (!form.vaccination.trim()) {
       newErrors.vaccination = "Vaccination Error";
@@ -64,6 +60,9 @@ export default function CreatePetCard(props) {
     if (!form.specialNeeds.trim()) {
       newErrors.specialNeeds = "Special Needs Error";
     }
+    // if(form.photos.length === 0){
+    //   newErrors.photos = "Photos Error";
+    // }
 
     setError(newErrors);
     console.log(newErrors);
@@ -71,13 +70,14 @@ export default function CreatePetCard(props) {
     if (Object.keys(newErrors).length === 0) {
       console.log("Create Pet Profile Valid");
       try {
-        const res = await api.post("/api/pet/post", form);
-        if (!res.data.body) {
+        const response = await api.post("/api/pet/post", form);
+        setRes(response)
+        if (!response.data.body) {
           console.log("DID NOT POST");
         } else {
           console.log("DID POST");
 
-          router.replace("(drawer)");
+          // router.replace("(drawer)");
         }
       } catch (err) {
         console.log(err);
@@ -171,8 +171,9 @@ export default function CreatePetCard(props) {
           value={form.otherInfo}
           onChangeText={(text) => handleOnChange("otherInfo", text)}
         ></TextInput>
+        <Button title="Upload Photo Gallery" onPress={() => props.handleImageRead(res?.data?.body?._id, "This is a caption")}></Button>
         <Button title="Submit" onPress={handleSubmit}></Button>
       </ScrollView>
     </View>
   );
-}
+}   

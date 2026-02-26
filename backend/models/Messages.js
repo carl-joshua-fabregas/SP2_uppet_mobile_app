@@ -1,14 +1,14 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const messageSchema = new mongoose.Schema({
   chatThreadOrigin: {
-    type: mongoose.SchemaTypes.ObjectID,
+    type: mongoose.SchemaTypes.ObjectId,
     ref: "ChatThread",
     required: true,
     index: true,
   },
   sender: {
-    type: mongoose.SchemaTypes.ObjectID,
+    type: mongoose.SchemaTypes.ObjectId,
     ref: "Adopter",
     required: true,
   },
@@ -33,4 +33,5 @@ const messageSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Message", messageSchema);
+const Message = mongoose.model("Message", messageSchema);
+export default Message;

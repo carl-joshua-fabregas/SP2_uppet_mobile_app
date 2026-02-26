@@ -7,11 +7,18 @@ import {
   Button,
   Dimensions,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+
 const width = Dimensions.get("window").width;
 
-export default function PetCard(props) {
+export default function PetCardHome(props) {
+  const navigator = useNavigation()
   //   console.log(props);
   const { pet } = props;
+
+  const handleViewMore = () => {
+    navigator.navigate("viewPetProfile", {pet: pet})
+  }
   return (
     <View style={styles.cardContainer}>
       <View style={styles.TopDetailsContainer}>
@@ -37,7 +44,7 @@ export default function PetCard(props) {
       </View>
       <View>
         <View style={styles.buttonContainer}>
-          <Button title="VIEW MORE"></Button>
+          <Button title="VIEW MORE" onPress={handleViewMore}></Button>
         </View>
       </View>
     </View>

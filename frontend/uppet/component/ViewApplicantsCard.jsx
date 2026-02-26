@@ -5,26 +5,26 @@ import {
   StyleSheet,
   Image,
   Dimensions,
+  TouchableOpacity
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 const width = Dimensions.get("window").width;
 
 export default function ViewApplicantsCard(props) {
-  const router = useRoute();
   const navigator = useNavigation();
-  const { adoptionApp } = props;
-  console.log("VIEW APPLICATION CARD THE DATA IS", adoptionApp);
+  const { adoptionApp, handleAccept, handleReject } = props;
+  
+  const isApproved = adoptionApp.status === "Approved"
+  const isPending = adoptionApp.status === "Pending"
+  const isRejected = adoptionApp.status === "Rejected"
+
   const applicant = adoptionApp.applicant;
+  const acceptColor = isApproved? "green" : isPending? "blue" : "gray";
+  const declineColor = isRejected? "red" : "gray";
 
   const onViewApplicantPress = () => {
     console.log("View Applicant is pressed ", applicant);
     navigator.navigate("viewAdopterProfile", { id: applicant._id });
-  };
-  const onAcceptPress = () => {
-    console.log("Accepted is pressed");
-  };
-  const onRejectPress = () => {
-    console.log("Reject is pressed");
   };
   const onMessagePress = () => {
     console.log("Message is pressed");
@@ -45,10 +45,18 @@ export default function ViewApplicantsCard(props) {
           <Text>Address: {applicant.address}</Text>
         </View>
       </View>
-      <Button title="View Applicants" onPress={onViewApplicantPress}></Button>
-      <Button title="Message" onPress={onMessagePress}></Button>
-      <Button title="Accept" onPress={onAcceptPress}></Button>
-      <Button title="Decline" onPress={onRejectPress}></Button>
+      <TouchableOpacity onPress={onViewApplicantPress}>
+      <Text>View Applicants</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={onMessagePress}>
+        <Text>Message</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleAccept} disabled={!isPending} style={[{backgroundColor: acceptColor}]}>
+        <Text>{isApproved? "Approved" : "Accept"}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleReject} disabled={!isPending} style={[{backgroundColor: declineColor}]}>
+        <Text>{isRejected? "Rejected": "Decline"} </Text>
+      </TouchableOpacity>
     </View>
   );
 }

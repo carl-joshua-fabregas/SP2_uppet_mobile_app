@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const AdopterSchema = new mongoose.Schema({
   firstName: {
@@ -74,4 +74,5 @@ const AdopterSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Adopter", AdopterSchema);
+const Adopter = mongoose.model("Adopter", AdopterSchema);
+export default Adopter;

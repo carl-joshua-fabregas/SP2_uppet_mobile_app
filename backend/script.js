@@ -1,9 +1,9 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv/config";
+import connectToDatabase from "./config/database.js";
+
 const app = express();
-const connectToDatabase = require("./config/database");
-require("dotenv").config();
 
 const corsOption = {
   origin: "*",
@@ -11,12 +11,12 @@ const corsOption = {
   credentials: true,
 };
 
-const petRouter = require("./routes/PetRouter");
-const adopterRouter = require("./routes/UserRouter");
-const authMiddleWare = require("./middleware/authMiddleware");
-const authGoogle = require("./routes/authRouter");
-const adoptionAppRouter = require("./routes/adoptionAppRouter");
-const notificationRouter = require("./routes/notificationRouter");
+import petRouter from "./routes/PetRouter.js";
+import adopterRouter from "./routes/UserRouter.js";
+import authMiddleWare from "./middleware/authMiddleware.js";
+import authGoogle from "./routes/authRouter.js";
+import adoptionAppRouter from "./routes/adoptionAppRouter.js";
+import notificationRouter from "./routes/notificationRouter.js";
 
 app.use(cors(corsOption));
 app.use(express.json());

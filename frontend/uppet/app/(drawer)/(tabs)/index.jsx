@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
-import PetCard from "../../../component/PetCard";
+import PetCardHome from "../../../component/PetCardHome";
 const api = require("../../../api/axios");
 export default function Index() {
   const router = useNavigation();
@@ -19,53 +19,49 @@ export default function Index() {
   const [hasMore, setHasMore] = useState(true);
   const [refresh, setRefresh] = useState(false);
 
-  const getPets = async (pageNum = 1) => {
-    console.log(`HEY THIS IS THE PAGE FOR PETS ${page}`);
-    console.log(`has more is ${hasMore} and loading is ${loading}`);
-    if (loading || !hasMore) {
-      console.log("STOP THE CAR");
+  const getPets = async (pageNum = 1, isRefreshing = false) => {
+    if (loading || !hasMore && !isRefreshing) {
       return;
     }
     setLoading(true);
 
     try {
+      console.log("pageNum:", pageNum);
+
       const res = await api.get("/api/pet/avail", {
         params: { page: pageNum },
       });
       const newPets = res.data.body;
       setPets((prev) => [...prev, ...newPets]);
 
-      // console.log(`this is the query result for page ${page} ${newPets}`);
-      console.log(res.data.body);
       if (newPets.length < 10) {
-        console.log("IS THIS FIRING");
         setHasMore(false);
       }
     } catch (err) {
-      console.log(err);
+      console.error("Error fetching pets:", err);
     } finally {
       setLoading(false);
-      if (refresh) setRefresh(false);
     }
   };
 
   const onRefresh = () => {
-    setRefresh(true);
     setHasMore(true);
     setPets([]);
 
     setPage(1);
+    getPets(1, true);
   };
 
   const loadMore = () => {
     if (hasMore && !loading) {
       setPage((prev) => prev + 1);
+      getPets(page + 1);
     }
   };
 
   useEffect(() => {
     getPets(page);
-  }, [page, getPets]);
+  }, []);
 
   return (
     <View>
@@ -74,7 +70,7 @@ export default function Index() {
           data={pets}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => {
-            return <PetCard pet={item}></PetCard>;
+            return <PetCardHome pet={item}></PetCardHome>;
           }}
           ListEmptyComponent={<Text>No pets found</Text>}
           ListFooterComponent={

@@ -1,8 +1,17 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
+
+const getBaseURL = () => {
+  if (Constants.expoConfig?.hostUri) {
+    const debuggerHost = Constants.expoConfig?.hostUri.split(":").shift();
+    return `http://${debuggerHost}:5000`;
+  }
+  return "http://192.168.1.24:5000";
+};
 
 const api = axios.create({
-  baseURL: "http://192.168.1.24:5000",
+  baseURL: getBaseURL(),
 });
 
 api.interceptors.request.use(async (config) => {

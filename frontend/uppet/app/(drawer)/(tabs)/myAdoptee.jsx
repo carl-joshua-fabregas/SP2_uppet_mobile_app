@@ -18,8 +18,8 @@ export default function MyAdoptee() {
   const [refresh, setRefresh] = useState(false);
   console.log(`HEY THIS IS THE PAGE FOR MYPETS ${page}`);
 
-  const getPets = async (pageNum = 1) => {
-    if (loading || !hasMore) return;
+  const getPets = async (pageNum = 1, isRefreshing = false) => {
+    if (loading || (!hasMore && !isRefreshing)) return;
     setLoading(true);
     try {
       const res = await api.get("/api/pet/myPets", {
@@ -28,7 +28,7 @@ export default function MyAdoptee() {
         },
       });
       const myAdoptees = res.data.body;
-      setPets([...pets, ...myAdoptees]);
+      setPets((prev) => [...prev, ...myAdoptees]);
       console.log(pets);
       if (myAdoptees.length < 10) {
         setHasMore(false);
@@ -37,25 +37,24 @@ export default function MyAdoptee() {
       console.log(err);
     } finally {
       setLoading(false);
-      if (refresh) setRefresh(false);
     }
   };
   const onRefresh = () => {
-    setRefresh(true);
     setHasMore(true);
     setPets([]);
     setPage(1);
+    getPets(1, true);
   };
   const loadMore = () => {
     if (!loading && hasMore) {
-      setLoading(true);
       setPage((prev) => prev + 1);
+      getPets(page + 1);
     }
   };
 
   useEffect(() => {
     getPets(page);
-  }, [page, getPets]);
+  }, []);
   return (
     <View>
       <FlatList

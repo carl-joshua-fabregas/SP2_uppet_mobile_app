@@ -12,21 +12,32 @@ import { useNavigation } from "@react-navigation/native";
 const width = Dimensions.get("window").width;
 
 export default function PetCardHome(props) {
-  const navigator = useNavigation()
+  const navigator = useNavigation();
   //   console.log(props);
   const { pet } = props;
 
   const handleViewMore = () => {
-    navigator.navigate("viewPetProfile", {pet: pet})
-  }
+    navigator.navigate("viewPetProfile", { pet: pet });
+  };
+  const photo = pet.photos.find((photo) => photo.isProfile === 1);
+  console.log("photos:", pet.photos); // 👈 add this
+  console.log(
+    "profile photo:",
+    pet.photos.find((photo) => photo.isProfile),
+  ); // 👈 and this
   return (
     <View style={styles.cardContainer}>
       <View style={styles.TopDetailsContainer}>
         <View style={styles.profileImageContainer}>
           <Image
-            source={require("../assets/images/doggoe.jpg")}
+            source={
+              photo
+                ? { uri: photo.url }
+                : require("../assets/images/doggoe.jpg")
+            }
             style={styles.profileImageStyle}
             resizeMode="cover"
+            onError={(e) => console.log("Image error", e.nativeEvent.error)}
           ></Image>
         </View>
         <View style={styles.detailsContainer}>
@@ -37,8 +48,11 @@ export default function PetCardHome(props) {
       </View>
       <View style={styles.mainImage}>
         <Image
-          source={require("../assets/images/doggoe.jpg")}
+          source={
+            photo ? { uri: photo.url } : require("../assets/images/doggoe.jpg")
+          }
           style={styles.mainImageContent}
+          onError={(e) => console.log("Image error", e.nativeEvent.error)}
           resizeMode="cover"
         ></Image>
       </View>
@@ -103,6 +117,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   mainImageContent: {
+    width: "100%",
     aspectRatio: 16 / 9,
   },
 

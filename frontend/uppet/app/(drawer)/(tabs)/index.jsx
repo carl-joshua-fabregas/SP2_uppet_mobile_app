@@ -20,7 +20,7 @@ export default function Index() {
   const [refresh, setRefresh] = useState(false);
 
   const getPets = async (pageNum = 1, isRefreshing = false) => {
-    if (loading || !hasMore && !isRefreshing) {
+    if (loading || (!hasMore && !isRefreshing)) {
       return;
     }
     setLoading(true);

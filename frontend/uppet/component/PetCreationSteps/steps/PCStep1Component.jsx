@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useState } from "react";
 
-export default function PCStep1Component({ petData, setPetData }) {
+export default function PCStep1Component({ petData, setPetData, onNext }) {
   const [errors, setErrors] = useState({});
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
@@ -43,6 +43,7 @@ export default function PCStep1Component({ petData, setPetData }) {
       setErrors({});
       // Proceed to next step
       console.log("Pet Data is valid, proceeding to next step:", petData);
+      onNext();
     }
   };
 
@@ -125,10 +126,11 @@ const styles = StyleSheet.create({
   PCStep1ComponentContainer: {
     flex: 1,
     backgroundColor: "#FFF9F5",
+    padding: 8,
   },
   label: {
     fontSize: 12,
-    fontWeight: 300,
+    fontWeight: "300",
     marginBottom: 4,
     letterSpacing: 0.1,
   },

@@ -11,7 +11,7 @@ import { launchImageLibrary } from "react-native-image-picker";
 
 import { useState } from "react";
 
-export default function PCStep3Component({ petData, setPetData }) {
+export default function PCStep3Component({ petData, setPetData, onNext }) {
   const [errors, setErrors] = useState({});
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
@@ -26,6 +26,7 @@ export default function PCStep3Component({ petData, setPetData }) {
       setErrors(newErrors);
     } else {
       setErrors({});
+      onNext();
     }
   };
 
@@ -99,7 +100,7 @@ export default function PCStep3Component({ petData, setPetData }) {
   };
 
   return (
-    <View style={styles.PCStep1ComponentContainer}>
+    <View style={styles.container}>
       <TouchableOpacity onPress={handleAddPhoto} style={styles.nextButton}>
         <Text style={styles.nextButtonText}>Add Photos</Text>
       </TouchableOpacity>

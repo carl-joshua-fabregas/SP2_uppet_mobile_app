@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useState } from "react";
 
-export default function PCStep2Component({ petData, setPetData }) {
+export default function PCStep2Component({ petData, setPetData, onNext }) {
   const [errors, setErrors] = useState({});
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
@@ -40,7 +40,9 @@ export default function PCStep2Component({ petData, setPetData }) {
     } else {
       setErrors({});
       // Proceed to next step
+
       console.log("Pet Data is valid, proceeding to next step:", petData);
+      onNext();
     }
   };
 
@@ -80,6 +82,29 @@ export default function PCStep2Component({ petData, setPetData }) {
           <Text style={styles.errorText}>{errors.healthCond}</Text>
         )}
       </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Behavior</Text>
+        <TextInput
+          placeholder="Enter behavior information"
+          value={petData.behavior}
+          onChangeText={(text) => update("behavior", text)}
+          style={[styles.input, errors.behavior && styles.inputError]}
+        ></TextInput>
+        {errors.behavior && (
+          <Text style={styles.errorText}>{errors.behavior}</Text>
+        )}
+      </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Spayed/Neutered</Text>
+        <TextInput
+          placeholder="Enter spayed/neutered status"
+          value={petData.sn}
+          onChangeText={(text) => update("sn", text)}
+          style={[styles.input, errors.sn && styles.inputError]}
+        ></TextInput>
+        {errors.sn && <Text style={styles.errorText}>{errors.sn}</Text>}
+      </View>
+
       <View style={styles.field}>
         <Text style={styles.label}>Special Needs</Text>
         <TextInput

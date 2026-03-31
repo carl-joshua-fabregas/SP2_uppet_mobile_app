@@ -2,6 +2,9 @@ import { Text, View } from "react-native";
 import { launchImageLibrary } from "react-native-image-picker";
 import CreatePetCard from "../component/CreatePetCard";
 import PCStep1Component from "../component/PetCreationSteps/steps/PCStep1Component";
+import PCStep2Component from "../component/PetCreationSteps/steps/PCStep2Component";
+import PCStep3Component from "../component/PetCreationSteps/steps/PCStep3Component";
+
 const api = require("../api/axios");
 import { useState } from "react";
 export default function CreateProfile() {
@@ -13,6 +16,15 @@ export default function CreateProfile() {
     sex: "",
     species: "",
     breed: "",
+    size: "",
+    weight: "",
+    vaccination: "",
+    sn: "",
+    healthCond: "",
+    behavior: "",
+    specialNeeds: "",
+    otherInfo: "",
+    photos: [],
   });
 
   const handleImageRead = (petId, caption) => {
@@ -85,7 +97,9 @@ export default function CreateProfile() {
   return (
     <View style={{ flex: 1 }}>
       {/* <CreatePetCard handleImageRead={handleImageRead}></CreatePetCard> */}
-      <PCStep1Component petData={pets} setPetData={setPets} />
+      {/* <PCStep1Component petData={pets} setPetData={setPets} /> */}
+      {/* <PCStep2Component petData={pets} setPetData={setPets} /> */}
+      <PCStep3Component petData={pets} setPetData={setPets} />
     </View>
   );
 }

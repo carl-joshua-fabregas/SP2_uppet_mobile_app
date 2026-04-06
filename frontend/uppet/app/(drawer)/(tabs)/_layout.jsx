@@ -1,12 +1,28 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
+import * as THEMES from "../../../assets/themes/themes";
+import { Pressable } from "react-native";
+
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#efb07d",
+        tabBarActiveTintColor: THEMES.COLORS.primary,
         headerShown: false,
+        tabBarLabelStyle: {
+          fontSize: THEMES.TYPOGRAPHY.label.fontSize,
+          fontFamily: THEMES.TYPOGRAPHY.label.fontFamily,
+        },
+        tabBarButton: (props) => (
+          <Pressable
+            {...props}
+            style={({ pressed }) => [
+              props.style,
+              { opacity: pressed ? 0.5 : 1 },
+            ]}
+          />
+        ),
       }}
     >
       {/*#efb07d */}
@@ -69,3 +85,13 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+// tabBarButton: (props) => (
+//   <Pressable
+//     {...props}
+//     style={({ pressed }) => [
+//       props.style,
+//       { opacity: pressed ? 0.5 : 1 },
+//     ]}
+//   />
+// ),

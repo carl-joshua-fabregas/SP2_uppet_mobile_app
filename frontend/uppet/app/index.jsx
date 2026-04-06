@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   GoogleSignin,
   GoogleSigninButton,
@@ -27,6 +27,7 @@ const api = require("../api/axios");
 //   "6734110788-dsgk74dm16ddm73bsuce679vcqif92pe.apps.googleusercontent.com",
 
 export default function Login() {
+  
   const router = useNavigation();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -101,6 +102,9 @@ export default function Login() {
       );
     }
   };
+
+
+
   return (
     <View style={styles.fullScreenContainer}>
       <View style={styles.logoContainer}>

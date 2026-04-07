@@ -10,6 +10,8 @@ import {
 import { useState, useEffect } from "react";
 import { useNavigation } from "@react-navigation/native";
 import PetCardHome from "../../../component/PetCardHome";
+import PetModal from "../../../component/PetModal";
+import * as Themes from "../../../assets/themes/themes";
 const api = require("../../../api/axios");
 export default function Index() {
   const router = useNavigation();
@@ -18,6 +20,11 @@ export default function Index() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [refresh, setRefresh] = useState(false);
+  const [selectedPet, setSelectedPet] = useState(null);
+
+  const setSelectedPetLatest = selectedPet
+    ? pets.find((pet) => pet._id === selectedPet._id)
+    : null;
 
   const getPets = async (pageNum = 1, isRefreshing = false) => {
     if (loading || (!hasMore && !isRefreshing)) {
@@ -64,13 +71,21 @@ export default function Index() {
   }, []);
 
   return (
-    <View>
+    <View style={styles.container}>
       <View>
         <FlatList
           data={pets}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => {
-            return <PetCardHome pet={item}></PetCardHome>;
+            return (
+              <PetCardHome
+                pet={item}
+                onPress={() => {
+                  setSelectedPet(item);
+                  console.log("Selected pet:", item);
+                }}
+              ></PetCardHome>
+            );
           }}
           ListEmptyComponent={<Text>No pets found</Text>}
           ListFooterComponent={
@@ -96,6 +111,12 @@ export default function Index() {
           }}
         ></Button>
       </View>
+      {setSelectedPetLatest && (
+        <PetModal
+          pet={setSelectedPetLatest}
+          onClose={() => setSelectedPet(null)}
+        ></PetModal>
+      )}
     </View>
   );
 }
@@ -103,6 +124,9 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
+    backgroundColor: Themes.COLORS.background,
+    justifyContent: "center",
+    alignItems: "center",
   },
   image: {
     width: 80,

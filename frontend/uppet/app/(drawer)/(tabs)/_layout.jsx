@@ -19,7 +19,7 @@ export default function TabLayout() {
             {...props}
             style={({ pressed }) => [
               props.style,
-              { opacity: pressed ? 0.5 : 1 },
+              { opacity: pressed ? 0.8 : 1 },
             ]}
           />
         ),

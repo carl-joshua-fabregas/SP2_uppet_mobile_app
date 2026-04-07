@@ -54,7 +54,7 @@ export const TYPOGRAPHY = {
   // For Badges and Trait Pills
   badgeText: {
     fontFamily: "Fredoka-Medium",
-    fontSize: 12,
+    fontSize: 10,
     color: COLORS.badgeText,
   },
 

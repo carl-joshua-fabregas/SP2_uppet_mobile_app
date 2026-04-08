@@ -37,7 +37,7 @@ export default function PetCardHome({ pet, onPress }) {
             <Text style={styles.badgeText}>{pet.age} years old</Text>
           </View>
         </View>
-        <Text style={styles.petBio}>{pet.bio}</Text>
+        <Text style={[styles.petBio, { numberOfLines: 2 }]}>{pet.bio}</Text>
       </View>
     </TouchableOpacity>
   );

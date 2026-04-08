@@ -3,12 +3,12 @@ import {
   View,
   StyleSheet,
   ActivityIndicator,
-  Image,
   FlatList,
 } from "react-native";
-import ViewApplicantsCard from "../component/ViewApplicantsCard";
+import ViewApplicantsCard from "../component/ViewApplicantsListCard";
 import { useState, useEffect } from "react";
 import { useRoute } from "@react-navigation/native";
+import * as Themes from "../assets/themes/themes";
 const api = require("../api/axios");
 
 export default function ViewApplicantList(props) {
@@ -19,63 +19,63 @@ export default function ViewApplicantList(props) {
   const [hasMore, setHasMore] = useState(true);
   const [refresh, setRefresh] = useState(false);
 
-  const handleAccept = async (id) => { 
-    try{
-      console.log("before accept", applicants)
-      const res = await api.post(`api/adoptionApp/${id}/approve`)
-      const updatedApplicant = res.data.body
-      console.log("Updated Applicant is", updatedApplicant)
+  const handleAccept = async (id) => {
+    try {
+      console.log("before accept", applicants);
+      const res = await api.post(`api/adoptionApp/${id}/approve`);
+      const updatedApplicant = res.data.body;
+      console.log("Updated Applicant is", updatedApplicant);
       // setApplicants(updatedApplicant)
       setApplicants((currentList) => {
-      const updateMap = new Map(updatedApplicant.map(item => [item._id, item]));
+        const updateMap = new Map(
+          updatedApplicant.map((item) => [item._id, item]),
+        );
 
-      return currentList.map((item) => {
-        if (updateMap.has(item._id)) {
-          return { ...item, ...updateMap.get(item._id) };
-        }
-        return item;
+        return currentList.map((item) => {
+          if (updateMap.has(item._id)) {
+            return { ...item, ...updateMap.get(item._id) };
+          }
+          return item;
+        });
       });
-    });
-      console.log("after accept", applicants)
-
+      console.log("after accept", applicants);
     } catch (err) {
-      console.log(err)
+      console.log(err);
     }
-  }
+  };
 
   const handleReject = async (id) => {
-    try{
-      const res = await api.patch(`api/adoptionApp/${id}/reject`)
-      const updatedApplicant = res.data.body
+    try {
+      const res = await api.patch(`api/adoptionApp/${id}/reject`);
+      const updatedApplicant = res.data.body;
       // setApplicants(updatedApplicant)
       setApplicants((currentList) => {
-      const updateMap = new Map(updatedApplicant.map(item => [item._id, item]));
+        const updateMap = new Map(
+          updatedApplicant.map((item) => [item._id, item]),
+        );
 
-      return currentList.map((item) => {
-        if (updateMap.has(item._id)) {
-          return { ...item, ...updateMap.get(item._id) };
-        }
-        return item;
+        return currentList.map((item) => {
+          if (updateMap.has(item._id)) {
+            return { ...item, ...updateMap.get(item._id) };
+          }
+          return item;
+        });
       });
-    });
     } catch (err) {
-      console.log(err)
+      console.log(err);
     }
-    
-  }
+  };
   const getApplicants = async (pageNum = 1) => {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-
-
       const res = await api.get(
         `/api/adoptionApp/${router.params.petID}/applicants`,
         {
           params: {
             page: pageNum,
           },
-        }
+        },
       );
       const applicantsArr = res.data.body;
       setApplicants((prev) => [...prev, ...applicantsArr]);
@@ -107,12 +107,18 @@ export default function ViewApplicantList(props) {
     getApplicants(page);
   }, [page, hasMore, loading, refresh]);
   return (
-    <View>
+    <View style={styles.cardContainer}>
       <FlatList
         data={applicants}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => {
-          return <ViewApplicantsCard adoptionApp={item} handleAccept={ () => handleAccept(item._id) } handleReject={ () => handleReject(item._id) }></ViewApplicantsCard>;
+          return (
+            <ViewApplicantsCard
+              adoptionApp={item}
+              handleAccept={() => handleAccept(item._id)}
+              handleReject={() => handleReject(item._id)}
+            ></ViewApplicantsCard>
+          );
         }}
         ListEmptyComponent={<Text>No Applicants found</Text>}
         ListFooterComponent={
@@ -131,3 +137,9 @@ export default function ViewApplicantList(props) {
     </View>
   );
 }
+const styles = StyleSheet.create({
+  cardContainer: {
+    flex: 1,
+    backgroundColor: Themes.COLORS.background,
+  },
+});

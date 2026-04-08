@@ -1,7 +1,7 @@
 import AdoptionApplication from "../models/AdoptionApplication.js";
 import Pet from "../models/Pet.js";
 
-export async function createAdoptApp (req, res) {
+export async function createAdoptApp(req, res) {
   try {
     const { petToAdopt } = req.body;
 
@@ -22,9 +22,9 @@ export async function createAdoptApp (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findAllAdoptApp (req, res) {
+export async function findAllAdoptApp(req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -47,9 +47,9 @@ export async function findAllAdoptApp (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findAdoptAppByID (req, res) {
+export async function findAdoptAppByID(req, res) {
   try {
     const adoptApp = await AdoptionApplication.findById(req.params.id);
     if (!adoptApp) {
@@ -67,10 +67,10 @@ export async function findAdoptAppByID (req, res) {
       body: err.message,
     });
   }
-};
+}
 
 //can also be used to all the pets it depends on the frontend
-export async function findMyListAdoptApp (req, res) {
+export async function findMyListAdoptApp(req, res) {
   try {
     const adoptAppList = await AdoptionApplication.find({
       applicant: req.user.id,
@@ -90,9 +90,9 @@ export async function findMyListAdoptApp (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findMyListAdoptees (req, res) {
+export async function findMyListAdoptees(req, res) {
   try {
     const adoptAppList = await Pet.find({ ownerId: req.user.id }).select("_id");
     const adoptAppListID = adoptAppList.map((petID) => petID._id);
@@ -119,15 +119,15 @@ export async function findMyListAdoptees (req, res) {
       body: err.message,
     });
   }
-};
-export async function findPetApplicants (req, res) {
+}
+export async function findPetApplicants(req, res) {
   try {
     console.log("FINDING PET", req.params.id);
     const adoptAppList = await AdoptionApplication.find({
       petToAdopt: req.params.id,
     })
-      .populate("applicant", "firstName address")
-      .select("status");
+      .populate("applicant", "firstName MiddleName lastName address")
+      .select("status timeStamp");
     if (adoptAppList.length == 0) {
       return res.status(404).json({
         message: "Nothing Found",
@@ -143,30 +143,34 @@ export async function findPetApplicants (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findPetUserApplication (req, res) {
-  try{
-    console.log("FINDING PET USER ID APPLICATION")
-    const app = await AdoptionApplication.findOne({applicant: req.user.id, petToAdopt: req.params.id})
+export async function findPetUserApplication(req, res) {
+  try {
+    console.log("FINDING PET USER ID APPLICATION");
+    const app = await AdoptionApplication.findOne({
+      applicant: req.user.id,
+      petToAdopt: req.params.id,
+    });
     const pet = await Pet.findById(req.params.id);
-    console.log("FINDING PET USER ID APPLICATION END")
+    console.log("FINDING PET USER ID APPLICATION END");
 
-    const isOwner = pet.ownerId.toString() === req.user.id.toString() ? true : false;
-    const status = app? app.status: false
-    
+    const isOwner =
+      pet.ownerId.toString() === req.user.id.toString() ? true : false;
+    const status = app ? app.status : false;
+
     return res.status(200).json({
       status: status,
-      isOwner: isOwner
-    })
-   } catch (err) {
+      isOwner: isOwner,
+    });
+  } catch (err) {
     return res.status(500).json({
       message: "Server Error",
-      body: err.message
-    })
+      body: err.message,
+    });
   }
 }
-export async function updateAdoptionApp (req, res) {
+export async function updateAdoptionApp(req, res) {
   try {
     const options = {
       new: true,
@@ -209,7 +213,7 @@ export async function updateAdoptionApp (req, res) {
     const newAdoptionApp = await AdoptionApplication.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
-      options
+      options,
     );
 
     return res.status(200).json({
@@ -222,11 +226,14 @@ export async function updateAdoptionApp (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function cancelAdoptApp (req, res) {
+export async function cancelAdoptApp(req, res) {
   try {
-    const app = await AdoptionApplication.findOneAndDelete({applicant: req.user.id, petToAdopt: req.params.id});
+    const app = await AdoptionApplication.findOneAndDelete({
+      applicant: req.user.id,
+      petToAdopt: req.params.id,
+    });
     return res.status(200).json({
       message: "Cancelled Adoption App",
     });
@@ -236,9 +243,9 @@ export async function cancelAdoptApp (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteAllAdoptApp (req, res) {
+export async function deleteAllAdoptApp(req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -256,9 +263,9 @@ export async function deleteAllAdoptApp (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function approveAdoption (req, res) {
+export async function approveAdoption(req, res) {
   const options = {
     new: true,
     runValidators: true,
@@ -274,7 +281,7 @@ export async function approveAdoption (req, res) {
     }
 
     const acceptedApplication = await AdoptionApplication.findById(
-      req.params.id
+      req.params.id,
     );
     if (!acceptedApplication) {
       return res.status(404).json({
@@ -299,12 +306,12 @@ export async function approveAdoption (req, res) {
       const accept = await AdoptionApplication.findByIdAndUpdate(
         acceptedApplication.id,
         { status: "Approved" },
-        options
+        options,
       );
       const updatePet = await Pet.findById(
         pet.id,
         { adoptedStatus: "Accepted" },
-        options
+        options,
       );
 
       const reject = await AdoptionApplication.updateMany(
@@ -314,14 +321,16 @@ export async function approveAdoption (req, res) {
           status: { $ne: "Approved", $ne: "Rejected", $ne: "Cancelled" },
         },
         { status: "Rejected" },
-        options
+        options,
       );
 
-      const updatedList = await AdoptionApplication.find({petToAdopt: acceptedApplication.petToAdopt}).populate("applicant", " firstName address")
-      if(updatedList.length === 0 ) {
+      const updatedList = await AdoptionApplication.find({
+        petToAdopt: acceptedApplication.petToAdopt,
+      }).populate("applicant", " firstName address");
+      if (updatedList.length === 0) {
         return res.status(500).json({
-          message: "Error Retrieving Updated List"
-        })
+          message: "Error Retrieving Updated List",
+        });
       }
       return res.status(200).json({
         message: "Approved",
@@ -338,9 +347,9 @@ export async function approveAdoption (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function rejectApplicant (req, res) {
+export async function rejectApplicant(req, res) {
   const options = {
     new: true,
     runValidators: true,
@@ -376,14 +385,16 @@ export async function rejectApplicant (req, res) {
       {
         status: "Rejected",
       },
-      options
+      options,
     );
-    const updatedList = await AdoptionApplication.find({petToAdopt: rejectApplication.petToAdopt}).populate("applicant", " firstName address")
-      if(updatedList.length === 0 ) {
-        return res.status(500).json({
-          message: "Error Retrieving Updated List"
-        })
-      }
+    const updatedList = await AdoptionApplication.find({
+      petToAdopt: rejectApplication.petToAdopt,
+    }).populate("applicant", " firstName address");
+    if (updatedList.length === 0) {
+      return res.status(500).json({
+        message: "Error Retrieving Updated List",
+      });
+    }
 
     return res.status(200).json({
       message: "Application Rejected",
@@ -395,4 +406,4 @@ export async function rejectApplicant (req, res) {
       body: err.message,
     });
   }
-};
+}

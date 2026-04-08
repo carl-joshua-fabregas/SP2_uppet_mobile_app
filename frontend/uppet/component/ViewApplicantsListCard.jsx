@@ -72,7 +72,7 @@ export default function ViewApplicantsCard({
             📍{applicant.address}
           </Text>
           <Text style={styles.detailsText} numberOfLines={1}>
-            Date Applied:{" "}
+            📅
             {adoptionApp.timeStamp
               ? new Date(adoptionApp.timeStamp).toLocaleDateString()
               : "N/A"}
@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
     padding: Themes.SPACING.md,
     marginTop: Themes.SPACING.sm, // Vertical space between cards
     // Subtle shadow (Fredoka friendly)
+    marginBottom: Themes.SPACING.sm,
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },

@@ -4,6 +4,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   FlatList,
+  SectionList,
 } from "react-native";
 import ViewApplicantsCard from "../component/ViewApplicantsListCard";
 import { useState, useEffect } from "react";
@@ -103,13 +104,43 @@ export default function ViewApplicantList(props) {
     }
   };
 
+  const getStructuredData = (rawData) => {
+    const approved = rawData.filter((a) => a.status === "Approved");
+    const pending = rawData.filter((a) => a.status === "Pending");
+    const rejected = rawData.filter((a) => a.status === "Rejected");
+    const structuredData = [
+      {
+        title: `Approved Applications - ${approved.length}`,
+        data: approved,
+      },
+      {
+        title: `Pending Applications - ${pending.length}`,
+        data: pending,
+      },
+      {
+        title: `Rejected Applications - ${rejected.length}`,
+        data: rejected,
+      },
+    ];
+
+    return structuredData.filter((s) => s.data.length > 0);
+  };
+
+  const renderSectionHeader = ({ section: { title } }) => {
+    return (
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerText}>{title}</Text>
+      </View>
+    );
+  };
   useEffect(() => {
     getApplicants(page);
   }, [page, hasMore, loading, refresh]);
+
   return (
     <View style={styles.cardContainer}>
-      <FlatList
-        data={applicants}
+      <SectionList
+        sections={getStructuredData(applicants)}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => {
           return (
@@ -120,20 +151,14 @@ export default function ViewApplicantList(props) {
             ></ViewApplicantsCard>
           );
         }}
-        ListEmptyComponent={<Text>No Applicants found</Text>}
-        ListFooterComponent={
-          loading ? (
-            <ActivityIndicator size="large" />
-          ) : !hasMore ? (
-            <Text>No More Application</Text>
-          ) : null
+        renderSectionHeader={renderSectionHeader}
+        stickySectionHeadersEnabled={true}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          !loading && <Text style={styles.emptyText}>No Applicants found</Text>
         }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.1}
-        refreshing={refresh}
-        onRefresh={onRefresh}
-        removeClippedSubviews={false}
-      ></FlatList>
+      ></SectionList>
     </View>
   );
 }
@@ -142,4 +167,60 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Themes.COLORS.background,
   },
+  headerContainer: {
+    backgroundColor: Themes.COLORS.background,
+    paddingTop: Themes.SPACING.md,
+    paddingBottom: Themes.SPACING.sm,
+    paddingHorizontal: Themes.SPACING.md,
+    zIndex: 10,
+  },
+  headerText: {
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
+    fontSize: 13,
+    color: Themes.COLORS.primary,
+    letterSpacing: 1.5,
+    textTransform: "uppercase",
+    opacity: 0.8,
+  },
+  listContent: {
+    paddingHorizontal: Themes.SPACING.md,
+    paddingBottom: Themes.SPACING.md, // Space at the bottom
+  },
+
+  emptyText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: 16,
+    color: Themes.COLORS.textFaded || "#888",
+    textAlign: "center",
+    marginTop: 100, // Pushes it down so it's not hugging the top
+    paddingHorizontal: Themes.SPACING.lg,
+    lineHeight: 22,
+  },
 });
+
+//  {/* <FlatList
+//     data={applicants}
+//     keyExtractor={(item) => item._id}
+//     renderItem={({ item }) => {
+//       return (
+//         <ViewApplicantsCard
+//           adoptionApp={item}
+//           handleAccept={() => handleAccept(item._id)}
+//           handleReject={() => handleReject(item._id)}
+//         ></ViewApplicantsCard>
+//       );
+//     }}
+//     ListEmptyComponent={<Text>No Applicants found</Text>}
+//     ListFooterComponent={
+//       loading ? (
+//         <ActivityIndicator size="large" />
+//       ) : !hasMore ? (
+//         <Text>No More Application</Text>
+//       ) : null
+//     }
+//     onEndReached={loadMore}
+//     onEndReachedThreshold={0.1}
+//     refreshing={refresh}
+//     onRefresh={onRefresh}
+//     removeClippedSubviews={false}
+//   ></FlatList> */}

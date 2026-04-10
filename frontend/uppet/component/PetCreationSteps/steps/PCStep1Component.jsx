@@ -7,9 +7,15 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useState } from "react";
-
-export default function PCStep1Component({ petData, setPetData, onNext }) {
+import * as Themes from "../../../assets/themes/themes";
+export default function PCStep1Component({
+  petData,
+  setPetData,
+  onNext,
+  onBack,
+}) {
   const [errors, setErrors] = useState({});
+  const [bioHeight, setBioHeight] = useState(100);
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
 
@@ -46,13 +52,33 @@ export default function PCStep1Component({ petData, setPetData, onNext }) {
       onNext();
     }
   };
+  const SelectionChip = ({ label, value, field }) => (
+    <TouchableOpacity
+      style={[styles.chip, petData[field] === value && styles.chipActive]}
+      onPress={() => update(field, value)}
+    >
+      <Text
+        style={[
+          styles.chipText,
+          petData[field] === value && styles.chipTextActive,
+        ]}
+      >
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
-    <ScrollView style={styles.PCStep1ComponentContainer}>
+    <ScrollView
+      style={styles.PCStep1ComponentContainer}
+      contentContainerStyle={styles.scrollPadding}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.field}>
         <Text style={styles.label}>Name</Text>
         <TextInput
-          placeholder="Enter Name"
+          placeholderTextColor="#A9A9A9"
+          placeholder="Pet's Name"
           value={petData.name}
           onChangeText={(text) => update("name", text)}
           style={[styles.input, errors.name && styles.inputError]}
@@ -60,28 +86,9 @@ export default function PCStep1Component({ petData, setPetData, onNext }) {
         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
       </View>
       <View style={styles.field}>
-        <Text style={styles.label}>Age</Text>
-        <TextInput
-          placeholder="Enter Age"
-          value={petData.age}
-          onChangeText={(text) => update("age", text)}
-          style={[styles.input, errors.age && styles.inputError]}
-        ></TextInput>
-        {errors.age && <Text style={styles.errorText}>{errors.age}</Text>}
-      </View>
-      <View style={styles.field}>
-        <Text style={styles.label}>Sex</Text>
-        <TextInput
-          placeholder="Enter male or female"
-          value={petData.sex}
-          onChangeText={(text) => update("sex", text)}
-          style={[styles.input, errors.sex && styles.inputError]}
-        ></TextInput>
-        {errors.sex && <Text style={styles.errorText}>{errors.sex}</Text>}
-      </View>
-      <View style={styles.field}>
         <Text style={styles.label}>Species</Text>
         <TextInput
+          placeholderTextColor="#A9A9A9"
           placeholder="Enter Species"
           value={petData.species}
           onChangeText={(text) => update("species", text)}
@@ -94,6 +101,7 @@ export default function PCStep1Component({ petData, setPetData, onNext }) {
       <View style={styles.field}>
         <Text style={styles.label}>Breed</Text>
         <TextInput
+          placeholderTextColor="#A9A9A9"
           placeholder="Enter Breed"
           value={petData.breed}
           onChangeText={(text) => update("breed", text)}
@@ -102,22 +110,56 @@ export default function PCStep1Component({ petData, setPetData, onNext }) {
         {errors.breed && <Text style={styles.errorText}>{errors.breed}</Text>}
       </View>
       <View style={styles.field}>
+        <Text style={styles.label}>Age</Text>
+        <TextInput
+          placeholderTextColor="#A9A9A9"
+          placeholder="Enter Age"
+          value={petData.age}
+          onChangeText={(text) => update("age", text)}
+          keyboardType="numeric"
+          style={[styles.input, errors.age && styles.inputError]}
+        ></TextInput>
+        {errors.age && <Text style={styles.errorText}>{errors.age}</Text>}
+      </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Sex</Text>
+        <View style={styles.chipRow}>
+          <SelectionChip label="Male" value="male" field="sex"></SelectionChip>
+          <SelectionChip
+            label="Female"
+            value="female"
+            field="sex"
+          ></SelectionChip>
+        </View>
+        {errors.sex && <Text style={styles.errorText}>{errors.sex}</Text>}
+      </View>
+
+      <View style={styles.field}>
         <Text style={styles.label}>Bio</Text>
         <TextInput
+          placeholderTextColor="#A9A9A9"
+          scrollEnabled={false}
           placeholder="Enter Bio"
           value={petData.bio}
+          multiline={true}
           onChangeText={(text) => update("bio", text)}
+          onContentSizeChange={(e) =>
+            setBioHeight(e.nativeEvent.contentSize.height + 20)
+          }
           style={[
             styles.input,
-            styles.bioTextArea,
+            styles.textArea,
             errors.bio && styles.inputError,
+            { height: Math.max(100, bioHeight) },
           ]}
         ></TextInput>
         {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
       </View>
-      <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-        <Text style={styles.nextButtonText}>Next</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
+          <Text style={styles.nextButtonText}>Next</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -125,52 +167,92 @@ export default function PCStep1Component({ petData, setPetData, onNext }) {
 const styles = StyleSheet.create({
   PCStep1ComponentContainer: {
     flex: 1,
-    backgroundColor: "#FFF9F5",
+    backgroundColor: Themes.COLORS.background,
     padding: 8,
   },
+  scrollPadding: { padding: Themes.SPACING.lg, paddingBottom: 50 },
+  field: { marginBottom: Themes.SPACING.md },
+  row: { flexDirection: "row", alignItems: "flex-start" },
   label: {
-    fontSize: 12,
-    fontWeight: "300",
-    marginBottom: 4,
-    letterSpacing: 0.1,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: 14,
+    color: Themes.COLORS.primary,
+    marginBottom: 6,
+    marginLeft: 2,
   },
   input: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
-    borderRadius: 16,
-    fontSize: 14,
-    borderWidth: 1.5,
-    borderColor: "#FDF2E9",
+    backgroundColor: "#FFFFFF",
+    borderRadius: Themes.RADIUS.md,
+    padding: Themes.SPACING.md,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    borderWidth: 1,
+    borderColor: "#EAEAEA",
+    color: "#333",
   },
-  bioTextArea: {
-    minHeight: 80,
+  textArea: {
+    height: 100,
     textAlignVertical: "top",
-    multiline: true,
   },
+  inputError: { borderColor: "#FF6B6B" },
   errorText: {
-    color: "red",
-    marginBottom: 8,
-    fontSize: 11,
-    letterSpacing: 0.1,
-    marginTop: -8,
+    color: "#FF6B6B",
+    fontSize: 11, // 👈 Small but readable
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    marginTop: 2, // 👈 Tight gap from the input
+    lineHeight: 12, // 👈 Force the container to be thin
+    marginLeft: 4,
   },
-  inputError: {
-    borderColor: "red",
+
+  // Selection Chips
+  chipRow: { flexDirection: "row", height: 50 },
+  chip: {
+    flex: 1,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
   },
-  field: {
-    marginBottom: 10,
+  chipActive: {
+    backgroundColor: "#E8F5E9",
+    borderWidth: 1.5,
+    borderColor: Themes.COLORS.primary,
+  },
+  chipText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    color: "#999",
+    fontSize: 14,
+  },
+  chipTextActive: {
+    color: Themes.COLORS.primary,
+    fontWeight: "bold",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between", // 👈 Spaces them out
+    marginTop: 30,
+    paddingBottom: 20, // 👈 Ensures it's not hugging the bottom of the screen
+  },
+  backButton: {
+    paddingVertical: Themes.SPACING.md,
+    paddingHorizontal: 25,
+    borderRadius: Themes.RADIUS.md,
+    backgroundColor: "#F5F5F5", // 👈 Give it a light background to look like a button
+    marginRight: 10,
   },
   nextButton: {
-    backgroundColor: "#efb07d",
-    paddingVertical: 12,
-    borderRadius: 16,
+    flex: 1, // 👈 Takes up the remaining width
+    backgroundColor: Themes.COLORS.primary,
+    paddingVertical: Themes.SPACING.md,
+    borderRadius: Themes.RADIUS.md,
+    alignItems: "center",
+    elevation: 4,
   },
   nextButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
+    color: "#FFF",
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
   },
 });

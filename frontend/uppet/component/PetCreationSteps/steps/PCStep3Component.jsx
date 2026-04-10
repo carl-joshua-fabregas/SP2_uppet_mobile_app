@@ -11,7 +11,7 @@ import { launchImageLibrary } from "react-native-image-picker";
 
 import { useState } from "react";
 
-export default function PCStep3Component({ petData, setPetData, onNext }) {
+export default function PCStep3Component({ petData, setPetData, onNext, onBack }) {
   const [errors, setErrors] = useState({});
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));

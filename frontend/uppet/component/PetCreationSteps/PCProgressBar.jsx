@@ -1,31 +1,30 @@
 import { View, StyleSheet } from "react-native";
+import * as Themes from "../../assets/themes/themes";
 
 export default function PCProgressBar({ currentStep, totalSteps }) {
   const progressPercentage = (currentStep / totalSteps) * 100;
-
+  console.log(currentStep, totalSteps);
   return (
     <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { flex: progressPercentage }]} />
-      <View style={{ flex: 1 - progressPercentage }} />
+      <View
+        style={[styles.progressFill, { width: `${progressPercentage}%` }]}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pcrprogressBarContainer: {
-    flex: 1,
-    backgroundColor: "#FFF9F5",
-  },
   progressTrack: {
-    backgroundColor: "#FDF2E9",
-    borderRadius: 9999,
-    marginBottom: 20,
     height: 10,
-    flexDirection: "row",
+    width: "90%", // Leave some room on the sides
+    backgroundColor: "#E0E0E0",
+    borderRadius: 10,
+    alignSelf: "center", // Center the bar
+    marginTop: 20, // Don't hug the top of the screen
     overflow: "hidden",
   },
   progressFill: {
-    backgroundColor: "#efb07d",
-    borderRadius: 9999,
+    height: "100%",
+    backgroundColor: Themes.COLORS.primary,
   },
 });

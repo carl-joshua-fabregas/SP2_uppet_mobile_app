@@ -15,7 +15,6 @@ export default function PCStep1Component({
   onBack,
 }) {
   const [errors, setErrors] = useState({});
-  const [bioHeight, setBioHeight] = useState(100);
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
 
@@ -143,14 +142,10 @@ export default function PCStep1Component({
           value={petData.bio}
           multiline={true}
           onChangeText={(text) => update("bio", text)}
-          onContentSizeChange={(e) =>
-            setBioHeight(e.nativeEvent.contentSize.height + 20)
-          }
           style={[
             styles.input,
             styles.textArea,
             errors.bio && styles.inputError,
-            { height: Math.max(100, bioHeight) },
           ]}
         ></TextInput>
         {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}

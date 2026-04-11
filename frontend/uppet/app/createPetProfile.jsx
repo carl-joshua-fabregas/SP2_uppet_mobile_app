@@ -5,7 +5,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { launchImageLibrary } from "react-native-image-picker";
 // import PCProgressBar from "../component/PetCreationSteps/PCProgressBar";
 import PCProgressTracker from "../component/PetCreationSteps/PCProgressTracker";
 import PCStep1Component from "../component/PetCreationSteps/steps/PCStep1Component";
@@ -18,8 +17,11 @@ import * as Themes from "../assets/themes/themes";
 const api = require("../api/axios");
 
 import { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import axios from "axios";
 export default function CreateProfile() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [finish, setFinish] = useState(false);
   const [pets, setPets] = useState({
     name: "",
     age: "",
@@ -38,11 +40,11 @@ export default function CreateProfile() {
     photos: [],
   });
   const STEPS = [
-    { label: "Basic Info", component: PCStep1Component },
-    { label: "Health & Behavior", component: PCStep2Component },
-    { label: "Photos", component: PCStep3Component },
-    { label: "Review", component: PCStep4Component },
-    { label: "Done", component: PCStep5Component },
+    { label: "Basic Info" },
+    { label: "Health & Behavior" },
+    { label: "Gallery Photos" },
+    { label: "Review" },
+    { label: "PET PROFILE CARD CREATED" },
   ];
 
   const handleNext = () => {
@@ -50,11 +52,62 @@ export default function CreateProfile() {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep((prev) => prev + 1);
     }
+    console.log(`update ${currentStep} `, pets);
   };
   const handleBack = () => {
     console.log("HANDLE Back CALLED. CURRENT STEP:", currentStep);
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
+    }
+  };
+
+  const createPet = async () => {
+    console.log("IM DONE");
+    try {
+      const petCreationRes = await api.post(`api/pet/post`, {
+        ...pets,
+        photos: [],
+      });
+      const petCreated = petCreationRes.data;
+      const petID = petCreated.body._id;
+      console.log("PET CREATED PETID", petCreated, petID);
+
+      const uploadedPhotos = await Promise.all(
+        pets.photos.map(async (photo) => {
+          console.log(photo);
+          const preSignRes = await api.post(`api/pet/presignUploadURL`, {
+            fileName: photo.name,
+            petId: petID,
+            fileType: photo.type,
+          });
+
+          const { url, key } = preSignRes.data.body;
+          const fetchImage = await fetch(photo.url);
+          const blob = await fetchImage.blob();
+
+          await fetch(url, {
+            method: "PUT",
+            body: blob,
+            contentType: photo.type,
+          });
+
+          return {
+            key: key,
+            caption: photo.caption,
+            isProfile: photo.isProfile,
+            timeStamp: Date.now(),
+          };
+        }),
+      );
+      console.log("DONE NA SANA");
+      console.log(uploadedPhotos);
+      await api.patch(`api/pet/${petID}/photo`, {
+        photos: uploadedPhotos,
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      console.log("OKAY NA NA UPLOAD NA TEH");
     }
   };
 
@@ -88,9 +141,19 @@ export default function CreateProfile() {
           />
         );
       case 3:
-        return <PCStep4Component></PCStep4Component>;
+        return (
+          <PCStep4Component
+            petData={pets}
+            onNext={handleNext}
+            onBack={handleBack}
+            onCreate={createPet}
+            onFinish={() => {
+              setFinish(true);
+            }}
+          ></PCStep4Component>
+        );
       case 4:
-        return <PCStep5Component></PCStep5Component>;
+        return <PCStep5Component petData={pets}></PCStep5Component>;
       default:
         return null;
     }

@@ -1,20 +1,20 @@
 import Pet from "../models/Pet.js";
 import AdoptionApplication from "../models/AdoptionApplication.js";
-import {S3Client, PutObjectCommand} from "@aws-sdk/client-s3";
-import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 console.log("AWS REGION:", process.env.AWS_REGION);
 console.log("AWS ACCESS KEY ID:", process.env.AWS_ACCESS_KEY_ID);
 console.log("AWS SECRET ACCESS KEY:", process.env.AWS_SECRET_ACCESS_KEY);
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
-  credentials: { 
+  credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
 
-export async function createPet (req, res) {
+export async function createPet(req, res) {
   try {
     const {
       name,
@@ -67,9 +67,9 @@ export async function createPet (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findAll (req, res) {
+export async function findAll(req, res) {
   try {
     const allPets = await Pet.find({})
       .skip((req.query.page - 1) * 10)
@@ -91,9 +91,9 @@ export async function findAll (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findByID (req, res) {
+export async function findByID(req, res) {
   try {
     const petID = req.params.id;
     const pet = await Pet.findById(petID);
@@ -113,9 +113,9 @@ export async function findByID (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findByFilter (req, res) {
+export async function findByFilter(req, res) {
   console.log("FIND BY FILTER CALLED");
   try {
     const { age, breed, species, sex, size, weight, adoptionStatus } =
@@ -149,9 +149,9 @@ export async function findByFilter (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findAllAvailPets (req, res) {
+export async function findAllAvailPets(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
     const avail = await Pet.find({ adoptedStatus: 1 })
@@ -174,9 +174,9 @@ export async function findAllAvailPets (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findMyPets (req, res) {
+export async function findMyPets(req, res) {
   try {
     const myPets = await Pet.find({ ownerId: req.user.id })
       .skip((req.query.page - 1) * 10)
@@ -198,9 +198,9 @@ export async function findMyPets (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteByID (req, res) {
+export async function deleteByID(req, res) {
   try {
     const pet = await Pet.findById(req.params.id);
 
@@ -231,9 +231,9 @@ export async function deleteByID (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteAll (req, res) {
+export async function deleteAll(req, res) {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({
@@ -252,9 +252,9 @@ export async function deleteAll (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function updatePet (req, res) {
+export async function updatePet(req, res) {
   try {
     const options = {
       new: true,
@@ -281,7 +281,7 @@ export async function updatePet (req, res) {
     const updatedPet = await Pet.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
-      options
+      options,
     );
 
     return res.status(200).json({
@@ -294,30 +294,35 @@ export async function updatePet (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function presignUploadURL (req, res) {
+export async function presignUploadURL(req, res) {
   try {
     const key = `pets/${req.body.petId}/${Date.now()}_${req.body.fileName}`;
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
-      ContentType: req.body.fileType
+      ContentType: req.body.fileType,
       // Metadata:{
       //   uri: req.body.uri || "",
       //   name: req.body.name || ""
       // }
     });
-    console.log(process.env.AWS_BUCKET_NAME, process.env.AWS_REGION, process.env.AWS_ACCESS_KEY_ID, process.env.AWS_SECRET_ACCESS_KEY );
+    console.log(
+      process.env.AWS_BUCKET_NAME,
+      process.env.AWS_REGION,
+      process.env.AWS_ACCESS_KEY_ID,
+      process.env.AWS_SECRET_ACCESS_KEY,
+    );
     console.log("GENERATING PRESIGNED URL FOR KEY:", key);
     console.log("WITH COMMAND:", command);
-    
+
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
     console.log("PRESIGNED URL GENERATED:", url);
 
     return res.status(200).json({
       message: "Successfully obtained presigned URL",
-      body: {url: url, key: key},
+      body: { url: url, key: key },
     });
   } catch (err) {
     console.log("ERROR IN GENERATING PRESIGNED URL:", err);
@@ -328,7 +333,7 @@ export async function presignUploadURL (req, res) {
   }
 }
 
-export async function uploadPetPhoto (req, res) {
+export async function uploadPetPhoto(req, res) {
   console.log("UPLOAD PET PHOTO CONTROLLER CALLED");
   try {
     console.log("PET ID IN UPLOAD PET PHOTO CONTROLLER", req.params.id);
@@ -348,23 +353,25 @@ export async function uploadPetPhoto (req, res) {
         message: "Forbidden",
       });
     }
-    const url = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${req.body.key}`;
 
-    const photo = {
-      url: url,
-      key: req.body.key,
-      caption: req.body.caption,
-      isProfile: req.body.isProfile,
-      timeStamp: Date.now(),
-    };
+    const uploadedPhotos = req.body.photos.map((p) => ({
+      url: `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${p.key}`,
+      key: p.key,
+      caption: p.caption,
+      isProfile: p.isProfile,
+      timeStamp: p.timeStamp,
+    }));
 
-    pet.photos.push(photo);
-
-    const newPhoto = await pet.save();
+    console.log("BACKED END HERE UPLOADED PHOTOS ARE", uploadedPhotos);
+    const updatedPet = await Pet.findByIdAndUpdate(
+      req.params.id,
+      { $push: { photos: { $each: uploadedPhotos } } },
+      { new: true }, // Returns the pet with the new photos included
+    );
 
     return res.status(200).json({
       message: "Succesfully uploaded photo",
-      body: newPhoto,
+      body: updatedPet,
     });
   } catch (err) {
     console.log("ERROR IN UPLOADING PET PHOTO:", err);
@@ -373,9 +380,9 @@ export async function uploadPetPhoto (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deletePetPhoto (req, res) {
+export async function deletePetPhoto(req, res) {
   try {
     const options = {
       new: true,
@@ -406,7 +413,7 @@ export async function deletePetPhoto (req, res) {
           },
         },
       },
-      options
+      options,
     );
 
     return res.status(200).json({
@@ -419,9 +426,9 @@ export async function deletePetPhoto (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function updatePhotoCaption (req, res) {
+export async function updatePhotoCaption(req, res) {
   try {
     const pet = await Pet.findById(req.params.id);
     const options = {
@@ -448,7 +455,7 @@ export async function updatePhotoCaption (req, res) {
           "photos.$.caption": req.body.caption,
         },
       },
-      options
+      options,
     );
 
     if (!updatedPet) {
@@ -466,4 +473,4 @@ export async function updatePhotoCaption (req, res) {
       body: err.message,
     });
   }
-};
+}

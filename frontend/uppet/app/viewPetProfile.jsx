@@ -94,6 +94,7 @@ export default function ViewPetProfile() {
         onMessagePress={handleMessage}
         buttonProps={buttonProps}
         isOwner={isOwner}
+        isEditing={false}
       ></PetProfileCardViewMore>
     </View>
   );

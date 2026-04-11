@@ -1,6 +1,19 @@
 import express from "express";
 const router = express.Router();
-import {createPet, presignUploadURL, uploadPetPhoto, findAll, findAllAvailPets, findMyPets, findByFilter, findByID, updatePet,deleteAll, deleteByID, deletePetPhoto} from "../controller/PetController.js";
+import {
+  createPet,
+  presignUploadURL,
+  uploadPetPhoto,
+  findAll,
+  findAllAvailPets,
+  findMyPets,
+  findByFilter,
+  findByID,
+  updatePet,
+  deleteAll,
+  deleteByID,
+  deletePetPhoto,
+} from "../controller/PetController.js";
 
 // POST Requests
 router.post("/post", createPet);

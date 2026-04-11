@@ -15,6 +15,7 @@ export default function PetProfileCardViewMore({
   onMessagePress,
   buttonProps,
   isOwner,
+  editingFooter,
 }) {
   const profilePhoto = pet.photos.find((photo) => photo.isProfile === 1);
   const form = {
@@ -106,25 +107,33 @@ export default function PetProfileCardViewMore({
               <Text style={styles.petBio}>{form.otherInfo}</Text>
             </>
           )}
-          <View style={styles.buttonSection}>
-            <TouchableOpacity
-              style={[
-                styles.primaryButtonContainer,
-                { backgroundColor: buttonProps.color || Themes.COLORS.primary },
-              ]}
-              onPress={buttonProps.onPress}
-            >
-              <Text style={styles.primaryButtonText}>{buttonProps.title}</Text>
-            </TouchableOpacity>
-            {!isOwner && (
+          {editingFooter ? (
+            editingFooter
+          ) : (
+            <View style={styles.buttonSection}>
               <TouchableOpacity
-                style={[styles.secondaryButtonContainer]}
-                onPress={onMessagePress}
+                style={[
+                  styles.primaryButtonContainer,
+                  {
+                    backgroundColor: buttonProps.color || Themes.COLORS.primary,
+                  },
+                ]}
+                onPress={buttonProps.onPress}
               >
-                <Text style={styles.secondaryButtonText}>Message Owner</Text>
+                <Text style={styles.primaryButtonText}>
+                  {buttonProps.title}
+                </Text>
               </TouchableOpacity>
-            )}
-          </View>
+              {!isOwner && (
+                <TouchableOpacity
+                  style={[styles.secondaryButtonContainer]}
+                  onPress={onMessagePress}
+                >
+                  <Text style={styles.secondaryButtonText}>Message Owner</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>

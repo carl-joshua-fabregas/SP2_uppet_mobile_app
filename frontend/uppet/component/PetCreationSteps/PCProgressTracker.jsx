@@ -1,5 +1,6 @@
 import { View, StyleSheet, Text } from "react-native";
 import * as Themes from "../../assets/themes/themes";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function PCProgressTracker({ currentStep, STEPS }) {
   return (
@@ -18,7 +19,11 @@ export default function PCProgressTracker({ currentStep, STEPS }) {
               ]}
             >
               {isCompleted ? (
-                <Text>"CHECK"</Text>
+                <Ionicons
+                  name={"checkmark-sharp"}
+                  color={Themes.COLORS.badge}
+                  size={20}
+                ></Ionicons>
               ) : (
                 <Text
                   style={[styles.stepNum, isActive && styles.stepNumActive]}

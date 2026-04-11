@@ -16,10 +16,6 @@ export default function PCStep2Component({
   onBack,
 }) {
   const [errors, setErrors] = useState({});
-  const [healthCondHeight, setHealthCondHeight] = useState(60);
-  const [specialNeedsHeight, setSpecialNeedsHeight] = useState(60);
-  const [behaviorHeight, setBehaviorHeight] = useState(60);
-  const [otherInfoHeight, setOtherInfoHeight] = useState(60);
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
 
@@ -41,6 +37,9 @@ export default function PCStep2Component({
     }
     if (!petData.sn) {
       newErrors.sn = "Please specify if your pet is spayed/neutered";
+    }
+    if (!petData.specialNeeds) {
+      newErrors.specialNeeds = "Please Put NA";
     }
     if (!petData.healthCond) {
       newErrors.healthCond = "Health condition is required";
@@ -151,14 +150,7 @@ export default function PCStep2Component({
           value={petData.healthCond}
           onChangeText={(text) => update("healthCond", text)}
           multiline={true}
-          onContentSizeChange={(e) =>
-            setHealthCondHeight(e.nativeEvent.contentSize.height + 20)
-          }
-          style={[
-            styles.input,
-            errors.healthCond && styles.inputError,
-            { height: Math.max(60, healthCondHeight) },
-          ]}
+          style={[styles.input, errors.healthCond && styles.inputError]}
         ></TextInput>
         {errors.healthCond && (
           <Text style={styles.errorText}>{errors.healthCond}</Text>
@@ -172,14 +164,7 @@ export default function PCStep2Component({
           value={petData.behavior}
           onChangeText={(text) => update("behavior", text)}
           multiline={true}
-          onContentSizeChange={(e) =>
-            setBehaviorHeight(e.nativeEvent.contentSize.height + 20)
-          }
-          style={[
-            styles.input,
-            errors.behavior && styles.inputError,
-            { height: Math.max(60, behaviorHeight) },
-          ]}
+          style={[styles.input, errors.behavior && styles.inputError]}
         ></TextInput>
         {errors.behavior && (
           <Text style={styles.errorText}>{errors.behavior}</Text>
@@ -193,15 +178,8 @@ export default function PCStep2Component({
           placeholderTextColor="#A9A9A9"
           value={petData.specialNeeds}
           multiline={true}
-          onContentSizeChange={(e) =>
-            setSpecialNeedsHeight(e.nativeEvent.contentSize.height + 20)
-          }
           onChangeText={(text) => update("specialNeeds", text)}
-          style={[
-            styles.input,
-            errors.specialNeeds && styles.inputError,
-            { height: Math.max(60, specialNeedsHeight) },
-          ]}
+          style={[styles.input, errors.specialNeeds && styles.inputError]}
         ></TextInput>
         {errors.specialNeeds && (
           <Text style={styles.errorText}>{errors.specialNeeds}</Text>
@@ -214,15 +192,8 @@ export default function PCStep2Component({
           placeholderTextColor="#A9A9A9"
           value={petData.otherInfo}
           multiline={true}
-          onContentSizeChange={(e) =>
-            setOtherInfoHeight(e.nativeEvent.contentSize.height + 20)
-          }
           onChangeText={(text) => update("otherInfo", text)}
-          style={[
-            styles.input,
-            errors.otherInfo && styles.inputError,
-            { height: Math.max(60, otherInfoHeight) },
-          ]}
+          style={[styles.input, errors.otherInfo && styles.inputError]}
         ></TextInput>
         {errors.otherInfo && (
           <Text style={styles.errorText}>{errors.otherInfo}</Text>

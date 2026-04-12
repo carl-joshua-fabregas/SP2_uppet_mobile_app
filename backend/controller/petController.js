@@ -154,7 +154,7 @@ export async function findByFilter(req, res) {
 export async function findAllAvailPets(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
-    const avail = await Pet.find({ adoptedStatus: 1 })
+    const avail = await Pet.find({ adoptedStatus: 0 })
       .skip((page - 1) * 10)
       .limit(10);
 

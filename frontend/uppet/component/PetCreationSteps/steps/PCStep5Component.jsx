@@ -6,9 +6,7 @@ export default function PCStep5Component({ petData, finish }) {
   const navigation = useNavigation();
 
   const onFinish = () => {
-    if (finish) {
-      navigation.navigate("myAdoptees");
-    }
+    navigation.navigate("myAdoptees");
   };
   return (
     <View style={styles.container}>

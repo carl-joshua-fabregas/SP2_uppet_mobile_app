@@ -21,7 +21,7 @@ import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 export default function CreateProfile() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [finish, setFinish] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [pets, setPets] = useState({
     name: "",
     age: "",
@@ -64,6 +64,7 @@ export default function CreateProfile() {
   const createPet = async () => {
     console.log("IM DONE");
     try {
+      setUploading(false);
       const petCreationRes = await api.post(`api/pet/post`, {
         ...pets,
         photos: [],
@@ -104,6 +105,8 @@ export default function CreateProfile() {
       await api.patch(`api/pet/${petID}/photo`, {
         photos: uploadedPhotos,
       });
+      setUploading(true);
+      return true;
     } catch (err) {
       console.error(err);
     } finally {
@@ -147,9 +150,7 @@ export default function CreateProfile() {
             onNext={handleNext}
             onBack={handleBack}
             onCreate={createPet}
-            onFinish={() => {
-              setFinish(true);
-            }}
+            uploading={uploading}
           ></PCStep4Component>
         );
       case 4:

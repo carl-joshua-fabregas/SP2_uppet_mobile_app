@@ -62,7 +62,7 @@ const petSchema = new mongoose.Schema({
   adoptedStatus: {
     type: Number,
     required: true,
-    default: 1,
+    default: 0,
   },
   otherInfo: {
     type: String,
@@ -73,7 +73,8 @@ const petSchema = new mongoose.Schema({
       {
         key: {
           type: String,
-          required: true},
+          required: true,
+        },
         url: {
           type: String,
           required: true,

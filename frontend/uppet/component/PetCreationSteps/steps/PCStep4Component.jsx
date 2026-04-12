@@ -1,4 +1,11 @@
-import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  ActivityIndicator,
+  Modal,
+} from "react-native";
 import PetProfileCardViewMore from "../../PetProfileCard";
 import * as Themes from "../../../assets/themes/themes";
 
@@ -7,14 +14,33 @@ export default function PCStep4Component({
   onNext,
   onBack,
   onCreate,
-  onFinish,
+  uploading,
 }) {
   const handleNext = async () => {
-    await onCreate();
-    onNext();
+    try {
+      const success = await onCreate();
+      if (success) {
+        onNext();
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
   return (
     <View style={{ flex: 1 }}>
+      <Modal transparent={true} visible={uploading} animationType="fade">
+        <View style={styles.modalBackground}>
+          <View style={styles.activityIndicatorWrapper}>
+            <ActivityIndicator
+              size="large"
+              color={Themes.COLORS.primary}
+              style={{ marginBottom: 15 }}
+            />
+            <Text style={styles.loadingText}>Creating Pet Profile...</Text>
+            <Text style={styles.subLoadingText}>Uploading photos to cloud</Text>
+          </View>
+        </View>
+      </Modal>
       <PetProfileCardViewMore
         pet={petData}
         isOwner={true}
@@ -66,5 +92,35 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+  },
+  modalBackground: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // 👈 Dims the screen
+  },
+  activityIndicatorWrapper: {
+    backgroundColor: "#FFFFFF",
+    padding: 30,
+    borderRadius: 15,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5, // Shadow for Android
+    shadowColor: "#000", // Shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  loadingText: {
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: 18,
+    color: Themes.COLORS.primary,
+  },
+  subLoadingText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: 12,
+    color: Themes.COLORS.textMuted,
+    marginTop: 5,
   },
 });

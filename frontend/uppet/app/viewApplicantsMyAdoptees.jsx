@@ -152,7 +152,6 @@ export default function ViewApplicantList(props) {
           );
         }}
         renderSectionHeader={renderSectionHeader}
-        stickySectionHeadersEnabled={true}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={

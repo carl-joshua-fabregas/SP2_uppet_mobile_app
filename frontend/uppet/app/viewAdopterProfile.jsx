@@ -26,7 +26,7 @@ export default function ViewAdopterProfile() {
   }, []);
 
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <ProfileCard adopter={user}></ProfileCard>
     </View>
   );

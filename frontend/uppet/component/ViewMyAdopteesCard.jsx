@@ -52,11 +52,14 @@ export default function ViewAdopteesCard({ pet }) {
         <View style={styles.footerRow}>
           <View style={styles.statsContainer}>
             <MaterialCommunityIcons
-              name="eye-outline"
+              name="newspaper-variant-outline"
               size={14}
-              color={Themes.COLORS.textFaded}
+              color={Themes.COLORS.primary}
             />
-            <Text style={styles.statsText}> 24 Views</Text>
+            <Text style={styles.statsText}>
+              {" "}
+              Pending Applications: {pet.pendingCount} / {pet.applicationCount}
+            </Text>
           </View>
 
           <MaterialCommunityIcons
@@ -96,7 +99,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: Themes.SPACING.md,
     justifyContent: "space-between",
     paddingVertical: 2,
   },
@@ -107,25 +110,25 @@ const styles = StyleSheet.create({
   },
   petName: {
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
-    fontSize: 18,
-    color: Themes.COLORS.text,
+    fontSize: Themes.TYPOGRAPHY.subheading.fontSize,
+    color: Themes.TYPOGRAPHY.heading.color,
     flex: 1,
-    marginRight: 10,
+    marginRight: Themes.SPACING.sm,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    paddingHorizontal: Themes.SPACING.sm,
+    paddingVertical: Themes.SPACING.xs,
+    borderRadius: Themes.SPACING.sm,
   },
   statusText: {
-    fontSize: 10,
+    fontSize: Themes.TYPOGRAPHY.badgeText.fontSize,
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   petBreed: {
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    fontSize: 13,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
     color: Themes.COLORS.textFaded,
     marginTop: -2,
   },
@@ -133,15 +136,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 8,
+    marginTop: Themes.SPACING.sm,
   },
   statsContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
   statsText: {
-    fontSize: 12,
-    color: Themes.COLORS.textFaded,
+    fontSize: Themes.TYPOGRAPHY.label.fontSize,
+    color: Themes.TYPOGRAPHY.label.color,
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
   },
 });

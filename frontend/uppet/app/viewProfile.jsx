@@ -22,8 +22,8 @@ export default function AdopterProfile() {
   }, []);
 
   return (
-    <View>
-      <ProfileCard adopter={user}></ProfileCard>
+    <View style={{ flex: 1 }}>
+      <ProfileCard adopter={user} isOwner={true}></ProfileCard>
     </View>
   );
 }

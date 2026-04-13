@@ -17,8 +17,6 @@ import * as Themes from "../assets/themes/themes";
 const api = require("../api/axios");
 
 import { useState } from "react";
-import { useNavigation } from "@react-navigation/native";
-import axios from "axios";
 export default function CreateProfile() {
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -64,7 +62,7 @@ export default function CreateProfile() {
   const createPet = async () => {
     console.log("IM DONE");
     try {
-      setUploading(false);
+      setUploading(true);
       const petCreationRes = await api.post(`api/pet/post`, {
         ...pets,
         photos: [],
@@ -105,7 +103,7 @@ export default function CreateProfile() {
       await api.patch(`api/pet/${petID}/photo`, {
         photos: uploadedPhotos,
       });
-      setUploading(true);
+      setUploading(false);
       return true;
     } catch (err) {
       console.error(err);

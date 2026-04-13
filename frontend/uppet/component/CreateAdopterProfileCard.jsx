@@ -68,7 +68,6 @@ export default function AdopterProfileInput(props) {
       newErrors.gender = "Gender Error";
     }
 
-    setErrors(newErrors);
     if (Object.keys(newErrors).length === 0) {
       console.log("Create Profile is valid");
 

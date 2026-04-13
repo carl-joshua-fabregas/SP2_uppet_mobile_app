@@ -14,11 +14,6 @@ import * as Themes from "../assets/themes/themes";
 const width = Dimensions.get("window").width;
 
 export default function PetCardHome({ pet, onPress }) {
-  const navigator = useNavigation();
-
-  const handleViewMore = () => {
-    navigator.navigate("viewPetProfile", { pet: pet });
-  };
   const photo = pet.photos.find((photo) => photo.isProfile === 1);
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={onPress}>
@@ -31,13 +26,15 @@ export default function PetCardHome({ pet, onPress }) {
 
       <View style={styles.petDetailsContainer}>
         <Text style={styles.petName}>{pet.name}</Text>
-        <Text style={styles.petBreed}>{pet.breed}</Text>
+        <Text style={styles.petBreed}>
+          {pet.breed} • {pet.sex}
+        </Text>
         <View style={styles.badgeRow}>
           <View style={styles.badgeContainer}>
             <Text style={styles.badgeText}>{pet.age} years old</Text>
           </View>
         </View>
-        <Text style={[styles.petBio, { numberOfLines: 2 }]}>{pet.bio}</Text>
+        <Text style={[styles.petBio, { numberOfLines: 1 }]}>{pet.bio}</Text>
       </View>
     </TouchableOpacity>
   );

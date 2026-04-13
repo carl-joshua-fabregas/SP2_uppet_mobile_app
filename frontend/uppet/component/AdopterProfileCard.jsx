@@ -1,89 +1,239 @@
-import { Text, ScrollView, Image, View } from "react-native";
+import {
+  Text,
+  ScrollView,
+  Image,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as Themes from "../assets/themes/themes";
 
-export default function ProfileCard(props) {
-  const { adopter } = props;
-  console.log("THIS IS ADOPTER PROFILE CARD");
-  console.log(adopter);
-  const form = {
-    firstName: adopter.firstName,
-    middleName: adopter.middleName,
-    lastName: adopter.lastName,
-    bio: adopter.bio,
-    age: adopter.age,
-    occupation: adopter.occupation,
-    income: adopter.income,
-    address: adopter.address,
-    contactInfo: adopter.contactInfo,
-    livingCon: adopter.livingCon,
-    lifeStyle: adopter.lifeStyle,
-    householdMem: adopter.householdMem,
-    currentOwnedPets: adopter.currentOwnedPets,
-    hobies: adopter.hobies,
-    gender: adopter.gender,
-  };
+export default function ProfileCard({ adopter, isOwner }) {
+  console.log("PROFILE CARD CLICKED");
+  // Section Component for cleaner code
+  const InfoSection = ({ icon, label, value }) => (
+    <View style={styles.infoRow}>
+      <View style={styles.iconContainer}>
+        <MaterialCommunityIcons
+          name={icon}
+          size={20}
+          color={Themes.COLORS.primary}
+        />
+      </View>
+      <View style={styles.textData}>
+        <Text style={styles.labelText}>{label}</Text>
+        <Text style={styles.valueText}>{value || "Not specified"}</Text>
+      </View>
+    </View>
+  );
 
   return (
-    <ScrollView>
-      <View>
-        <Text>First Name</Text>
-        <Text>{form.firstName}</Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header Section */}
+      <View style={styles.header}>
+        <Image
+          source={require("../assets/images/doggoe.jpg")} // Use adopter.profilePic if available
+          style={styles.profileImage}
+        />
+        <Text style={styles.fullName}>
+          {adopter.firstName}{" "}
+          {adopter.middleName ? adopter.middleName + " " : ""}
+          {adopter.lastName}
+        </Text>
+        <Text style={styles.bioText}>{adopter.bio || "No bio added yet."}</Text>
+
+        {/* Edit Button - Only shows if isOwner is true */}
+        {isOwner && (
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => console.log("Navigate to Edit Profile")}
+          >
+            <MaterialCommunityIcons
+              name="pencil-outline"
+              size={18}
+              color="#FFF"
+            />
+            <Text style={styles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
+        )}
       </View>
-      <View>
-        <Text>Middle Name</Text>
-        <Text>{form.middleName}</Text>
+
+      {/* Profile Details Content */}
+      <View style={styles.content}>
+        <Text style={styles.sectionTitle}>Personal Information</Text>
+        <View style={styles.card}>
+          <InfoSection
+            icon="calendar-account"
+            label="Age"
+            value={`${adopter.age} years old`}
+          />
+          <InfoSection
+            icon="gender-male-female"
+            label="Gender"
+            value={adopter.gender}
+          />
+          <InfoSection
+            icon="map-marker-outline"
+            label="Address"
+            value={adopter.address}
+          />
+          <InfoSection
+            icon="phone-outline"
+            label="Contact Info"
+            value={adopter.contactInfo}
+          />
+        </View>
+
+        <Text style={styles.sectionTitle}>Work & Lifestyle</Text>
+        <View style={styles.card}>
+          <InfoSection
+            icon="briefcase-outline"
+            label="Occupation"
+            value={adopter.occupation}
+          />
+          <InfoSection
+            icon="cash"
+            label="Income Bracket"
+            value={adopter.income}
+          />
+          <InfoSection
+            icon="home-city-outline"
+            label="Living Condition"
+            value={adopter.livingCon}
+          />
+          <InfoSection icon="run" label="Lifestyle" value={adopter.lifeStyle} />
+          <InfoSection
+            icon="human-male-female-child"
+            label="Household Members"
+            value={adopter.householdMem}
+          />
+        </View>
+
+        <Text style={styles.sectionTitle}>Pet Experience</Text>
+        <View style={styles.card}>
+          <InfoSection
+            icon="paw"
+            label="Currently Owned Pets"
+            value={adopter.currentOwnedPets}
+          />
+          <InfoSection
+            icon="heart-outline"
+            label="Hobbies"
+            value={adopter.hobies}
+          />
+        </View>
       </View>
-      <View>
-        <Text>Last Name</Text>
-        <Text>{form.lastName}</Text>
-      </View>
-      <View>
-        <Text>Bio</Text>
-        <Text>{form.bio}</Text>
-      </View>
-      <View>
-        <Text>Age</Text>
-        <Text>{form.age}</Text>
-      </View>
-      <View>
-        <Text>Occupation</Text>
-        <Text>{form.occupation}</Text>
-      </View>
-      <View>
-        <Text>Income</Text>
-        <Text>{form.income}</Text>
-      </View>
-      <View>
-        <Text>Address</Text>
-        <Text>{form.address}</Text>
-      </View>
-      <View>
-        <Text>Contact Info</Text>
-        <Text>{form.contactInfo}</Text>
-      </View>
-      <View>
-        <Text>Living Condition</Text>
-        <Text>{form.livingCon}</Text>
-      </View>
-      <View>
-        <Text>LifeStyle</Text>
-        <Text>{form.lifeStyle}</Text>
-      </View>
-      <View>
-        <Text>House Hold Members</Text>
-        <Text>{form.householdMem}</Text>
-      </View>
-      <View>
-        <Text>Current Owned Pets</Text>
-        <Text>{form.currentOwnedPets}</Text>
-      </View>
-      <View>
-        <Text>Hobies</Text>
-        <Text>{form.hobies}</Text>
-      </View>
-      <View>
-        <Text>Gender</Text>
-        <Text>{form.gender}</Text>
-      </View>
+
+      {/* Footer Spacing */}
+      {/* <View style={{ height: 40 }} /> */}
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Themes.COLORS.background,
+  },
+  header: {
+    alignItems: "center",
+    padding: Themes.SPACING.lg,
+    backgroundColor: Themes.COLORS.card,
+    borderBottomLeftRadius: Themes.RADIUS.lg,
+    borderBottomRightRadius: Themes.RADIUS.lg,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: Themes.COLORS.primary,
+    marginBottom: Themes.SPACING.sm,
+  },
+  fullName: {
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+    color: Themes.COLORS.text,
+    textAlign: "center",
+  },
+  bioText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.textFaded,
+    textAlign: "center",
+    marginTop: Themes.SPACING.sm,
+    paddingHorizontal: Themes.SPACING.md,
+  },
+  editButton: {
+    flexDirection: "row",
+    backgroundColor: Themes.COLORS.primary,
+    paddingHorizontal: Themes.SPACING.md,
+    paddingVertical: Themes.SPACING.sm,
+    borderRadius: Themes.RADIUS.md,
+    marginTop: Themes.SPACING.md,
+    alignItems: "center",
+  },
+  editButtonText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    marginLeft: Themes.SPACING.sm,
+  },
+  content: {
+    padding: Themes.SPACING.md,
+  },
+  sectionTitle: {
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+    color: Themes.COLORS.primary,
+    marginBottom: Themes.SPACING.sm,
+    marginTop: Themes.SPACING.md,
+    marginLeft: Themes.SPACING.sm,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  card: {
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: Themes.RADIUS.md,
+    padding: Themes.SPACING.md,
+    marginBottom: Themes.SPACING.sm,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Themes.SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: Themes.RADIUS.md,
+    backgroundColor: Themes.COLORS.primary + "10",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  textData: {
+    marginLeft: Themes.SPACING.md,
+    flex: 1,
+  },
+  labelText: {
+    fontSize: Themes.TYPOGRAPHY.label.fontSize,
+    color: Themes.COLORS.textFaded,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+  },
+  valueText: {
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.text,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    marginTop: 2,
+  },
+});

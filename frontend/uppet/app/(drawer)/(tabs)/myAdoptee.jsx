@@ -23,6 +23,8 @@ export default function MyAdoptee() {
   const getPets = async (pageNum = 1, isRefreshing = false) => {
     if (loading || (!hasMore && !isRefreshing)) return;
     setLoading(true);
+    console.log("ITS ME MARIO");
+
     try {
       const res = await api.get("/api/pet/myPets", {
         params: {
@@ -31,7 +33,6 @@ export default function MyAdoptee() {
       });
       const myAdoptees = res.data.body;
       setPets((prev) => [...prev, ...myAdoptees]);
-      console.log(pets);
       if (myAdoptees.length < 10) {
         setHasMore(false);
       }
@@ -87,7 +88,6 @@ export default function MyAdoptee() {
           return <ViewAdopteesCard pet={item}></ViewAdopteesCard>;
         }}
         renderSectionHeader={renderSectionHeader}
-        stickySectionHeadersEnabled={true}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={

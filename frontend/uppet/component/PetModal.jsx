@@ -38,7 +38,9 @@ export default function PetModal({ pet, onClose }) {
 
             <View style={styles.petDetailsContainer}>
               <Text style={styles.petName}>{pet.name}</Text>
-              <Text style={styles.petBreed}>{pet.breed}</Text>
+              <Text style={styles.petBreed}>
+                {pet.breed} • {pet.sex}
+              </Text>
               <View style={styles.badgeRow}>
                 <View style={styles.badgeContainer}>
                   <Text style={styles.badgeText}>{pet.age} years old</Text>
@@ -160,7 +162,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   meetButtonText: {
-    color: Themes.COLORS.textLight,
+    color: "#fff",
+
     fontSize: Themes.TYPOGRAPHY.subheading.fontSize,
     fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
   },

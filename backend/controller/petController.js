@@ -2,6 +2,7 @@ import Pet from "../models/Pet.js";
 import AdoptionApplication from "../models/AdoptionApplication.js";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import mongoose from "mongoose";
 
 console.log("AWS REGION:", process.env.AWS_REGION);
 console.log("AWS ACCESS KEY ID:", process.env.AWS_ACCESS_KEY_ID);
@@ -178,11 +179,39 @@ export async function findAllAvailPets(req, res) {
 
 export async function findMyPets(req, res) {
   try {
-    const myPets = await Pet.find({ ownerId: req.user.id })
-      .skip((req.query.page - 1) * 10)
-      .limit(10);
-
-    if (myPets.length == 0) {
+    const skip = (req.query.page - 1) * 10;
+    // const myPets = await Pet.find({ ownerId: req.user.id })
+    //   .skip((req.query.page - 1) * 10)
+    //   .limit(10);
+    const aggregatePets = await Pet.aggregate([
+      { $match: { ownerId: new mongoose.Types.ObjectId(req.user.id) } },
+      { $skip: skip },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "adoptionapplications",
+          localField: "_id",
+          foreignField: "petToAdopt",
+          as: "allApps",
+        },
+      },
+      {
+        $addFields: {
+          applicationCount: { $size: "$allApps" },
+          pendingCount: {
+            $size: {
+              $filter: {
+                input: "$allApps",
+                as: "app",
+                cond: { $eq: ["$$app.status", "Pending"] }, // Double check if yours is "Pending" or "pending"
+              },
+            },
+          },
+        },
+      },
+      { $project: { allApps: 0 } },
+    ]);
+    if (aggregatePets.length == 0) {
       return res.status(404).json({
         message: "No pets found",
         body: [],
@@ -190,9 +219,11 @@ export async function findMyPets(req, res) {
     }
     return res.status(200).json({
       message: "Successfully found all your pets",
-      body: myPets,
+      body: aggregatePets,
     });
   } catch (err) {
+    console.log(err);
+
     return res.status(500).json({
       message: "Server Error Meow",
       body: err.message,

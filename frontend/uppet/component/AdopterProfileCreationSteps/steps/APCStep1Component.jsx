@@ -29,6 +29,12 @@ export default function APCStep1Component({
     if (!adopterData.lastName.trim()) {
       newErrors.lastName = "Last Name Error";
     }
+    if (!adopterData.address.trim()) {
+      newErrors.address = "Address Error";
+    }
+    if (!adopterData.bio.trim()) {
+      newErrors.bio = "Bio Error";
+    }
     const ageNum = Number(adopterData.age, 10);
     if (isNaN(ageNum)) {
       newErrors.age = "Age Error";
@@ -129,12 +135,25 @@ export default function APCStep1Component({
         <View style={styles.field}>
           <Text style={styles.label}>Gender</Text>
           <View style={styles.chipRow}>
-            <SelectionChip label="Male" value="Male" field="gender" />
-            <SelectionChip label="Female" value="Female" field="gender" />
-            <SelectionChip label="Other" value="Other" field="gender" />
+            <SelectionChip label="Male" value="male" field="gender" />
+            <SelectionChip label="Female" value="female" field="gender" />
+            <SelectionChip label="Other" value="other" field="gender" />
           </View>
           {errors.gender && (
             <Text style={styles.errorText}>{errors.gender}</Text>
+          )}
+        </View>
+        <View style={styles.field}>
+          <Text style={styles.label}>Address</Text>
+          <TextInput
+            placeholderTextColor="#A9A9A9"
+            style={[styles.input, errors.address && styles.inputError]}
+            value={adopterData.address}
+            onChangeText={(val) => update("address", val)}
+            placeholder="Enter Address"
+          />
+          {errors.address && (
+            <Text style={styles.errorText}>{errors.address}</Text>
           )}
         </View>
         <View style={styles.field}>
@@ -151,7 +170,23 @@ export default function APCStep1Component({
             <Text style={styles.errorText}>{errors.contactInfo}</Text>
           )}
         </View>
-
+        <View style={styles.field}>
+          <Text style={styles.label}>Bio</Text>
+          <TextInput
+            placeholderTextColor="#A9A9A9"
+            scrollEnabled={false}
+            placeholder="Enter Bio"
+            value={adopterData.bio}
+            multiline={true}
+            onChangeText={(text) => update("bio", text)}
+            style={[
+              styles.input,
+              styles.textArea,
+              errors.bio && styles.inputError,
+            ]}
+          ></TextInput>
+          {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
+        </View>
         {/* NAVIGATION BUTTONS */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity onPress={onBack} style={styles.backButton}>

@@ -27,7 +27,26 @@ const api = require("../api/axios");
 //   "6734110788-dsgk74dm16ddm73bsuce679vcqif92pe.apps.googleusercontent.com",
 
 export default function Login() {
-  
+  const initialForm = {
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    bio: "",
+    age: "",
+    occupation: "",
+    income: "",
+    address: "",
+    contactInfo: "",
+    livingCon: "",
+    lifeStyle: "",
+    householdMem: "",
+    currentOwnedPets: "",
+    hobbies: "",
+    gender: "",
+    googleId: "",
+    hadPets: "",
+  };
+
   const router = useNavigation();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -49,29 +68,32 @@ export default function Login() {
       }
       const resGoogle = await GoogleSignin.signIn();
 
-      if (resGoogle) {
+      if (resGoogle && resGoogle.data) {
         console.log(resGoogle.data);
         const { idToken } = resGoogle.data;
         const { email } = resGoogle.data.user;
         console.log("PACK NA PACK");
+        await AsyncStorage.setItem("email", JSON.stringify(email));
 
         const res = await api.post("/api/auth/google", {
           token: {
             idToken: idToken,
           },
         });
-        console.log("here");
-        if (res.data.token) {
+        console.log(res.data.message);
+
+        if (res.data.status.toString() === "new_user") {
+          const adopterData = {
+            ...initialForm,
+            googleId: res.data.googleData.googleId,
+          };
+          router.replace("createAdopterProfile", {
+            type: "new_user",
+            adopterData: adopterData,
+          });
+        } else {
           await AsyncStorage.setItem("token", res.data.token);
           await AsyncStorage.setItem("email", JSON.stringify(email));
-        }
-        if (res.data.status.toString() === "new_user") {
-          console.log("new user");
-
-          router.replace("createAdopterProfile", { type: "new_user" });
-        } else {
-          console.log(res);
-
           router.replace("(drawer)");
         }
       }
@@ -85,6 +107,9 @@ export default function Login() {
       } else {
         console.error(err);
       }
+      GoogleSignin.signOut();
+    } finally {
+      setIsSigningIn(false);
     }
   };
 
@@ -102,8 +127,6 @@ export default function Login() {
       );
     }
   };
-
-
 
   return (
     <View style={styles.fullScreenContainer}>

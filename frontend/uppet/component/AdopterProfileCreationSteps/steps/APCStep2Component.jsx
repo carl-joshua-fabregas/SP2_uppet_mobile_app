@@ -36,6 +36,10 @@ export default function APCStep2Component({
     if (!adopterData.lifeStyle.trim()) {
       newErrors.lifeStyle = "LifeStyle Error";
     }
+    const householdMem = Number(adopterData.householdMem, 10);
+    if (isNaN(householdMem)) {
+      newErrors.householdMem = "Household Members Error";
+    }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
     } else {
@@ -71,6 +75,7 @@ export default function APCStep2Component({
         <View style={styles.field}>
           <Text style={styles.label}>Occupation</Text>
           <TextInput
+            placeholderTextColor="#A9A9A9"
             style={[styles.input, errors.occupation && styles.inputError]}
             value={adopterData.occupation}
             onChangeText={(val) => update("occupation", val)}
@@ -90,6 +95,7 @@ export default function APCStep2Component({
             onChangeText={(val) => update("income", val)}
             keyboardType="numeric"
             placeholder="e.g. 25000"
+            placeholderTextColor="#A9A9A9"
           />
           {errors.income && (
             <Text style={styles.errorText}>{errors.income}</Text>
@@ -113,6 +119,21 @@ export default function APCStep2Component({
           )}
         </View>
 
+        <View style={styles.field}>
+          <Text style={styles.label}>Number of people in the Household</Text>
+          <TextInput
+            style={[styles.input, errors.householdMem && styles.inputError]}
+            value={adopterData.householdMem}
+            onChangeText={(val) => update("householdMem", val)}
+            keyboardType="numeric"
+            placeholder="e.g. 2"
+            placeholderTextColor="#A9A9A9"
+          />
+          {errors.householdMem && (
+            <Text style={styles.errorText}>{errors.householdMem}</Text>
+          )}
+        </View>
+
         {/* LIFESTYLE */}
         <View style={styles.field}>
           <Text style={styles.label}>Lifestyle Description</Text>
@@ -126,6 +147,7 @@ export default function APCStep2Component({
             onChangeText={(val) => update("lifeStyle", val)}
             multiline={true}
             numberOfLines={4}
+            placeholderTextColor="#A9A9A9"
             placeholder="e.g. I work from home and enjoy morning walks. I have a fenced yard..."
           />
           {errors.lifeStyle && (

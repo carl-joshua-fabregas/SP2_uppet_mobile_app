@@ -5,8 +5,10 @@ import Message from "../models/Messages.js";
 import Notification from "../models/Notification.js";
 import Pet from "../models/Pet.js";
 import Rating from "../models/Rating.js";
+import jwt from "jsonwebtoken";
 
-export async function createAdopter (req, res) {
+export async function createAdopter(req, res) {
+  console.log("Create Adopter Called");
   try {
     const {
       firstName,
@@ -22,10 +24,11 @@ export async function createAdopter (req, res) {
       lifeStyle,
       householdMem,
       currentOwnedPets,
-      hobies,
+      hobbies,
       userType,
       googleId,
       gender,
+      hadPets,
     } = req.body;
     const adopter = new Adopter({
       firstName: firstName,
@@ -41,27 +44,39 @@ export async function createAdopter (req, res) {
       lifeStyle: lifeStyle,
       householdMem: parseInt(householdMem),
       currentOwnedPets: parseInt(currentOwnedPets),
-      hobies: hobies,
+      hobbies: hobbies,
       userType: userType,
       googleId: googleId,
       gender: gender,
+      hadPets: hadPets,
     });
 
     const newAdopter = await adopter.save();
     console.log("ADOPTER GOT SAVED", newAdopter);
+
+    const jwttoken = jwt.sign(
+      {
+        id: newAdopter._id,
+        role: newAdopter.userType,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "14d" },
+    );
     return res.status(200).json({
       message: "Successfully added user",
       body: newAdopter,
+      token: jwttoken,
     });
   } catch (err) {
+    console.err(err);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });
   }
-};
+}
 
-export async function findAllUser (req, res) {
+export async function findAllUser(req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -85,9 +100,9 @@ export async function findAllUser (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findUserByID (req, res) {
+export async function findUserByID(req, res) {
   try {
     const user = await Adopter.findById(req.params.id);
     console.log("FIND BY USER ID");
@@ -108,9 +123,9 @@ export async function findUserByID (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findCurrentUser (req, res) {
+export async function findCurrentUser(req, res) {
   try {
     const user = await Adopter.findById(req.user.id);
     if (!user) {
@@ -129,9 +144,9 @@ export async function findCurrentUser (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function updateUser (req, res) {
+export async function updateUser(req, res) {
   try {
     const options = {
       new: true,
@@ -157,7 +172,7 @@ export async function updateUser (req, res) {
     const newUser = await Adopter.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
-      options
+      options,
     );
 
     return res.status(200).json({
@@ -170,9 +185,9 @@ export async function updateUser (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteAllUser (req, res) {
+export async function deleteAllUser(req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -189,9 +204,9 @@ export async function deleteAllUser (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteUser (req, res) {
+export async function deleteUser(req, res) {
   try {
     const user = await Adopter.findById(req.params.id);
 
@@ -229,5 +244,4 @@ export async function deleteUser (req, res) {
       body: err.message,
     });
   }
-};
-
+}

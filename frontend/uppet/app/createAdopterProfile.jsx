@@ -6,6 +6,9 @@ import {
   Platform,
 } from "react-native";
 import { useState } from "react";
+import { useRoute } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import * as Themes from "../assets/themes/themes";
 import AdopterProfileInput from "../component/CreateAdopterProfileCard";
 import APCProgressTracker from "../component/AdopterProfileCreationSteps/APCProgressTracker";
@@ -18,26 +21,28 @@ import APCStep5Component from "../component/AdopterProfileCreationSteps/steps/AP
 const api = require("../api/axios");
 
 export default function createAdopterProfile() {
+  const route = useRoute();
+  const { adopterData } = route.params;
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [adopterForm, setAdopterForm] = useState({
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    bio: "",
-    age: "",
-    occupation: "",
-    income: "",
-    address: "",
-    contactInfo: "",
-    livingCon: "",
-    lifeStyle: "",
-    householdMem: "",
-    currentOwnedPets: "",
-    hobies: "",
-    gender: "",
-  });
-
+  const [adopterForm, setAdopterForm] = useState(adopterData);
+  // ({
+  //     firstName: "",
+  //     middleName: "",
+  //     lastName: "",
+  //     bio: "",
+  //     age: "",
+  //     occupation: "",
+  //     income: "",
+  //     address: "",
+  //     contactInfo: "",
+  //     livingCon: "",
+  //     lifeStyle: "",
+  //     householdMem: "",
+  //     currentOwnedPets: "",
+  //     hobies: "",
+  //     gender: "",
+  //   });
   const STEPS = [
     { label: "Basic Information" },
     { label: "WORK & LIFESTYLE" },
@@ -62,17 +67,19 @@ export default function createAdopterProfile() {
 
   const createAdopter = async () => {
     console.log("Start saving");
+    console.log(adopterForm);
     try {
       setUploading(false);
       const adopterCreationRes = await api.post(`api/user/post`, {
-        adopterForm,
+        ...adopterForm,
       });
-      const adopterCreated = adopterCreationRes.data.body;
-      console.log("Created Adopter Profile", adopterCreated);
+      console.log("Created Adopter Profile", adopterCreationRes.data.body);
+      await AsyncStorage.setItem("token", adopterCreationRes.data.token);
+      // await AsyncStorage.setItem("email", JSON.stringify(email));
       setUploading(false);
       return true;
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setUploading(false);
       console.log("DONE");

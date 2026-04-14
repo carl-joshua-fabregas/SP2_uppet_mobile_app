@@ -1,15 +1,8 @@
-import {
-  Text,
-  ScrollView,
-  Image,
-  View,
-  StyleSheet,
-  TouchableOpacity,
-} from "react-native";
+import { Text, Image, View, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 
-export default function ProfileCard({ adopter, isOwner }) {
+export default function ProfileCard({ adopter, isOwner, footer }) {
   console.log("PROFILE CARD CLICKED");
   // Section Component for cleaner code
   const InfoSection = ({ icon, label, value }) => (
@@ -29,7 +22,7 @@ export default function ProfileCard({ adopter, isOwner }) {
   );
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       {/* Header Section */}
       <View style={styles.header}>
         <Image
@@ -113,6 +106,11 @@ export default function ProfileCard({ adopter, isOwner }) {
         <Text style={styles.sectionTitle}>Pet Experience</Text>
         <View style={styles.card}>
           <InfoSection
+            icon="history"
+            label="Has had pets before?"
+            value={adopter.hadPets ? "Yes, I have" : "First-time owner"}
+          />
+          <InfoSection
             icon="paw"
             label="Currently Owned Pets"
             value={adopter.currentOwnedPets}
@@ -124,10 +122,7 @@ export default function ProfileCard({ adopter, isOwner }) {
           />
         </View>
       </View>
-
-      {/* Footer Spacing */}
-      {/* <View style={{ height: 40 }} /> */}
-    </ScrollView>
+    </View>
   );
 }
 

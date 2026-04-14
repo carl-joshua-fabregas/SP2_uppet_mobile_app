@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Themes from "../../../assets/themes/themes";
 import { useNavigation } from "@react-navigation/native";
-export default function APCStep5Component({ petData, finish }) {
+export default function APCStep5Component({ adopterData, finish }) {
   const navigation = useNavigation();
 
   const onFinish = () => {
@@ -19,8 +19,9 @@ export default function APCStep5Component({ petData, finish }) {
         {/* Success Message */}
         <Text style={styles.title}>Yey! All Done!</Text>
         <Text style={styles.subTitle}>
-          {petData.name}'s profile has been created successfully. Adopters can
-          now see your furry friend!
+          {adopterData.firstName} {adopterData.middleName}{" "}
+          {adopterData.lastName}'s profile has been created successfully.
+          Adopters can now see your furry friend!
         </Text>
       </View>
 

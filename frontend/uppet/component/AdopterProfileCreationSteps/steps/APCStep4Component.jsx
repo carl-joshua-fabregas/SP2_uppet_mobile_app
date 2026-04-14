@@ -5,12 +5,13 @@ import {
   Text,
   ActivityIndicator,
   Modal,
+  ScrollView,
 } from "react-native";
-import PetProfileCardViewMore from "../../PetProfileCard";
+import ProfileCard from "../../AdopterProfileCard";
 import * as Themes from "../../../assets/themes/themes";
 
 export default function APCStep4Component({
-  petData,
+  adopterData,
   onNext,
   onBack,
   onCreate,
@@ -27,7 +28,7 @@ export default function APCStep4Component({
     }
   };
   return (
-    <View style={{ flex: 1 }}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <Modal transparent={true} visible={uploading} animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.activityIndicatorWrapper}>
@@ -36,30 +37,31 @@ export default function APCStep4Component({
               color={Themes.COLORS.primary}
               style={{ marginBottom: 15 }}
             />
-            <Text style={styles.loadingText}>Creating Pet Profile...</Text>
-            <Text style={styles.subLoadingText}>Uploading photos to cloud</Text>
+            <Text style={styles.loadingText}>Creating Adopter Profile...</Text>
+            <Text style={styles.subLoadingText}>
+              Uploading Information to Cloud
+            </Text>
           </View>
         </View>
       </Modal>
-      <PetProfileCardViewMore
-        pet={petData}
-        isOwner={true}
-        editingFooter={
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-              <Text style={styles.nextButtonText}>Next</Text>
-            </TouchableOpacity>
-          </View>
-        }
-      ></PetProfileCardViewMore>
-    </View>
+      <ProfileCard adopter={adopterData}></ProfileCard>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={onBack} style={styles.backButton}>
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
+          <Text style={styles.nextButtonText}>Next</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Themes.COLORS.background,
+  },
   buttonContainer: {
     flexDirection: "row",
     alignItems: "center",

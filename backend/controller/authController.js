@@ -4,11 +4,10 @@ import { OAuth2Client } from "google-auth-library";
 const CLIENT_ID =
   "6734110788-rn5ibmvbnn7tf00hmr0lihi6ph9ma1fs.apps.googleusercontent.com";
 
-export async function authGoogle (req, res) {
+export async function authGoogle(req, res) {
   try {
     const client = new OAuth2Client(CLIENT_ID);
     const { token } = req.body;
-    let newUser = false;
 
     const ticket = await client.verifyIdToken({
       idToken: token.idToken,
@@ -18,47 +17,59 @@ export async function authGoogle (req, res) {
     const payload = ticket.getPayload();
     let user = await Adopter.findOne({ googleId: payload.sub });
 
-    if (!user) {
-      newUser = true;
-      const adopter = new Adopter({
-        firstName: "user",
-        middleName: "user",
-        lastName: "user",
-        bio: "user",
-        age: 0,
-        occupation: "user",
-        income: 0,
-        address: "user",
-        contactInfo: "user",
-        livingCon: "user",
-        lifeStyle: "user",
-        householdMem: 0,
-        currentOwnedPets: 0,
-        hobies: "user",
-        googleId: payload.sub,
-        gender: "other",
-      });
-      console.log("EVERYTHINH ID FINE-1");
+    // if (!user) {
+    //   newUser = true;
+    //   const adopter = new Adopter({
+    //     firstName: "user",
+    //     middleName: "user",
+    //     lastName: "user",
+    //     bio: "user",
+    //     age: 0,
+    //     occupation: "user",
+    //     income: 0,
+    //     address: "user",
+    //     contactInfo: "user",
+    //     livingCon: "user",
+    //     lifeStyle: "user",
+    //     householdMem: 0,
+    //     currentOwnedPets: 0,
+    //     hobies: "user",
+    //     googleId: payload.sub,
+    //     gender: "other",
+    //   });
+    //   console.log("EVERYTHINH ID FINE-1");
 
-      const savedUser = await adopter.save();
-      user = savedUser;
-      console.log("EVERYTHINH ID FINE0");
+    //   const savedUser = await adopter.save();
+    //   user = savedUser;
+    //   console.log("EVERYTHINH ID FINE0");
+    // }
+    if (!user) {
+      return res.status(200).json({
+        message: "New User Detected",
+        status: "new_user",
+        googleData: {
+          googleId: payload.sub,
+          email: payload.email,
+          firstName: payload.given_name,
+          lastName: payload.family_name,
+        },
+      });
     }
-    console.log("EVERYTHINH ID FINE1");
 
     const jwttoken = jwt.sign(
       {
         id: user._id,
         role: user.userType,
       },
-      process.env.JWT_SECRET
+      process.env.JWT_SECRET,
+      { expiresIn: "14d" },
     );
     console.log("EVERYTHINH ID FINE2");
     return res.status(200).json({
       message: "User Found",
       token: jwttoken,
       body: user,
-      status: newUser ? "new_user" : "old_user",
+      status: "old_user",
     });
   } catch (err) {
     console.log("EVERYTHINH IS NOT FINE");
@@ -67,5 +78,4 @@ export async function authGoogle (req, res) {
       body: err.message,
     });
   }
-};
-
+}

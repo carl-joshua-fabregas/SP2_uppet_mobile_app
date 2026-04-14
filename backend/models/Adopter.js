@@ -53,7 +53,7 @@ const AdopterSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  hobies: {
+  hobbies: {
     type: String,
     required: false,
   },
@@ -70,6 +70,11 @@ const AdopterSchema = new mongoose.Schema({
   gender: {
     type: String,
     enum: ["male", "female", "other"],
+    required: true,
+  },
+  hadPets: {
+    type: String,
+    enum: ["yes", "no"],
     required: true,
   },
 });

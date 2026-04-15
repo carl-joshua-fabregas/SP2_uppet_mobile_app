@@ -1,20 +1,12 @@
-import {
-  View,
-  StyleSheet,
-  Pressable,
-  Image,
-  Platform,
-  Button,
-} from "react-native";
+import { View, StyleSheet, Image, Platform, Button } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   GoogleSignin,
   GoogleSigninButton,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 import { useUser } from "../context/UserContext";
-import * as SecureStore from "expo-secure-store";
 
 const api = require("../api/axios");
 
@@ -49,15 +41,7 @@ export default function Login() {
 
   const router = useNavigation();
   const [isSigningIn, setIsSigningIn] = useState(false);
-  const { login, token } = useUser();
-
-  GoogleSignin.configure({
-    webClientId:
-      "6734110788-rn5ibmvbnn7tf00hmr0lihi6ph9ma1fs.apps.googleusercontent.com",
-    iosClientId:
-      "6734110788-9lbc61k9u8dg4tebk8uppo4ve75ju28b.apps.googleusercontent.com",
-  });
-
+  const { login } = useUser();
   const handleSignIn = async () => {
     if (isSigningIn) return;
 
@@ -73,8 +57,8 @@ export default function Login() {
         console.log(resGoogle.data);
 
         const { idToken } = resGoogle.data;
-        const { email } = resGoogle.data.user;
-        await SecureStore.setItemAsync("email", JSON.stringify(email));
+        // const { email } = resGoogle.data.user;
+        // await SecureStore.setItemAsync("email", JSON.stringify(email));
 
         const res = await api.post("/api/auth/google", {
           token: {
@@ -97,7 +81,7 @@ export default function Login() {
           });
         } else {
           console.log("HERE IN ELSE LOGIN", res.data.body);
-          login(res.data.body, res.data.token);
+          await login(res.data.body, res.data.token);
           router.replace("(drawer)");
         }
       }

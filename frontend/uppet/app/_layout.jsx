@@ -11,7 +11,24 @@ import {
 
 function NavigationStack() {
   const { token, loading } = useUser();
-  if (token) console.log(token);
+  const [fontsLoaded] = useFonts({
+    "Fredoka-Regular": Fredoka_400Regular,
+    "Fredoka-Medium": Fredoka_500Medium,
+    "Fredoka-SemiBold": Fredoka_600SemiBold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded && !loading) {
+      SplashScreen.hideAsync();
+      console.log("Fonts loaded successfully");
+    } else {
+      console.log("Loading fonts...");
+    }
+  }, [fontsLoaded, loading]);
+
+  if (!fontsLoaded) {
+    return null; // or a loading spinner
+  }
 
   if (loading) {
     return null;
@@ -19,33 +36,33 @@ function NavigationStack() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {!token ? (
-        <Stack.Screen name="index"></Stack.Screen>
-      ) : (
+      <Stack.Protected guard={token}>
         <Stack.Screen name="(drawer)"></Stack.Screen>
-      )}
-      <Stack.Screen
-        name="createPetProfile"
-        options={{ headerShown: true, title: "Create Pet Profile" }}
-      ></Stack.Screen>
-      <Stack.Screen
-        name="viewProfile"
-        options={{ headerShown: true, title: "Profile" }}
-      ></Stack.Screen>
+        <Stack.Screen
+          name="createPetProfile"
+          options={{ headerShown: true, title: "Create Pet Profile" }}
+        ></Stack.Screen>
+        <Stack.Screen
+          name="viewProfile"
+          options={{ headerShown: true, title: "Profile" }}
+        ></Stack.Screen>
 
-      <Stack.Screen
-        name="viewApplicantsMyAdoptees"
-        options={{ headerShown: true, title: "Profile" }}
-      ></Stack.Screen>
-      <Stack.Screen
-        name="viewAdopterProfile"
-        options={{ headerShown: true, title: "Profile" }}
-      ></Stack.Screen>
-      <Stack.Screen
-        name="viewPetProfile"
-        options={{ headerShown: true, title: "Pet Profile" }}
-      ></Stack.Screen>
-
+        <Stack.Screen
+          name="viewApplicantsMyAdoptees"
+          options={{ headerShown: true, title: "Profile" }}
+        ></Stack.Screen>
+        <Stack.Screen
+          name="viewAdopterProfile"
+          options={{ headerShown: true, title: "Profile" }}
+        ></Stack.Screen>
+        <Stack.Screen
+          name="viewPetProfile"
+          options={{ headerShown: true, title: "Pet Profile" }}
+        ></Stack.Screen>
+      </Stack.Protected>
+      <Stack.Protected guard={!token}>
+        <Stack.Screen name="index"></Stack.Screen>
+      </Stack.Protected>
       <Stack.Screen
         name="createAdopterProfile"
         options={{ headerShown: true, title: "Profile" }}
@@ -55,24 +72,6 @@ function NavigationStack() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    "Fredoka-Regular": Fredoka_400Regular,
-    "Fredoka-Medium": Fredoka_500Medium,
-    "Fredoka-SemiBold": Fredoka_600SemiBold,
-  });
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
-      console.log("Fonts loaded successfully");
-    } else {
-      console.log("Loading fonts...");
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return null; // or a loading spinner
-  }
-
   return (
     <UserProvider>
       <NavigationStack></NavigationStack>

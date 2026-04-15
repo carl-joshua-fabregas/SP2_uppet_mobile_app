@@ -1,25 +1,13 @@
 import { View, Text, Image, StyleSheet, Button, Pressable } from "react-native";
 import { useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useNavigation } from "@react-navigation/native";
+import { useUser } from "../context/UserContext";
 
 export default function ProfileDrawer(props) {
   const [email, setEmail] = useState(" ");
+  const { logout } = useUser();
   const router = useNavigation();
-
-  const getEmail = async () => {
-    try {
-      const storeEmail = await AsyncStorage.getItem("email");
-      setEmail(storeEmail);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  useEffect(() => {
-    getEmail();
-  }, []);
 
   const handleProfileClick = () => {
     console.log("IT HAS BEEN PRESSED");
@@ -29,9 +17,8 @@ export default function ProfileDrawer(props) {
   const handleSignOut = async () => {
     try {
       console.log("Signed OUT");
+      logout();
       await GoogleSignin.signOut();
-      await AsyncStorage.removeItem("token")
-      await AsyncStorage.removeItem("email")
       router.replace("index");
     } catch (err) {
       console.error(err);

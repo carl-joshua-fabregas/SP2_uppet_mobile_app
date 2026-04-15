@@ -17,27 +17,6 @@ export async function authGoogle(req, res) {
     const payload = ticket.getPayload();
     let user = await Adopter.findOne({ googleId: payload.sub });
 
-    if (!user) {
-      newUser = true;
-      const adopter = new Adopter({
-        firstName: "user",
-        middleName: "user",
-        lastName: "user",
-        bio: "user",
-        age: 0,
-        occupation: "user",
-        income: 0,
-        address: "user",
-        contactInfo: "user",
-        livingCon: "user",
-        lifeStyle: "user",
-        householdMem: 0,
-        currentOwnedPets: 0,
-        hobies: "user",
-        googleId: payload.sub,
-        gender: "other",
-      });
-    }
     //   console.log("EVERYTHINH ID FINE-1");
 
     //   const savedUser = await adopter.save();
@@ -54,7 +33,6 @@ export async function authGoogle(req, res) {
           firstName: payload.given_name,
           lastName: payload.family_name,
         },
-        body: newUser,
       });
     }
 

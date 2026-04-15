@@ -8,6 +8,7 @@ import {
 import { useState } from "react";
 import { useRoute } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUser } from "../context/UserContext";
 
 import * as Themes from "../assets/themes/themes";
 import AdopterProfileInput from "../component/CreateAdopterProfileCard";
@@ -21,11 +22,12 @@ import APCStep5Component from "../component/AdopterProfileCreationSteps/steps/AP
 const api = require("../api/axios");
 
 export default function createAdopterProfile() {
-  const route = useRoute();
-  const { adopterData } = route.params;
+  // const route = useRoute();
+  const { user } = useUser();
+  // const { adopterData } = route.params;
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [adopterForm, setAdopterForm] = useState(adopterData);
+  const [adopterForm, setAdopterForm] = useState(user);
   // ({
   //     firstName: "",
   //     middleName: "",

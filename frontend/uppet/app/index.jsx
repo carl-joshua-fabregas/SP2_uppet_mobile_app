@@ -6,7 +6,6 @@ import {
   Platform,
   Button,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useState, useEffect } from "react";
 import {
@@ -14,7 +13,8 @@ import {
   GoogleSigninButton,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUser } from "../context/UserContext";
+import * as SecureStore from "expo-secure-store";
 
 const api = require("../api/axios");
 
@@ -49,6 +49,7 @@ export default function Login() {
 
   const router = useNavigation();
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const { login, token } = useUser();
 
   GoogleSignin.configure({
     webClientId:
@@ -70,30 +71,33 @@ export default function Login() {
 
       if (resGoogle && resGoogle.data) {
         console.log(resGoogle.data);
+
         const { idToken } = resGoogle.data;
         const { email } = resGoogle.data.user;
-        console.log("PACK NA PACK");
-        await AsyncStorage.setItem("email", JSON.stringify(email));
+        await SecureStore.setItemAsync("email", JSON.stringify(email));
 
         const res = await api.post("/api/auth/google", {
           token: {
             idToken: idToken,
           },
         });
+
         console.log(res.data.message);
 
         if (res.data.status.toString() === "new_user") {
+          console.log("HERE IN NEW USER");
           const adopterData = {
             ...initialForm,
             googleId: res.data.googleData.googleId,
           };
+
           router.replace("createAdopterProfile", {
             type: "new_user",
             adopterData: adopterData,
           });
         } else {
-          await AsyncStorage.setItem("token", res.data.token);
-          await AsyncStorage.setItem("email", JSON.stringify(email));
+          console.log("HERE IN ELSE LOGIN", res.data.body);
+          login(res.data.body, res.data.token);
           router.replace("(drawer)");
         }
       }

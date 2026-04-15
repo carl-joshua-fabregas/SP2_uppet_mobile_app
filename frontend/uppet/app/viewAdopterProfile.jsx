@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { View, ScrollView } from "react-native";
 import { useState, useEffect } from "react";
 import { useRoute } from "@react-navigation/native";
 import ProfileCard from "../component/AdopterProfileCard";
@@ -26,8 +26,8 @@ export default function ViewAdopterProfile() {
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
+    <ScrollView style={{ flex: 1 }}>
       <ProfileCard adopter={user}></ProfileCard>
-    </View>
+    </ScrollView>
   );
 }

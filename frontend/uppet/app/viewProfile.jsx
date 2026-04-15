@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { useState, useEffect } from "react";
 import ProfileCard from "../component/AdopterProfileCard";
 const api = require("../api/axios");
@@ -22,8 +22,8 @@ export default function AdopterProfile() {
   }, []);
 
   return (
-    <View style={{ flex: 1 }}>
+    <ScrollView style={{ flex: 1 }}>
       <ProfileCard adopter={user} isOwner={true}></ProfileCard>
-    </View>
+    </ScrollView>
   );
 }

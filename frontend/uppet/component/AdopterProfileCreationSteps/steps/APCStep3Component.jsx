@@ -76,7 +76,11 @@ export default function APCStep3Component({
           <Text style={styles.label}>Currently Owned Pets</Text>
           <TextInput
             style={[styles.input, errors.currentOwnedPets && styles.inputError]}
-            value={adopterData.currentOwnedPets}
+            value={
+              adopterData.currentOwnedPets
+                ? String(adopterData.currentOwnedPets)
+                : ""
+            }
             onChangeText={(val) => update("currentOwnedPets", val)}
             placeholder="The number of pets you have"
             keyboardType="numeric"

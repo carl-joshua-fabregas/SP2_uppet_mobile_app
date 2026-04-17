@@ -1,11 +1,7 @@
 import { View, StyleSheet, Image, Platform, Button } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
-import {
-  GoogleSignin,
-  GoogleSigninButton,
-  statusCodes,
-} from "@react-native-google-signin/google-signin";
+import { GoogleSigninButton } from "@react-native-google-signin/google-signin";
 import { useUser } from "../context/UserContext";
 
 const api = require("../api/axios");
@@ -19,87 +15,85 @@ const api = require("../api/axios");
 //   "6734110788-dsgk74dm16ddm73bsuce679vcqif92pe.apps.googleusercontent.com",
 
 export default function Login() {
-  const initialForm = {
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    bio: "",
-    age: "",
-    occupation: "",
-    income: "",
-    address: "",
-    contactInfo: "",
-    livingCon: "",
-    lifeStyle: "",
-    householdMem: "",
-    currentOwnedPets: "",
-    hobbies: "",
-    gender: "",
-    googleId: "",
-    hadPets: "",
-  };
+  // const initialForm = {
+  //   firstName: "",
+  //   middleName: "",
+  //   lastName: "",
+  //   bio: "",
+  //   age: "",
+  //   occupation: "",
+  //   income: "",
+  //   address: "",
+  //   contactInfo: "",
+  //   livingCon: "",
+  //   lifeStyle: "",
+  //   householdMem: "",
+  //   currentOwnedPets: "",
+  //   hobbies: "",
+  //   gender: "",
+  //   googleId: "",
+  //   hadPets: "",
+  // };
 
-  const router = useNavigation();
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const { login } = useUser();
-  const handleSignIn = async () => {
-    if (isSigningIn) return;
+  const { handleSignIn } = useUser();
+  // const handleSignIn = async () => {
+  //   if (isSigningIn) return;
 
-    setIsSigningIn(true);
+  //   setIsSigningIn(true);
 
-    try {
-      if (Platform.OS === "android") {
-        await GoogleSignin.hasPlayServices();
-      }
-      const resGoogle = await GoogleSignin.signIn();
+  //   try {
+  //     if (Platform.OS === "android") {
+  //       await GoogleSignin.hasPlayServices();
+  //     }
+  //     const resGoogle = await GoogleSignin.signIn();
 
-      if (resGoogle && resGoogle.data) {
-        console.log(resGoogle.data);
+  //     if (resGoogle && resGoogle.data) {
+  //       console.log(resGoogle.data);
 
-        const { idToken } = resGoogle.data;
-        // const { email } = resGoogle.data.user;
-        // await SecureStore.setItemAsync("email", JSON.stringify(email));
+  //       const { idToken } = resGoogle.data;
+  //       // const { email } = resGoogle.data.user;
+  //       // await SecureStore.setItemAsync("email", JSON.stringify(email));
 
-        const res = await api.post("/api/auth/google", {
-          token: {
-            idToken: idToken,
-          },
-        });
+  //       const res = await api.post("/api/auth/google", {
+  //         token: {
+  //           idToken: idToken,
+  //         },
+  //       });
 
-        console.log(res.data.message);
+  //       console.log(res.data.message);
 
-        if (res.data.status.toString() === "new_user") {
-          console.log("HERE IN NEW USER");
-          const adopterData = {
-            ...initialForm,
-            googleId: res.data.googleData.googleId,
-          };
+  //       if (res.data.status.toString() === "new_user") {
+  //         console.log("HERE IN NEW USER");
+  //         const adopterData = {
+  //           ...initialForm,
+  //           googleId: res.data.googleData.googleId,
+  //         };
 
-          router.replace("createAdopterProfile", {
-            type: "new_user",
-            adopterData: adopterData,
-          });
-        } else {
-          console.log("HERE IN ELSE LOGIN", res.data.body);
-          await login(res.data.body, res.data.token);
-          router.replace("(drawer)");
-        }
-      }
+  //         router.replace("createAdopterProfile", {
+  //           type: "new_user",
+  //           adopterData: adopterData,
+  //         });
+  //       } else {
+  //         console.log("HERE IN ELSE LOGIN", res.data.body);
+  //         await login(res.data.body, res.data.token);
+  //         router.replace("(drawer)");
+  //       }
+  //     }
 
-      console.log("Success");
-    } catch (err) {
-      if (err.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log("CANCELLED");
-      } else if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        console.log("PLAY SERVICE UNAVAILALE");
-      } else {
-        console.error(err);
-      }
-      GoogleSignin.signOut();
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
+  //     console.log("Success");
+  //   } catch (err) {
+  //     if (err.code === statusCodes.SIGN_IN_CANCELLED) {
+  //       console.log("CANCELLED");
+  //     } else if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+  //       console.log("PLAY SERVICE UNAVAILALE");
+  //     } else {
+  //       console.error(err);
+  //     }
+  //     GoogleSignin.signOut();
+  //   } finally {
+  //     setIsSigningIn(false);
+  //   }
+  // };
 
   const CrossSignInButton = () => {
     if (Platform.OS === "web") {

@@ -2,12 +2,9 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Themes from "../../../assets/themes/themes";
 import { useNavigation } from "@react-navigation/native";
-export default function APCStep5Component({ adopterData, finish }) {
-  const navigation = useNavigation();
-
-  const onFinish = () => {
-    navigation.navigate("myAdoptees");
-  };
+import { useUser } from "../../../context/UserContext";
+export default function APCStep5Component({ onFinish }) {
+  const { user, newUser } = useUser();
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -19,17 +16,15 @@ export default function APCStep5Component({ adopterData, finish }) {
         {/* Success Message */}
         <Text style={styles.title}>Yey! All Done!</Text>
         <Text style={styles.subTitle}>
-          {adopterData.firstName} {adopterData.middleName}{" "}
-          {adopterData.lastName}'s profile has been created successfully.
-          Adopters can now see your furry friend!
+          {user.firstName} {user.middleName} {user.lastName}'s profile has been
+          created successfully. Adopters can now see your furry friend!
         </Text>
       </View>
 
       {/* Final Action Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          onPress={onFinish}
-          disabled={finish}
+          onPress={() => onFinish(newUser)}
           style={styles.finishButton}
         >
           <Text style={styles.finishButtonText}>View My Adoptees</Text>

@@ -1,6 +1,9 @@
 import { View, Text, Image, StyleSheet, Button, Pressable } from "react-native";
 import { useState, useEffect } from "react";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import {
+  GoogleSignin,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
 import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
 

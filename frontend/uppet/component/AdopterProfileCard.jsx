@@ -2,7 +2,7 @@ import { Text, Image, View, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 
-export default function ProfileCard({ adopter, isOwner, footer }) {
+export default function ProfileCard({ adopter, isOwner, handleEditing }) {
   console.log("PROFILE CARD CLICKED");
   // Section Component for cleaner code
   const InfoSection = ({ icon, label, value }) => (
@@ -38,10 +38,7 @@ export default function ProfileCard({ adopter, isOwner, footer }) {
 
         {/* Edit Button - Only shows if isOwner is true */}
         {isOwner && (
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => console.log("Navigate to Edit Profile")}
-          >
+          <TouchableOpacity style={styles.editButton} onPress={handleEditing}>
             <MaterialCommunityIcons
               name="pencil-outline"
               size={18}

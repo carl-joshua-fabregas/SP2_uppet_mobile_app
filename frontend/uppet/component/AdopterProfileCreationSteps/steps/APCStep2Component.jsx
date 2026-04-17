@@ -91,7 +91,7 @@ export default function APCStep2Component({
           <Text style={styles.label}>Estimated Monthly Income (PHP)</Text>
           <TextInput
             style={[styles.input, errors.income && styles.inputError]}
-            value={adopterData.income}
+            value={adopterData.income ? String(adopterData.income) : ""}
             onChangeText={(val) => update("income", val)}
             keyboardType="numeric"
             placeholder="e.g. 25000"
@@ -123,7 +123,9 @@ export default function APCStep2Component({
           <Text style={styles.label}>Number of people in the Household</Text>
           <TextInput
             style={[styles.input, errors.householdMem && styles.inputError]}
-            value={adopterData.householdMem}
+            value={
+              adopterData.householdMem ? String(adopterData.householdMem) : ""
+            }
             onChangeText={(val) => update("householdMem", val)}
             keyboardType="numeric"
             placeholder="e.g. 2"

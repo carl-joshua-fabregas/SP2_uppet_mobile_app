@@ -6,12 +6,9 @@ import {
   Platform,
 } from "react-native";
 import { useState } from "react";
-import { useRoute } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useUser } from "../context/UserContext";
-
+import { useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
-import AdopterProfileInput from "../component/CreateAdopterProfileCard";
 import APCProgressTracker from "../component/AdopterProfileCreationSteps/APCProgressTracker";
 import APCStep1Component from "../component/AdopterProfileCreationSteps/steps/APCStep1Component";
 import APCStep2Component from "../component/AdopterProfileCreationSteps/steps/APCStep2Component";
@@ -22,12 +19,12 @@ import APCStep5Component from "../component/AdopterProfileCreationSteps/steps/AP
 const api = require("../api/axios");
 
 export default function createAdopterProfile() {
-  // const route = useRoute();
-  const { user } = useUser();
+  const { user, setNewUser, login } = useUser();
   // const { adopterData } = route.params;
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [adopterForm, setAdopterForm] = useState(user);
+  const navigation = useNavigation();
   // ({
   //     firstName: "",
   //     middleName: "",
@@ -45,6 +42,16 @@ export default function createAdopterProfile() {
   //     hobies: "",
   //     gender: "",
   //   });
+  const onFinish = (newUser) => {
+    console.log("I AM FINISH UP, VAL OF NEW USER : ", newUser);
+    if (!newUser) {
+      navigation.navigate("viewProfile");
+    } else {
+      setNewUser(false);
+      navigation.navigate("(drawer)");
+    }
+  };
+
   const STEPS = [
     { label: "Basic Information" },
     { label: "WORK & LIFESTYLE" },
@@ -75,9 +82,7 @@ export default function createAdopterProfile() {
       const adopterCreationRes = await api.post(`api/user/post`, {
         ...adopterForm,
       });
-      console.log("Created Adopter Profile", adopterCreationRes.data.body);
-      await AsyncStorage.setItem("token", adopterCreationRes.data.token);
-      // await AsyncStorage.setItem("email", JSON.stringify(email));
+      login(adopterForm, adopterCreationRes.data.token);
       setUploading(false);
       return true;
     } catch (error) {
@@ -128,7 +133,10 @@ export default function createAdopterProfile() {
         );
       case 4:
         return (
-          <APCStep5Component adopterData={adopterForm}></APCStep5Component>
+          <APCStep5Component
+            adopterData={adopterForm}
+            onFinish={onFinish}
+          ></APCStep5Component>
         );
       default:
         return null;

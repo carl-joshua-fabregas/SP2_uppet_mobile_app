@@ -10,7 +10,7 @@ import {
 } from "@expo-google-fonts/fredoka";
 
 function NavigationStack() {
-  const { token, loading } = useUser();
+  const { token, loading, newUser } = useUser();
   const [fontsLoaded] = useFonts({
     "Fredoka-Regular": Fredoka_400Regular,
     "Fredoka-Medium": Fredoka_500Medium,
@@ -60,7 +60,7 @@ function NavigationStack() {
           options={{ headerShown: true, title: "Pet Profile" }}
         ></Stack.Screen>
       </Stack.Protected>
-      <Stack.Protected guard={!token}>
+      <Stack.Protected guard={!token && !newUser}>
         <Stack.Screen name="index"></Stack.Screen>
       </Stack.Protected>
       <Stack.Screen

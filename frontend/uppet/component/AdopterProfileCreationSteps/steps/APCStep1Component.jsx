@@ -123,7 +123,7 @@ export default function APCStep1Component({
           <TextInput
             placeholderTextColor="#A9A9A9"
             style={[styles.input, errors.age && styles.inputError]}
-            value={adopterData.age}
+            value={adopterData.age ? String(adopterData.age) : ""}
             onChangeText={(val) => update("age", val)}
             keyboardType="numeric"
             placeholder="Must be 18+"

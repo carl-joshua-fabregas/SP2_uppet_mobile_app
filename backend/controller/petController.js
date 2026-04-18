@@ -1,6 +1,6 @@
 import Pet from "../models/Pet.js";
 import AdoptionApplication from "../models/AdoptionApplication.js";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import mongoose from "mongoose";
 
@@ -368,7 +368,38 @@ export async function presignUploadURL(req, res) {
     });
   }
 }
+export async function presignDeleteURL(req, res) {
+  try {
+    console.log("GENERATING presignDeleteURL");
+    const key = req.body.key
+    const command = new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+    });
+    console.log(
+      process.env.AWS_BUCKET_NAME,
+      process.env.AWS_REGION,
+      process.env.AWS_ACCESS_KEY_ID,
+      process.env.AWS_SECRET_ACCESS_KEY,
+    );
+    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
+    console.log("WITH COMMAND:", command);
 
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    console.log("PRESIGNED URL GENERATED:", url);
+
+    return res.status(200).json({
+      message: "Successfully obtained presigned URL",
+      body: { url: url, key: key },
+    });
+  } catch (err) {
+    console.log("ERROR IN GENERATING PRESIGNED URL:", err);
+    return res.status(505).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+}
 export async function uploadPetPhoto(req, res) {
   console.log("UPLOAD PET PHOTO CONTROLLER CALLED");
   try {
@@ -417,7 +448,7 @@ export async function uploadPetPhoto(req, res) {
     });
   }
 }
-
+//Not Currently Available for updating photos because we do bulk update
 export async function deletePetPhoto(req, res) {
   try {
     const options = {

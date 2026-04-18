@@ -6,6 +6,15 @@ import Notification from "../models/Notification.js";
 import Pet from "../models/Pet.js";
 import Rating from "../models/Rating.js";
 import jwt from "jsonwebtoken";
+import { S3Client, PutObjectCommand, DeleteObjectCommand} from "@aws-sdk/client-s3";
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
 export async function createAdopter(req, res) {
   console.log("Create Adopter Called");
@@ -246,10 +255,54 @@ export async function deleteUser(req, res) {
     });
   }
 }
+export async function uploadAdopterPhoto(req, res) {
+  console.log("UPLOAD Adopter PHOTO CONTROLLER CALLED");
+  try {
+    console.log("Adoper ID IN UPLOAD PET PHOTO CONTROLLER", req.user.id);
 
+    const adopter = await Adopter.findById(req.user.id);
+    if (!adopter) {
+      return res.status(404).json({
+        message: "Not found",
+      });
+    }
+
+    // const uploadedPhotos = req.body.photos.map((p) => ({
+    //   url: `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${p.key}`,
+    //   key: p.key,
+    //   caption: p.caption,
+    //   isProfile: p.isProfile,
+    //   timeStamp: p.timeStamp,
+    // }));
+
+    const uploadedPhoto = {
+      url: `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${req.body.photo.key}`,
+      key: req.body.photo.key,
+      timeStamp: req.body.photo.key
+    }
+
+    console.log("BACKED END HERE UPLOADED PHOTOS ARE", uploadedPhotos);
+    const updatedAdopter = await Adopter.findByIdAndUpdate(
+      req.user.id,
+      { $set: { photos: { $each: uploadedPhotos } } },
+      { new: true }, // Returns the pet with the new photos included
+    );
+
+    return res.status(200).json({
+      message: "Succesfully uploaded photo",
+      body: updatedPet,
+    });
+  } catch (err) {
+    console.log("ERROR IN UPLOADING PET PHOTO:", err);
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+}
 export async function presignUploadURL(req, res) {
   try {
-    const key = `user/${req.body.petId}/${Date.now()}_${req.body.fileName}`;
+    const key = `user/${req.user.id}/${Date.now()}_${req.body.fileName}`;
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
@@ -258,6 +311,38 @@ export async function presignUploadURL(req, res) {
       //   uri: req.body.uri || "",
       //   name: req.body.name || ""
       // }
+    });
+    console.log(
+      process.env.AWS_BUCKET_NAME,
+      process.env.AWS_REGION,
+      process.env.AWS_ACCESS_KEY_ID,
+      process.env.AWS_SECRET_ACCESS_KEY,
+    );
+    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
+    console.log("WITH COMMAND:", command);
+
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    console.log("PRESIGNED URL GENERATED:", url);
+
+    return res.status(200).json({
+      message: "Successfully obtained presigned URL",
+      body: { url: url, key: key },
+    });
+  } catch (err) {
+    console.log("ERROR IN GENERATING PRESIGNED URL:", err);
+    return res.status(505).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+}
+export async function presignDeleteURL(req, res) {
+  try {
+    console.log("GENERATING presignDeleteURL");
+    const key = req.body.key
+    const command = new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
     });
     console.log(
       process.env.AWS_BUCKET_NAME,

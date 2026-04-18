@@ -3,19 +3,17 @@ import {
   View,
   StyleSheet,
   TextInput,
-  ScrollView,
   TouchableOpacity,
 } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import * as Themes from "../../../assets/themes/themes";
 
 export default function APCStep2Component({
   adopterData,
   setAdopterData,
-  onNext,
-  onBack,
+  errors,
 }) {
-  const [errors, setErrors] = useState({});
   const update = (key, value) =>
     setAdopterData((prev) => ({ ...prev, [key]: value }));
 
@@ -50,7 +48,43 @@ export default function APCStep2Component({
       onNext();
     }
   };
+  const FormInput = ({
+    label,
+    value,
+    onChange,
+    error,
+    placeholder,
+    multiline,
+    height,
+    keyboardType,
+    icon,
+  }) => (
+    <View style={styles.field}>
+      <View style={styles.infoRow}>
+        <MaterialCommunityIcons
+          name={icon}
+          size={20}
+          color={Themes.COLORS.primary}
+        ></MaterialCommunityIcons>
 
+        <Text style={styles.label}>{label}</Text>
+      </View>
+      <TextInput
+        placeholderTextColor="#A9A9A9"
+        style={[
+          styles.input,
+          error && styles.inputError,
+          multiline && { height, textAlignVertical: "top" },
+        ]}
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        multiline={multiline}
+        keyboardType={keyboardType}
+      />
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
+  );
   const SelectionChip = ({ label, value, field }) => (
     <TouchableOpacity
       style={[styles.chip, adopterData[field] === value && styles.chipActive]}
@@ -70,41 +104,56 @@ export default function APCStep2Component({
 
   return (
     <View style={styles.APCStep2ComponentContainer}>
-      <ScrollView contentContainerStyle={styles.scrollPadding}>
-        {/* OCCUPATION */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Occupation</Text>
-          <TextInput
-            placeholderTextColor="#A9A9A9"
-            style={[styles.input, errors.occupation && styles.inputError]}
-            value={adopterData.occupation}
-            onChangeText={(val) => update("occupation", val)}
-            placeholder="e.g. Software Developer"
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="briefcase-outline"
+            size={20}
+            color={Themes.COLORS.primary}
           />
-          {errors.occupation && (
-            <Text style={styles.errorText}>{errors.occupation}</Text>
-          )}
+          <Text style={styles.sectionTitle}>Work & Finance</Text>
         </View>
 
-        {/* MONTHLY INCOME */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Estimated Monthly Income (PHP)</Text>
-          <TextInput
-            style={[styles.input, errors.income && styles.inputError]}
-            value={adopterData.income ? String(adopterData.income) : ""}
-            onChangeText={(val) => update("income", val)}
-            keyboardType="numeric"
-            placeholder="e.g. 25000"
-            placeholderTextColor="#A9A9A9"
+        <FormInput
+          label="Occupation"
+          value={adopterData.occupation}
+          onChange={(v) => update("occupation", v)}
+          error={errors.occupation}
+          placeholder="e.g. Software Developer"
+          icon="card-account-details-outline"
+        />
+
+        <FormInput
+          label="Monthly Income (PHP)"
+          value={String(adopterData.income || "")}
+          onChange={(v) => update("income", v)}
+          error={errors.income}
+          placeholder="e.g. 25000"
+          keyboardType="numeric"
+          icon="cash-multiple"
+        />
+      </View>
+
+      {/* SECTION 2: LIVING SITUATION */}
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="home-city-outline"
+            size={20}
+            color={Themes.COLORS.primary}
           />
-          {errors.income && (
-            <Text style={styles.errorText}>{errors.income}</Text>
-          )}
+          <Text style={styles.sectionTitle}>Living Situation</Text>
         </View>
 
-        {/* LIVING CONDITION */}
         <View style={styles.field}>
-          <Text style={styles.label}>Living Condition</Text>
+          <View style={styles.infoRow}>
+            <MaterialCommunityIcons
+              name="home-variant-outline"
+              size={20}
+              color={Themes.COLORS.primary}
+            />
+            <Text style={styles.label}>Living Condition</Text>
+          </View>
           <View style={styles.chipRow}>
             <SelectionChip label="House" value="House" field="livingCon" />
             <SelectionChip
@@ -119,54 +168,39 @@ export default function APCStep2Component({
           )}
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Number of people in the Household</Text>
-          <TextInput
-            style={[styles.input, errors.householdMem && styles.inputError]}
-            value={
-              adopterData.householdMem ? String(adopterData.householdMem) : ""
-            }
-            onChangeText={(val) => update("householdMem", val)}
-            keyboardType="numeric"
-            placeholder="e.g. 2"
-            placeholderTextColor="#A9A9A9"
+        <FormInput
+          label="Household Members"
+          value={String(adopterData.householdMem || "")}
+          onChange={(v) => update("householdMem", v)}
+          error={errors.householdMem}
+          placeholder="Number of people living with you"
+          keyboardType="numeric"
+          icon="account-group-outline"
+        />
+      </View>
+
+      {/* SECTION 3: LIFESTYLE */}
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="run-fast"
+            size={20}
+            color={Themes.COLORS.primary}
           />
-          {errors.householdMem && (
-            <Text style={styles.errorText}>{errors.householdMem}</Text>
-          )}
+          <Text style={styles.sectionTitle}>Lifestyle</Text>
         </View>
 
-        {/* LIFESTYLE */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Lifestyle Description</Text>
-          <TextInput
-            style={[
-              styles.input,
-              styles.textArea,
-              errors.lifeStyle && styles.inputError,
-            ]}
-            value={adopterData.lifeStyle}
-            onChangeText={(val) => update("lifeStyle", val)}
-            multiline={true}
-            numberOfLines={4}
-            placeholderTextColor="#A9A9A9"
-            placeholder="e.g. I work from home and enjoy morning walks. I have a fenced yard..."
-          />
-          {errors.lifeStyle && (
-            <Text style={styles.errorText}>{errors.lifeStyle}</Text>
-          )}
-        </View>
-
-        {/* NAVIGATION BUTTONS */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Text style={styles.backButtonText}>Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-            <Text style={styles.nextButtonText}>Next: Pet Experience</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        <FormInput
+          label="Lifestyle Description"
+          value={adopterData.lifeStyle}
+          onChange={(v) => update("lifeStyle", v)}
+          error={errors.lifeStyle}
+          placeholder="e.g. I work from home and enjoy morning walks..."
+          multiline
+          height={100}
+          icon="clipboard-text-outline"
+        />
+      </View>
     </View>
   );
 }
@@ -178,12 +212,39 @@ const styles = StyleSheet.create({
   },
   scrollPadding: { padding: Themes.SPACING.lg, paddingBottom: 50 },
   field: { marginBottom: Themes.SPACING.md },
-  row: { flexDirection: "row", alignItems: "flex-start" },
+  sectionCard: {
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: Themes.RADIUS.md,
+    padding: Themes.SPACING.md,
+    marginBottom: Themes.SPACING.sm,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Themes.SPACING.sm,
+    paddingBottom: Themes.SPACING.xs,
+  },
+  sectionTitle: {
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+    color: Themes.COLORS.primary,
+    marginLeft: Themes.SPACING.sm,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
   label: {
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: 14,
     color: Themes.COLORS.primary,
-    marginBottom: 6,
     marginLeft: 2,
   },
   input: {
@@ -196,22 +257,15 @@ const styles = StyleSheet.create({
     borderColor: "#EAEAEA",
     color: "#333",
   },
-  textArea: {
-    height: 100,
-    textAlignVertical: "top",
-  },
   inputError: { borderColor: "#FF6B6B" },
   errorText: {
     color: "#FF6B6B",
-    fontSize: 11, // 👈 Small but readable
+    fontSize: 11,
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    marginTop: 2, // 👈 Tight gap from the input
-    lineHeight: 12, // 👈 Force the container to be thin
+    marginTop: 2,
     marginLeft: 4,
   },
-
-  // Selection Chips
-  chipRow: { flexDirection: "row", height: 50 },
+  chipRow: { flexDirection: "row", height: 50, marginTop: 4 },
   chip: {
     flex: 1,
     backgroundColor: "#F5F5F5",
@@ -237,20 +291,20 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between", // 👈 Spaces them out
-    marginTop: 30,
-    paddingBottom: 20, // 👈 Ensures it's not hugging the bottom of the screen
+    justifyContent: "space-between",
+    marginTop: 20,
+    paddingBottom: 20,
   },
   backButton: {
     paddingVertical: Themes.SPACING.md,
     paddingHorizontal: 25,
     borderRadius: Themes.RADIUS.md,
-    backgroundColor: "#F5F5F5", // 👈 Give it a light background to look like a button
+    backgroundColor: "#F5F5F5",
     marginRight: 10,
-    elevation: 3,
+    elevation: 1,
   },
   nextButton: {
-    flex: 1, // 👈 Takes up the remaining width
+    flex: 1,
     backgroundColor: Themes.COLORS.primary,
     paddingVertical: Themes.SPACING.md,
     borderRadius: Themes.RADIUS.md,
@@ -259,7 +313,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    color: Themes.COLORS.textMuted, // A light gray
+    color: Themes.COLORS.textMuted,
     fontSize: 16,
   },
   nextButtonText: {

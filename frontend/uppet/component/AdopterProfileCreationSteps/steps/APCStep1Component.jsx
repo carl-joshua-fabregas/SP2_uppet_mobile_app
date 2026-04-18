@@ -7,55 +7,55 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import * as Themes from "../../../assets/themes/themes";
 export default function APCStep1Component({
   adopterData,
   setAdopterData,
-  onNext,
-  onBack,
+  errors,
 }) {
-  const [errors, setErrors] = useState({});
+  // const [errors, setErrors] = useState({});
   const update = (key, value) =>
     setAdopterData((prev) => ({ ...prev, [key]: value }));
 
-  const handleNext = async () => {
-    const newErrors = {};
-    if (!adopterData.firstName.trim()) {
-      newErrors.firstName = "First Name Error";
-    }
-    if (!adopterData.middleName.trim()) {
-      newErrors.middleName = "Middle Name Error";
-    }
-    if (!adopterData.lastName.trim()) {
-      newErrors.lastName = "Last Name Error";
-    }
-    if (!adopterData.address.trim()) {
-      newErrors.address = "Address Error";
-    }
-    if (!adopterData.bio.trim()) {
-      newErrors.bio = "Bio Error";
-    }
-    const ageNum = Number(adopterData.age, 10);
-    if (isNaN(ageNum)) {
-      newErrors.age = "Age Error";
-    }
-    if (!adopterData.gender.trim()) {
-      newErrors.gender = "Gender Error";
-    }
-    if (!adopterData.contactInfo.trim()) {
-      newErrors.contactInfo = "Contact Info Error";
-    }
+  // const handleNext = async () => {
+  //   const newErrors = {};
+  //   if (!adopterData.firstName.trim()) {
+  //     newErrors.firstName = "First Name Error";
+  //   }
+  //   if (!adopterData.middleName.trim()) {
+  //     newErrors.middleName = "Middle Name Error";
+  //   }
+  //   if (!adopterData.lastName.trim()) {
+  //     newErrors.lastName = "Last Name Error";
+  //   }
+  //   if (!adopterData.address.trim()) {
+  //     newErrors.address = "Address Error";
+  //   }
+  //   if (!adopterData.bio.trim()) {
+  //     newErrors.bio = "Bio Error";
+  //   }
+  //   const ageNum = Number(adopterData.age, 10);
+  //   if (isNaN(ageNum)) {
+  //     newErrors.age = "Age Error";
+  //   }
+  //   if (!adopterData.gender.trim()) {
+  //     newErrors.gender = "Gender Error";
+  //   }
+  //   if (!adopterData.contactInfo.trim()) {
+  //     newErrors.contactInfo = "Contact Info Error";
+  //   }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-    } else {
-      setErrors({});
-      // Proceed to next step
-      console.log("Pet Data is valid, proceeding to next step:", adopterData);
-      onNext();
-    }
-  };
+  //   if (Object.keys(newErrors).length > 0) {
+  //     setErrors(newErrors);
+  //   } else {
+  //     setErrors({});
+  //     // Proceed to next step
+  //     console.log("Pet Data is valid, proceeding to next step:", adopterData);
+  //     onNext();
+  //   }
+  // };
 
   const SelectionChip = ({ label, value, field }) => (
     <TouchableOpacity
@@ -72,14 +72,59 @@ export default function APCStep1Component({
       </Text>
     </TouchableOpacity>
   );
+  const FormInput = ({
+    label,
+    value,
+    onChange,
+    error,
+    placeholder,
+    multiline,
+    height,
+    keyboardType,
+    icon,
+  }) => (
+    <View style={styles.field}>
+      <View style={styles.infoRow}>
+        <MaterialCommunityIcons
+          name={icon}
+          size={20}
+          color={Themes.COLORS.primary}
+        ></MaterialCommunityIcons>
 
+        <Text style={styles.label}>{label}</Text>
+      </View>
+      <TextInput
+        placeholderTextColor="#A9A9A9"
+        style={[
+          styles.input,
+          error && styles.inputError,
+          multiline && { height, textAlignVertical: "top" },
+        ]}
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        multiline={multiline}
+        keyboardType={keyboardType}
+      />
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
+  );
   return (
     <View style={styles.APCStep1ComponentContainer}>
-      <ScrollView contentContainerStyle={styles.scrollPadding}>
-        {/* PROFILE PICTURE UPLOAD */}
+      {/* PROFILE PICTURE UPLOAD */}
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="account-details"
+            size={20}
+            color={Themes.COLORS.primary}
+          />
+          <Text style={styles.sectionTitle}>Profile Picture</Text>
+        </View>
+
         <View style={styles.avatarSection}>
           <TouchableOpacity
-            onPress={() => console.log("PICK IMAGE")}
+            onPress={() => console.log("HELLO")}
             style={styles.avatarContainer}
           >
             {adopterData.profilePicture ? (
@@ -89,134 +134,127 @@ export default function APCStep1Component({
               />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <Text style={styles.placeholderText}>+</Text>
+                <MaterialCommunityIcons
+                  name="camera-plus-outline"
+                  size={32}
+                  color={Themes.COLORS.primary}
+                />
               </View>
             )}
           </TouchableOpacity>
           <Text style={styles.avatarLabel}>Upload Profile Picture</Text>
         </View>
-        {/* FIRST NAME */}
-        <View style={styles.field}>
-          <Text style={styles.label}>First Name</Text>
-          <TextInput
-            placeholderTextColor="#A9A9A9"
-            style={[styles.input, errors.firstName && styles.inputError]}
-            value={adopterData.firstName}
-            onChangeText={(val) => update("firstName", val)}
-            placeholder="e.g. Juan"
+      </View>
+      {/* Personal Information */}
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="account-box"
+            size={20}
+            color={Themes.COLORS.primary}
           />
-          {errors.firstName && (
-            <Text style={styles.errorText}>{errors.firstName}</Text>
-          )}
+          <Text style={styles.sectionTitle}>Personal Information</Text>
         </View>
+        <FormInput
+          label="First Name"
+          value={adopterData.firstName}
+          onChange={(v) => update("firstName", v)}
+          error={errors.firstName}
+          placeholder="Juan"
+        />
+        <FormInput
+          label="Last Name"
+          value={adopterData.lastName}
+          onChange={(v) => update("lastName", v)}
+          error={errors.lastName}
+          placeholder="Dela Cruz"
+        />
+        <FormInput
+          label="Middle Name (Optional)"
+          value={adopterData.middleName}
+          onChange={(v) => update("middleName", v)}
+          placeholder="Protacio"
+        />
 
-        {/* MIDDLE NAME (Optional) */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Middle Name (Optional)</Text>
-          <TextInput
-            placeholderTextColor="#A9A9A9"
-            style={styles.input}
-            value={adopterData.middleName}
-            onChangeText={(val) => update("middleName", val)}
-            placeholder="e.g. Protacio"
-          />
-        </View>
-
-        {/* LAST NAME */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Last Name</Text>
-          <TextInput
-            placeholderTextColor="#A9A9A9"
-            style={[styles.input, errors.lastName && styles.inputError]}
-            value={adopterData.lastName}
-            onChangeText={(val) => update("lastName", val)}
-            placeholder="e.g. Dela Cruz"
-          />
-          {errors.lastName && (
-            <Text style={styles.errorText}>{errors.lastName}</Text>
-          )}
-        </View>
-
-        {/* AGE */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Age</Text>
-          <TextInput
-            placeholderTextColor="#A9A9A9"
-            style={[styles.input, errors.age && styles.inputError]}
-            value={adopterData.age ? String(adopterData.age) : ""}
-            onChangeText={(val) => update("age", val)}
-            keyboardType="numeric"
-            placeholder="Must be 18+"
-          />
-          {errors.age && <Text style={styles.errorText}>{errors.age}</Text>}
-        </View>
-
-        {/* GENDER SELECTION */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Gender</Text>
-          <View style={styles.chipRow}>
-            <SelectionChip label="Male" value="male" field="gender" />
-            <SelectionChip label="Female" value="female" field="gender" />
-            <SelectionChip label="Other" value="other" field="gender" />
+        <View style={styles.row}>
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <FormInput
+              label="Age"
+              value={String(adopterData.age)}
+              onChange={(v) => update("age", v)}
+              error={errors.age}
+              placeholder="18+"
+              keyboardType="numeric"
+              icon="calendar-account"
+            />
           </View>
-          {errors.gender && (
-            <Text style={styles.errorText}>{errors.gender}</Text>
-          )}
+          <View style={{ flex: 1.5 }}>
+            <View style={styles.infoRow}>
+              <MaterialCommunityIcons
+                name="gender-male-female"
+                size={20}
+                color={Themes.COLORS.primary}
+              ></MaterialCommunityIcons>
+              <Text style={styles.label}>Gender</Text>
+            </View>
+            <View style={styles.chipRow}>
+              <SelectionChip label="M" value="male" field="gender" />
+              <SelectionChip label="F" value="female" field="gender" />
+              <SelectionChip label="Other" value="other" field="gender" />
+            </View>
+          </View>
         </View>
-        <View style={styles.field}>
-          <Text style={styles.label}>Address</Text>
-          <TextInput
-            placeholderTextColor="#A9A9A9"
-            style={[styles.input, errors.address && styles.inputError]}
-            value={adopterData.address}
-            onChangeText={(val) => update("address", val)}
-            placeholder="Enter Address"
+      </View>
+
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="map-marker-outline"
+            size={20}
+            color={Themes.COLORS.primary}
           />
-          {errors.address && (
-            <Text style={styles.errorText}>{errors.address}</Text>
-          )}
+          <Text style={styles.sectionTitle}>Contact & Location</Text>
         </View>
-        <View style={styles.field}>
-          <Text style={styles.label}>Contact Information</Text>
-          <TextInput
-            placeholderTextColor="#A9A9A9"
-            style={[styles.input, errors.contactInfo && styles.inputError]}
-            value={adopterData.contactInfo}
-            onChangeText={(val) => update("contactInfo", val)}
-            keyboardType="numeric"
-            placeholder="Enter Contact Information"
+        <FormInput
+          label="Home Address"
+          value={adopterData.address}
+          onChange={(v) => update("address", v)}
+          error={errors.address}
+          placeholder="Barangay, City, Province"
+          icon="hoop-house"
+        />
+        <FormInput
+          label="Contact Number"
+          value={adopterData.contactInfo}
+          onChange={(v) => update("contactInfo", v)}
+          error={errors.contactInfo}
+          placeholder="0912 345 6789"
+          keyboardType="numeric"
+          icon="phone-outline"
+        />
+      </View>
+
+      {/* SECTION 3: BIO CARD */}
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="text-account"
+            size={20}
+            color={Themes.COLORS.primary}
           />
-          {errors.contactInfo && (
-            <Text style={styles.errorText}>{errors.contactInfo}</Text>
-          )}
+          <Text style={styles.sectionTitle}>About You</Text>
         </View>
-        <View style={styles.field}>
-          <Text style={styles.label}>Bio</Text>
-          <TextInput
-            placeholderTextColor="#A9A9A9"
-            scrollEnabled={false}
-            placeholder="Enter Bio"
-            value={adopterData.bio}
-            multiline={true}
-            onChangeText={(text) => update("bio", text)}
-            style={[
-              styles.input,
-              styles.textArea,
-              errors.bio && styles.inputError,
-            ]}
-          ></TextInput>
-          {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
-        </View>
-        {/* NAVIGATION BUTTONS */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Text style={styles.backButtonText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-            <Text style={styles.nextButtonText}>Next: Work & Living</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+        <FormInput
+          label="Bio"
+          value={adopterData.bio}
+          onChange={(v) => update("bio", v)}
+          error={errors.bio}
+          placeholder="Tell us why you'd like to adopt..."
+          multiline
+          height={100}
+          icon="comment-account"
+        />
+      </View>
     </View>
   );
 }
@@ -229,12 +267,41 @@ const styles = StyleSheet.create({
   },
   scrollPadding: { padding: Themes.SPACING.lg, paddingBottom: 50 },
   field: { marginBottom: Themes.SPACING.md },
+  scrollPadding: { padding: 16, paddingBottom: 40 },
+  sectionCard: {
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: Themes.RADIUS.md,
+    padding: Themes.SPACING.md,
+    marginBottom: Themes.SPACING.sm,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Themes.SPACING.sm,
+    paddingBottom: Themes.SPACING.xs,
+  },
+  sectionTitle: {
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+    color: Themes.COLORS.primary,
+    marginLeft: Themes.SPACING.sm,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
   row: { flexDirection: "row", alignItems: "flex-start" },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
   label: {
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: 14,
     color: Themes.COLORS.primary,
-    marginBottom: 6,
     marginLeft: 2,
   },
   input: {
@@ -260,6 +327,9 @@ const styles = StyleSheet.create({
     lineHeight: 12, // 👈 Force the container to be thin
     marginLeft: 4,
   },
+  content: {
+    padding: Themes.SPACING.md,
+  },
 
   // Selection Chips
   chipRow: { flexDirection: "row", height: 50 },
@@ -284,33 +354,6 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: Themes.COLORS.primary,
     fontWeight: "bold",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between", // 👈 Spaces them out
-    marginTop: 30,
-    paddingBottom: 20, // 👈 Ensures it's not hugging the bottom of the screen
-  },
-  backButton: {
-    paddingVertical: Themes.SPACING.md,
-    paddingHorizontal: 25,
-    borderRadius: Themes.RADIUS.md,
-    backgroundColor: "#F5F5F5", // 👈 Give it a light background to look like a button
-    marginRight: 10,
-  },
-  nextButton: {
-    flex: 1, // 👈 Takes up the remaining width
-    backgroundColor: Themes.COLORS.primary,
-    paddingVertical: Themes.SPACING.md,
-    borderRadius: Themes.RADIUS.md,
-    alignItems: "center",
-    elevation: 4,
-  },
-  nextButtonText: {
-    color: "#FFF",
-    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
-    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
   },
   avatarSection: {
     alignItems: "center",
@@ -346,6 +389,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
     fontSize: Themes.TYPOGRAPHY.body.fontSize,
-    color: Themes.COLORS.primary,
+    color: Themes.COLORS.primaryDark,
   },
 });

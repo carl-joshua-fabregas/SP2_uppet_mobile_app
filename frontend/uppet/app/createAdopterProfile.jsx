@@ -3,7 +3,9 @@ import {
   StyleSheet,
   Text,
   KeyboardAvoidingView,
+  TouchableOpacity,
   Platform,
+  ScrollView,
 } from "react-native";
 import { useState } from "react";
 import { useUser } from "../context/UserContext";
@@ -25,23 +27,97 @@ export default function createAdopterProfile() {
   const [uploading, setUploading] = useState(false);
   const [adopterForm, setAdopterForm] = useState(user);
   const navigation = useNavigation();
-  // ({
-  //     firstName: "",
-  //     middleName: "",
-  //     lastName: "",
-  //     bio: "",
-  //     age: "",
-  //     occupation: "",
-  //     income: "",
-  //     address: "",
-  //     contactInfo: "",
-  //     livingCon: "",
-  //     lifeStyle: "",
-  //     householdMem: "",
-  //     currentOwnedPets: "",
-  //     hobies: "",
-  //     gender: "",
-  //   });
+  const [errors, setErrors] = useState({});
+
+  const validators = () => {
+    const newErrors = {};
+    switch (currentStep) {
+      case 0: {
+        if (!adopterForm.firstName.trim()) {
+          newErrors.firstName = "First Name Error";
+        }
+        if (!adopterForm.middleName.trim()) {
+          newErrors.middleName = "Middle Name Error";
+        }
+        if (!adopterForm.lastName.trim()) {
+          newErrors.lastName = "Last Name Error";
+        }
+        if (!adopterForm.address.trim()) {
+          newErrors.address = "Address Error";
+        }
+        if (!adopterForm.bio.trim()) {
+          newErrors.bio = "Bio Error";
+        }
+        const ageNum = Number(adopterForm.age, 10);
+        if (isNaN(ageNum)) {
+          newErrors.age = "Age Error";
+        }
+        if (!adopterForm.gender.trim()) {
+          newErrors.gender = "Gender Error";
+        }
+        if (!adopterForm.contactInfo.trim()) {
+          newErrors.contactInfo = "Contact Info Error";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+          setErrors(newErrors);
+        } else {
+          setErrors({});
+          // Proceed to next step
+          console.log(
+            "Pet Data is valid, proceeding to next step:",
+            adopterForm,
+          );
+        }
+      }
+      case 1: {
+        if (!adopterForm.occupation.trim()) {
+          newErrors.occupation = "Occupation Error";
+        }
+        const incomeNum = Number(adopterForm.income, 10);
+        if (isNaN(incomeNum)) {
+          newErrors.income = "Income Error";
+        }
+        if (!adopterForm.livingCon.trim()) {
+          newErrors.livingCon = "Living Condition Error";
+        }
+        if (!adopterForm.lifeStyle.trim()) {
+          newErrors.lifeStyle = "LifeStyle Error";
+        }
+        const householdMem = Number(adopterForm.householdMem, 10);
+        if (isNaN(householdMem)) {
+          newErrors.householdMem = "Household Members Error";
+        }
+        if (Object.keys(newErrors).length > 0) {
+          setErrors(newErrors);
+        } else {
+          setErrors({});
+          // Proceed to next step
+
+          console.log(
+            "Pet Data is valid, proceeding to next step:",
+            adopterForm,
+          );
+        }
+      }
+      case 2: {
+        const currentOwnedPetsNum = Number(adopterForm.currentOwnedPets, 10);
+        if (isNaN(currentOwnedPetsNum)) {
+          newErrors.currentOwnedPets = "Current Owned Pets Error";
+        }
+        if (!adopterForm.hadPets.trim()) {
+          newErrors.hadPets = "Pet Experience Error";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+          setErrors(newErrors);
+        } else {
+          setErrors({});
+        }
+      }
+    }
+  };
+
   const onFinish = (newUser) => {
     console.log("I AM FINISH UP, VAL OF NEW USER : ", newUser);
     if (!newUser) {
@@ -60,13 +136,6 @@ export default function createAdopterProfile() {
     { label: "Done" },
   ];
 
-  const handleNext = () => {
-    console.log("HANDLE NEXT CALLED. CURRENT STEP:", currentStep);
-    if (currentStep < STEPS.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    }
-    console.log(`update ${currentStep} `, adopterForm);
-  };
   const handleBack = () => {
     console.log("HANDLE Back CALLED. CURRENT STEP:", currentStep);
     if (currentStep > 0) {
@@ -92,6 +161,10 @@ export default function createAdopterProfile() {
       console.log("DONE");
     }
   };
+
+  const updateAdopter = async () => {
+    console.log("Updating Adopter", adopter);
+  };
   const renderStep = () => {
     switch (currentStep) {
       case 0:
@@ -99,8 +172,7 @@ export default function createAdopterProfile() {
           <APCStep1Component
             adopterData={adopterForm}
             setAdopterData={setAdopterForm}
-            onNext={handleNext}
-            onBack={handleBack}
+            errors={errors}
           ></APCStep1Component>
         );
       case 1:
@@ -108,8 +180,7 @@ export default function createAdopterProfile() {
           <APCStep2Component
             adopterData={adopterForm}
             setAdopterData={setAdopterForm}
-            onNext={handleNext}
-            onBack={handleBack}
+            errors={errors}
           ></APCStep2Component>
         );
       case 2:
@@ -117,8 +188,7 @@ export default function createAdopterProfile() {
           <APCStep3Component
             adopterData={adopterForm}
             setAdopterData={setAdopterForm}
-            onNext={handleNext}
-            onBack={handleBack}
+            errors={errors}
           ></APCStep3Component>
         );
       case 3:
@@ -143,6 +213,17 @@ export default function createAdopterProfile() {
     }
   };
 
+  const handleNext = () => {
+    validators();
+    console.log("HANDLE NEXT CALLED. CURRENT STEP:", currentStep);
+    if (currentStep < STEPS.length - 1 && Object.keys(errors).length === 0) {
+      setCurrentStep((prev) => prev + 1);
+      if (currentStep === STEPS.length - 1) {
+        createAdopter();
+      }
+    }
+    console.log(`update ${currentStep} `, adopterForm);
+  };
   // const { type } = props.route.params || {}; // safe access
   return (
     <KeyboardAvoidingView
@@ -160,7 +241,26 @@ export default function createAdopterProfile() {
             {STEPS[currentStep].label}
           </Text>
         </View>
-        {renderStep()}
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderStep()}
+          {/* NAVIGATION BUTTONS */}
+          <View style={styles.buttonContainer}>
+            {currentStep > 0 && (
+              <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                <Text style={styles.backButtonText}>Back</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
+              <Text style={styles.nextButtonText}>
+                Next: {STEPS[currentStep].label}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
     </KeyboardAvoidingView>
   );
@@ -188,4 +288,42 @@ const styles = StyleSheet.create({
     color: Themes.COLORS.primary, // Forest Green
     marginTop: 4,
   },
+  buttonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between", // 👈 Spaces them out
+    marginTop: 30,
+    paddingBottom: 20, // 👈 Ensures it's not hugging the bottom of the screen
+  },
+
+  backButton: {
+    paddingVertical: Themes.SPACING.md,
+    paddingHorizontal: 25,
+    borderRadius: Themes.RADIUS.md,
+    backgroundColor: "#F5F5F5", // 👈 Give it a light background to look like a button
+    marginRight: 10,
+    elevation: 3,
+  },
+
+  nextButton: {
+    flex: 1, // 👈 Takes up the remaining width
+    backgroundColor: Themes.COLORS.primary,
+    paddingVertical: Themes.SPACING.md,
+    borderRadius: Themes.RADIUS.md,
+    alignItems: "center",
+    elevation: 3,
+  },
+
+  backButtonText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    color: Themes.COLORS.textMuted, // A light gray
+    fontSize: 16,
+  },
+
+  nextButtonText: {
+    color: "#FFF",
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+  },
+  scrollContet: { flexGrow: 1, padding: Themes.SPACING.lg, paddingBottom: 50 },
 });

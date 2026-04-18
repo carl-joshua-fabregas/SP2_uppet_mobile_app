@@ -5,15 +5,13 @@ import {
   Text,
   ActivityIndicator,
   Modal,
-  ScrollView,
 } from "react-native";
 import ProfileCard from "../../AdopterProfileCard";
 import * as Themes from "../../../assets/themes/themes";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function APCStep4Component({
   adopterData,
-  onNext,
-  onBack,
   onCreate,
   uploading,
 }) {
@@ -28,7 +26,7 @@ export default function APCStep4Component({
     }
   };
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       <Modal transparent={true} visible={uploading} animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.activityIndicatorWrapper}>
@@ -45,15 +43,7 @@ export default function APCStep4Component({
         </View>
       </Modal>
       <ProfileCard adopter={adopterData}></ProfileCard>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Text style={styles.backButtonText}>Back</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-          <Text style={styles.nextButtonText}>Next</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+    </View>
   );
 }
 

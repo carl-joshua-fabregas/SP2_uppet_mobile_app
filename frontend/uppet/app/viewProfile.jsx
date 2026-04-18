@@ -11,10 +11,6 @@ export default function AdopterProfile() {
     navigation.navigate("createAdopterProfile");
   };
 
-  useEffect(() => {
-    getProfile();
-  }, []);
-
   return (
     <ScrollView style={{ flex: 1 }}>
       <ProfileCard

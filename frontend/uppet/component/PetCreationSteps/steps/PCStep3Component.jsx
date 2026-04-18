@@ -114,7 +114,8 @@ export default function PCStep3Component({
             type: asset.type,
             caption: "",
             id: asset.fileName + Date.now().toString() + index, // Use fileName as a temporary ID,
-            isProfile: petData.photos.length === 0 && index === 0 ? 1 : 0, // Set first photo as profile by default
+            isProfile:
+              petData.photos.length === 0 && index === 0 ? true : false, // Set first photo as profile by default
           }));
           //   console.log("Pet ID IN HANDLE IMAGE READ", petId);
 
@@ -134,7 +135,7 @@ export default function PCStep3Component({
   const handleSetProfile = (photoId) => {
     const updatedPhotos = petData.photos.map((photo) => ({
       ...photo,
-      isProfile: photo.id === photoId ? 1 : 0,
+      isProfile: photo.id === photoId ? true : false,
     }));
     update("photos", updatedPhotos);
   };

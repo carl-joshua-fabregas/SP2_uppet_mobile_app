@@ -5,9 +5,10 @@ import * as Themes from "../assets/themes/themes";
 
 export default function ViewAdopteesCard({ pet }) {
   const navigation = useNavigation();
-  const isAvailable = pet.adoptedStatus === 1;
+  const isAvailable = pet.adoptedStatus;
   const statusTextColor = isAvailable ? "#D97706" : Themes.COLORS.badgeText;
   const statusBg = isAvailable ? "#FFF4E0" : Themes.COLORS.badge;
+  const photo = pet.photos.find((p) => p.isProfile);
 
   console.log("THIS IS AN ID", pet._id);
 
@@ -25,9 +26,7 @@ export default function ViewAdopteesCard({ pet }) {
       {/* Pet Thumbnail */}
       <Image
         source={
-          pet.photos?.[0]?.url
-            ? { uri: pet.photos[0].url }
-            : require("../assets/images/doggoe.jpg")
+          photo ? { uri: photo.url } : require("../assets/images/doggoe.jpg")
         }
         style={styles.petImage}
       />

@@ -76,8 +76,8 @@ export async function findAll(req, res) {
       .skip((req.query.page - 1) * 10)
       .limit(10);
     if (allPets.length == 0) {
-      return res.status(404).json({
-        message: "Not found",
+      return res.status(200).json({
+        message: "NO PETS FOUND",
         body: [],
       });
     }
@@ -154,22 +154,27 @@ export async function findByFilter(req, res) {
 
 export async function findAllAvailPets(req, res) {
   try {
+    console.log("Finding available pets");
     const page = parseInt(req.query.page) || 1;
-    const avail = await Pet.find({ adoptedStatus: 0 })
+    const avail = await Pet.find({ adoptedStatus: { $ne: true } })
       .skip((page - 1) * 10)
       .limit(10);
+    console.log("Found pets:", avail.length);
 
-    if (avail.length == 0) {
-      return res.status(404).json({
-        message: "No pets found",
+    if (avail.length === 0) {
+      console.log("Found pets are nothing");
+      return res.status(200).json({
+        message: "AVAILABLE PETS ARE EMPTY",
         body: [],
       });
     }
+    console.log("SUCCESSFULL RETREIVAL");
     return res.status(200).json({
       message: "Successfully found all available pets",
       body: avail,
     });
   } catch (err) {
+    console.log("Error in findAllAvailPets:", err);
     return res.status(500).json({
       message: "Server Error Meow",
       body: err.message,
@@ -212,7 +217,7 @@ export async function findMyPets(req, res) {
       { $project: { allApps: 0 } },
     ]);
     if (aggregatePets.length == 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No pets found",
         body: [],
       });

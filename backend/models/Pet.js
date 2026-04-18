@@ -60,9 +60,9 @@ const petSchema = new mongoose.Schema({
     required: true,
   },
   adoptedStatus: {
-    type: Number,
-    required: true,
-    default: 0,
+    type: Boolean,
+    required: false,
+    default: false,
   },
   otherInfo: {
     type: String,
@@ -89,7 +89,7 @@ const petSchema = new mongoose.Schema({
           default: Date.now,
         },
         isProfile: {
-          type: Number,
+          type: Boolean,
           required: true,
         },
       },

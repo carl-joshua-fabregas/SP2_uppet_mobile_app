@@ -17,7 +17,7 @@
   "scripts": {
     "run": "npm start --prefix backend",
     "start": "node backend/script.js",
-    "dev": "nodemon backend/script.js"
+    "dev": "nodemon --watch . backend/script.js"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

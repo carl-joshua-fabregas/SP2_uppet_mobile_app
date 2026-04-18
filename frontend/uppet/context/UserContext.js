@@ -24,6 +24,7 @@ export const UserProvider = ({ children }) => {
   const [newUser, setNewUser] = useState(false);
 
   const login = async (userData, userToken) => {
+    console.log("Logging In with", userData);
     setUser(userData);
     setToken(userToken);
     await SecureStore.setItemAsync("token", userToken);

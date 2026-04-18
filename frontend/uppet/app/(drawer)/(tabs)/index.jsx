@@ -42,10 +42,13 @@ export default function Index() {
       setPets((prev) => [...prev, ...newPets]);
 
       if (newPets.length < 10) {
+        console.log("THERE ARE NO MORE PETS");
         setHasMore(false);
       }
     } catch (err) {
       console.error("Error fetching pets:", err);
+      console.error("Status:", err.response?.status); // Is it actually 404?
+      console.error("Data:", err.response?.data); // Does it say "Pet not found"?
     } finally {
       setLoading(false);
     }
@@ -72,35 +75,33 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      <View>
-        <FlatList
-          data={pets}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => {
-            return (
-              <PetCardHome
-                pet={item}
-                onPress={() => {
-                  setSelectedPet(item);
-                  console.log("Selected pet:", item);
-                }}
-              ></PetCardHome>
-            );
-          }}
-          ListEmptyComponent={<Text>No pets found</Text>}
-          ListFooterComponent={
-            hasMore ? (
-              <ActivityIndicator size="large" />
-            ) : !hasMore ? (
-              <Text>No more pets</Text>
-            ) : null
-          }
-          onEndReached={hasMore ? loadMore : null}
-          onEndReachedThreshold={0.1}
-          refreshing={refresh}
-          onRefresh={onRefresh}
-        ></FlatList>
-      </View>
+      <FlatList
+        data={pets}
+        keyExtractor={(item) => item._id}
+        renderItem={({ item }) => {
+          return (
+            <PetCardHome
+              pet={item}
+              onPress={() => {
+                setSelectedPet(item);
+                console.log("Selected pet:", item);
+              }}
+            ></PetCardHome>
+          );
+        }}
+        ListEmptyComponent={<Text>No pets found</Text>}
+        ListFooterComponent={
+          hasMore ? (
+            <ActivityIndicator size="large" />
+          ) : !hasMore ? (
+            <Text>No more pets</Text>
+          ) : null
+        }
+        onEndReached={hasMore ? loadMore : null}
+        onEndReachedThreshold={0.1}
+        refreshing={refresh}
+        onRefresh={onRefresh}
+      ></FlatList>
       <View style={styles.buttonContainer}>
         <Button
           title="POST"
@@ -127,6 +128,7 @@ const styles = StyleSheet.create({
     backgroundColor: Themes.COLORS.background,
     justifyContent: "center",
     alignItems: "center",
+    flex: 1,
   },
   image: {
     width: 80,

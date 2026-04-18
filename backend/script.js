@@ -39,12 +39,14 @@ app.get("/", (req, res) => {
   console.log("Root endpoint accessed");
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, "0.0.0.0", () => {
   console.log("server is running on port " + PORT);
-  console.log(
-    "Server is accessible on all network interfaces " +
-      server.address().address,
-  );
+  const address = server.address();
+  if (address) {
+    console.log(
+      "Server is accessible on " + address.address + ":" + address.port,
+    );
+  }
 });

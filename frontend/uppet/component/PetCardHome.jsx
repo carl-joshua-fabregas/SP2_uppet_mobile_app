@@ -14,7 +14,7 @@ import * as Themes from "../assets/themes/themes";
 const width = Dimensions.get("window").width;
 
 export default function PetCardHome({ pet, onPress }) {
-  const photo = pet.photos.find((photo) => photo.isProfile === 1);
+  const photo = pet.photos.find((photo) => photo.isProfile);
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={onPress}>
       <Image

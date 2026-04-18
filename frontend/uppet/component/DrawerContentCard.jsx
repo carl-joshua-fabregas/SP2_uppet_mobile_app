@@ -21,8 +21,6 @@ export default function ProfileDrawer(props) {
     try {
       console.log("Signed OUT");
       logout();
-      await GoogleSignin.signOut();
-      router.replace("index");
     } catch (err) {
       console.error(err);
     }

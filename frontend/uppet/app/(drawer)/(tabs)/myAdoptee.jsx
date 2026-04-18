@@ -55,8 +55,8 @@ export default function MyAdoptee() {
     }
   };
   const getStructuredData = (rawData) => {
-    const adopted = rawData.filter((a) => a.adoptedStatus === 0);
-    const notadopted = rawData.filter((a) => a.adoptedStatus === 1);
+    const adopted = rawData.filter((a) => a.adoptedStatus);
+    const notadopted = rawData.filter((a) => !a.adoptedStatus);
     const structuredData = [
       {
         title: `Pending Adoptions - ${notadopted.length}`,

@@ -13,7 +13,7 @@ import { useNavigation } from "@react-navigation/native";
 
 export default function PetModal({ pet, onClose }) {
   const navigator = useNavigation();
-  const petProfilePhoto = pet?.photos?.find((photo) => photo.isProfile === 1);
+  const petProfilePhoto = pet?.photos?.find((photo) => photo.isProfile);
   return (
     <Modal
       visible={!!pet}

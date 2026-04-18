@@ -77,6 +77,11 @@ const AdopterSchema = new mongoose.Schema({
     enum: ["yes", "no"],
     required: true,
   },
+  profilePhoto: {
+    url: { type: String, required: true },
+    key: { type: String, required: true },
+    timeStamp: { type: Date, required: true, default: Date.now() },
+  },
 });
 
 const Adopter = mongoose.model("Adopter", AdopterSchema);

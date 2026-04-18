@@ -5,6 +5,7 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import { useState } from "react";
 import * as Themes from "../../../assets/themes/themes";
@@ -75,6 +76,25 @@ export default function APCStep1Component({
   return (
     <View style={styles.APCStep1ComponentContainer}>
       <ScrollView contentContainerStyle={styles.scrollPadding}>
+        {/* PROFILE PICTURE UPLOAD */}
+        <View style={styles.avatarSection}>
+          <TouchableOpacity
+            onPress={() => console.log("PICK IMAGE")}
+            style={styles.avatarContainer}
+          >
+            {adopterData.profilePicture ? (
+              <Image
+                source={{ uri: adopterData.profilePicture }}
+                style={styles.avatar}
+              />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.placeholderText}>+</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <Text style={styles.avatarLabel}>Upload Profile Picture</Text>
+        </View>
         {/* FIRST NAME */}
         <View style={styles.field}>
           <Text style={styles.label}>First Name</Text>
@@ -291,5 +311,41 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+  },
+  avatarSection: {
+    alignItems: "center",
+    marginBottom: Themes.SPACING.lg,
+    marginTop: Themes.SPACING.sm,
+  },
+  avatarContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#F5F5F5",
+    borderWidth: 2,
+    borderColor: Themes.COLORS.primary,
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  avatar: {
+    width: "100%",
+    height: "100%",
+  },
+  avatarPlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  placeholderText: {
+    fontSize: 40,
+    color: Themes.COLORS.primary,
+    fontWeight: "300",
+  },
+  avatarLabel: {
+    marginTop: 8,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.primary,
   },
 });

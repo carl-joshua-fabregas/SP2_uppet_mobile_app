@@ -8,8 +8,10 @@ const getBaseURL = () => {
     const debuggerHost = Constants.expoConfig?.hostUri.split(":").shift();
     return `http://${debuggerHost}:5000`;
   }
-  return "http://10.20.25.183:5000";
+  return "http://10.20.25.254:5000";
 };
+
+console.log("Base URL:", getBaseURL());
 
 const api = axios.create({
   baseURL: getBaseURL(),

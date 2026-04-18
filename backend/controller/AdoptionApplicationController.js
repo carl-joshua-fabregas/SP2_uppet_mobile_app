@@ -33,8 +33,9 @@ export async function findAllAdoptApp(req, res) {
     }
     const allApp = await AdoptionApplication.find({});
     if (allApp.length == 0) {
-      return res.status(404).json({
-        message: "Nothing Found",
+      return res.status(200).json({
+        message: "No Applications Found",
+        body: [],
       });
     }
     return res.status(200).json({
@@ -54,7 +55,7 @@ export async function findAdoptAppByID(req, res) {
     const adoptApp = await AdoptionApplication.findById(req.params.id);
     if (!adoptApp) {
       return res.status(404).json({
-        message: "Nothing Found",
+        message: "No Applications Found",
       });
     }
     return res.status(200).json({
@@ -76,8 +77,9 @@ export async function findMyListAdoptApp(req, res) {
       applicant: req.user.id,
     });
     if (adoptAppList.length == 0) {
-      return res.status(404).json({
-        message: "Nothing Found",
+      return res.status(200).json({
+        message: "No Applications found",
+        body: [],
       });
     }
     return res.status(200).json({
@@ -98,8 +100,8 @@ export async function findMyListAdoptees(req, res) {
     const adoptAppListID = adoptAppList.map((petID) => petID._id);
 
     if (adoptAppListID.length == 0) {
-      return res.status(404).json({
-        message: "Nothing Found",
+      return res.status(200).json({
+        message: "No Applications Found",
       });
     }
 
@@ -129,8 +131,8 @@ export async function findPetApplicants(req, res) {
       .populate("applicant", "firstName MiddleName lastName address")
       .select("status timeStamp");
     if (adoptAppList.length == 0) {
-      return res.status(404).json({
-        message: "Nothing Found",
+      return res.status(200).json({
+        message: "No Applicants found",
       });
     }
     return res.status(200).json({
@@ -310,7 +312,7 @@ export async function approveAdoption(req, res) {
       );
       const updatePet = await Pet.findById(
         pet.id,
-        { adoptedStatus: "Accepted" },
+        { adoptedStatus: true },
         options,
       );
 
@@ -326,7 +328,7 @@ export async function approveAdoption(req, res) {
 
       const updatedList = await AdoptionApplication.find({
         petToAdopt: acceptedApplication.petToAdopt,
-      }).populate("applicant", " firstName address");
+      }).populate("applicant", " firstName middleName lastName address");
       if (updatedList.length === 0) {
         return res.status(500).json({
           message: "Error Retrieving Updated List",

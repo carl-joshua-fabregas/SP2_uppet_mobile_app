@@ -17,7 +17,7 @@ export default function PetProfileCardViewMore({
   isOwner,
   editingFooter,
 }) {
-  const profilePhoto = pet.photos.find((photo) => photo.isProfile === 1);
+  const profilePhoto = pet.photos.find((photo) => photo.isProfile);
   const form = {
     name: pet.name,
     age: pet.age,

@@ -1,22 +1,11 @@
 import { ScrollView, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useState, useEffect } from "react";
+import { useUser } from "../context/UserContext";
 import ProfileCard from "../component/AdopterProfileCard";
-const api = require("../api/axios");
 export default function AdopterProfile() {
-  const [user, setUser] = useState({});
+  const { user } = useUser();
   const navigation = useNavigation();
-  const getProfile = async () => {
-    try {
-      const res = await api.get("/api/user/me", {});
-      const userData = res.data.body;
-
-      setUser(userData);
-      console.log("I LOADED");
-    } catch (err) {
-      console.log(err);
-    }
-  };
 
   const handleEditing = () => {
     navigation.navigate("createAdopterProfile");

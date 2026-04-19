@@ -26,7 +26,11 @@ export default function ProfileCard({ adopter, isOwner, handleEditing }) {
       {/* Header Section */}
       <View style={styles.header}>
         <Image
-          source={require("../assets/images/doggoe.jpg")} // Use adopter.profilePic if available
+          source={
+            adopter.profilePhoto
+              ? { uri: adopter.profilePhoto.url }
+              : require("../assets/images/doggoe.jpg")
+          } // Use adopter.profilePic if available
           style={styles.profileImage}
         />
         <Text style={styles.fullName}>

@@ -21,7 +21,7 @@ import APCStep5Component from "../component/AdopterProfileCreationSteps/steps/AP
 const api = require("../api/axios");
 
 export default function createAdopterProfile() {
-  const { user, setNewUser, login } = useUser();
+  const { user, setNewUser, login, setUser, newUser } = useUser();
   // const { adopterData } = route.params;
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -33,88 +33,83 @@ export default function createAdopterProfile() {
     const newErrors = {};
     switch (currentStep) {
       case 0: {
-        if (!adopterForm.firstName.trim()) {
+        console.log("AT VALIDATOR 0");
+        if (
+          !(
+            adopterForm.profilePhoto &&
+            Object.hasOwn(adopterForm.profilePhoto, "url") &&
+            Object.hasOwn(adopterForm.profilePhoto, "key")
+          )
+        ) {
+          newErrors.profilePhoto = "Please Upload One Profile Picture";
+        }
+        if (!adopterForm.firstName?.trim()) {
           newErrors.firstName = "First Name Error";
         }
-        if (!adopterForm.middleName.trim()) {
+        if (adopterForm.middleName && !adopterForm.middleName?.trim()) {
           newErrors.middleName = "Middle Name Error";
         }
-        if (!adopterForm.lastName.trim()) {
+        if (!adopterForm.lastName?.trim()) {
           newErrors.lastName = "Last Name Error";
         }
-        if (!adopterForm.address.trim()) {
+        if (!adopterForm.address?.trim()) {
           newErrors.address = "Address Error";
         }
-        if (!adopterForm.bio.trim()) {
+        if (!adopterForm.bio?.trim()) {
           newErrors.bio = "Bio Error";
         }
         const ageNum = Number(adopterForm.age, 10);
         if (isNaN(ageNum)) {
           newErrors.age = "Age Error";
         }
-        if (!adopterForm.gender.trim()) {
+        if (!adopterForm.gender?.trim()) {
           newErrors.gender = "Gender Error";
         }
-        if (!adopterForm.contactInfo.trim()) {
+        if (!adopterForm.contactInfo?.trim()) {
           newErrors.contactInfo = "Contact Info Error";
         }
-
-        if (Object.keys(newErrors).length > 0) {
-          setErrors(newErrors);
-        } else {
-          setErrors({});
-          // Proceed to next step
-          console.log(
-            "Pet Data is valid, proceeding to next step:",
-            adopterForm,
-          );
-        }
+        break;
       }
       case 1: {
-        if (!adopterForm.occupation.trim()) {
+        if (!adopterForm.occupation?.trim()) {
           newErrors.occupation = "Occupation Error";
         }
         const incomeNum = Number(adopterForm.income, 10);
         if (isNaN(incomeNum)) {
           newErrors.income = "Income Error";
         }
-        if (!adopterForm.livingCon.trim()) {
+        if (!adopterForm.livingCon?.trim()) {
           newErrors.livingCon = "Living Condition Error";
         }
-        if (!adopterForm.lifeStyle.trim()) {
+        if (!adopterForm.lifeStyle?.trim()) {
           newErrors.lifeStyle = "LifeStyle Error";
         }
         const householdMem = Number(adopterForm.householdMem, 10);
         if (isNaN(householdMem)) {
           newErrors.householdMem = "Household Members Error";
         }
-        if (Object.keys(newErrors).length > 0) {
-          setErrors(newErrors);
-        } else {
-          setErrors({});
-          // Proceed to next step
-
-          console.log(
-            "Pet Data is valid, proceeding to next step:",
-            adopterForm,
-          );
-        }
+        break;
       }
       case 2: {
         const currentOwnedPetsNum = Number(adopterForm.currentOwnedPets, 10);
         if (isNaN(currentOwnedPetsNum)) {
           newErrors.currentOwnedPets = "Current Owned Pets Error";
         }
-        if (!adopterForm.hadPets.trim()) {
+        if (!adopterForm.hadPets?.trim()) {
           newErrors.hadPets = "Pet Experience Error";
         }
-
-        if (Object.keys(newErrors).length > 0) {
-          setErrors(newErrors);
-        } else {
-          setErrors({});
-        }
+        break;
       }
+      default: {
+        break;
+      }
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return false;
+    } else {
+      setErrors({});
+      return true;
     }
   };
 
@@ -143,21 +138,61 @@ export default function createAdopterProfile() {
     }
   };
 
+  const saveEditAdopter = async () => {
+    console.log("Saving Editing of Adopter");
+    try {
+      setUploading(true);
+      const adopterUpdateRes = await api.patch(`/api/user/update`, {
+        ...adopterForm,
+      });
+    } catch (error) {
+      console.log("Error in saveEdit");
+      console.error(error);
+    } finally {
+      setUploading(false);
+    }
+  };
   const createAdopter = async () => {
     console.log("Start saving");
     console.log(adopterForm);
     try {
-      setUploading(false);
+      setUploading(true);
       const adopterCreationRes = await api.post(`api/user/post`, {
         ...adopterForm,
       });
-      login(adopterForm, adopterCreationRes.data.token);
-      setUploading(false);
+      console.log("ADOPTER IS CREATED IN THE DB");
+      console.log("Getting Presign URL for profile upload");
+      login(adopterCreationRes.data.body, adopterCreationRes.data.token);
+
+      const presignUrl = await api.post(`/api/user/presignUploadUrl`, {
+        fileName: adopterForm.profilePhoto.name,
+        fileType: adopterForm.profilePhoto.fileType,
+      });
+
+      console.log("Presigned URL obtained ");
+
+      const { url, key } = presignUrl.data.body;
+      const fetchImage = await fetch(adopterForm.profilePhoto.url);
+      const blob = await fetchImage.blob();
+
+      await fetch(url, {
+        method: "PUT",
+        body: blob,
+        contentType: adopterForm.profilePhoto.fileType,
+      });
+
+      const finalAdopterFormRes = await api.patch(`/api/user/photo`, {
+        key: key,
+        timeStamp: Date.now(),
+      });
+      console.log("THE FINAL FORM IS ,", finalAdopterFormRes.data.body);
+      setUser(finalAdopterFormRes.data.body);
       return true;
     } catch (error) {
       console.error(error);
     } finally {
       setUploading(false);
+      setNewUser(false);
       console.log("DONE");
     }
   };
@@ -195,9 +230,6 @@ export default function createAdopterProfile() {
         return (
           <APCStep4Component
             adopterData={adopterForm}
-            onNext={handleNext}
-            onBack={handleBack}
-            onCreate={createAdopter}
             uploading={uploading}
           ></APCStep4Component>
         );
@@ -213,56 +245,53 @@ export default function createAdopterProfile() {
     }
   };
 
-  const handleNext = () => {
-    validators();
-    console.log("HANDLE NEXT CALLED. CURRENT STEP:", currentStep);
-    if (currentStep < STEPS.length - 1 && Object.keys(errors).length === 0) {
-      setCurrentStep((prev) => prev + 1);
-      if (currentStep === STEPS.length - 1) {
-        createAdopter();
+  const handleNext = async () => {
+    console.log("HANDLE NEXT CALLED. CURRENT STEP:", currentStep, errors);
+    if (currentStep < STEPS.length - 1 && validators()) {
+      console.log("DOES USER EXIST", user);
+      if (currentStep === STEPS.length - 2 && newUser) {
+        await createAdopter();
+      } else if (currentStep === STEPS.length - 2 && !newUser) {
+        await saveEditAdopter();
       }
+      setCurrentStep((prev) => prev + 1);
     }
     console.log(`update ${currentStep} `, adopterForm);
   };
   // const { type } = props.route.params || {}; // safe access
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-    >
-      <View style={styles.createProfileContainer}>
-        <APCProgressTracker currentStep={currentStep} STEPS={STEPS} />
-        <View style={styles.headerContainer}>
-          <Text style={styles.stepHeaderCount}>
-            Step{currentStep + 1} of {STEPS.length}
-          </Text>
-          <Text style={styles.stepHeaderTitle}>
-            {" "}
-            {STEPS[currentStep].label}
-          </Text>
-        </View>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {renderStep()}
-          {/* NAVIGATION BUTTONS */}
+    // <KeyboardAvoidingView style={{ flex: 1 }}>
+    <View style={styles.createProfileContainer}>
+      <APCProgressTracker currentStep={currentStep} STEPS={STEPS} />
+      <View style={styles.headerContainer}>
+        <Text style={styles.stepHeaderCount}>
+          Step{currentStep + 1} of {STEPS.length}
+        </Text>
+        <Text style={styles.stepHeaderTitle}> {STEPS[currentStep].label}</Text>
+      </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {renderStep()}
+        {/* NAVIGATION BUTTONS */}
+        {currentStep < STEPS.length - 1 && (
           <View style={styles.buttonContainer}>
             {currentStep > 0 && (
               <TouchableOpacity onPress={handleBack} style={styles.backButton}>
                 <Text style={styles.backButtonText}>Back</Text>
               </TouchableOpacity>
             )}
-
             <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
               <Text style={styles.nextButtonText}>
-                Next: {STEPS[currentStep].label}
+                Next: {STEPS[currentStep + 1].label}
               </Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </View>
-    </KeyboardAvoidingView>
+        )}
+      </ScrollView>
+    </View>
+    // </KeyboardAvoidingView>
   );
 }
 

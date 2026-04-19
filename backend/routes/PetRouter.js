@@ -3,6 +3,7 @@ const router = express.Router();
 import {
   createPet,
   presignUploadURL,
+  presignDeleteURL,
   uploadPetPhoto,
   findAll,
   findAllAvailPets,
@@ -34,7 +35,9 @@ router.patch("/:id", updatePet);
 router.patch("/:id/photo", uploadPetPhoto);
 
 //Delete Requests
+
 router.delete("/", deleteAll);
+router.delete("/presignDeleteURL", presignDeleteURL);
 router.delete("/:id", deleteByID);
 router.delete("/:id/photo/:photoId", deletePetPhoto);
 

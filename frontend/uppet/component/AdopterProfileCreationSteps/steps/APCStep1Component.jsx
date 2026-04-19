@@ -10,6 +10,8 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import * as Themes from "../../../assets/themes/themes";
+import { launchImageLibrary } from "react-native-image-picker";
+
 export default function APCStep1Component({
   adopterData,
   setAdopterData,
@@ -19,44 +21,37 @@ export default function APCStep1Component({
   const update = (key, value) =>
     setAdopterData((prev) => ({ ...prev, [key]: value }));
 
-  // const handleNext = async () => {
-  //   const newErrors = {};
-  //   if (!adopterData.firstName.trim()) {
-  //     newErrors.firstName = "First Name Error";
-  //   }
-  //   if (!adopterData.middleName.trim()) {
-  //     newErrors.middleName = "Middle Name Error";
-  //   }
-  //   if (!adopterData.lastName.trim()) {
-  //     newErrors.lastName = "Last Name Error";
-  //   }
-  //   if (!adopterData.address.trim()) {
-  //     newErrors.address = "Address Error";
-  //   }
-  //   if (!adopterData.bio.trim()) {
-  //     newErrors.bio = "Bio Error";
-  //   }
-  //   const ageNum = Number(adopterData.age, 10);
-  //   if (isNaN(ageNum)) {
-  //     newErrors.age = "Age Error";
-  //   }
-  //   if (!adopterData.gender.trim()) {
-  //     newErrors.gender = "Gender Error";
-  //   }
-  //   if (!adopterData.contactInfo.trim()) {
-  //     newErrors.contactInfo = "Contact Info Error";
-  //   }
-
-  //   if (Object.keys(newErrors).length > 0) {
-  //     setErrors(newErrors);
-  //   } else {
-  //     setErrors({});
-  //     // Proceed to next step
-  //     console.log("Pet Data is valid, proceeding to next step:", adopterData);
-  //     onNext();
-  //   }
-  // };
-
+  const handleAddPhoto = () => {
+    console.log("Adding Adopter Profile Picture");
+    launchImageLibrary(
+      {
+        mediaType: "photo",
+        quality: 1,
+        selectionLimit: 1,
+      },
+      async (response) => {
+        if (response.didCancel) {
+          console.log("The user has cancelled selection");
+        } else if (response.errorCode) {
+          console.log(
+            "I have issues and one of them is you",
+            response.errorCode,
+          );
+        } else {
+          const asset = response.assets;
+          const newProfilePicture = {
+            url: asset[0].uri,
+            name: asset[0].fileName,
+            type: asset[0].type,
+            key: asset[0].fileName + Date.now().toString(),
+          };
+          console.log("Selected zucc", newProfilePicture);
+          update("profilePhoto", newProfilePicture);
+          console.log("Update zucc", adopterData);
+        }
+      },
+    );
+  };
   const SelectionChip = ({ label, value, field }) => (
     <TouchableOpacity
       style={[styles.chip, adopterData[field] === value && styles.chipActive]}
@@ -124,12 +119,16 @@ export default function APCStep1Component({
 
         <View style={styles.avatarSection}>
           <TouchableOpacity
-            onPress={() => console.log("HELLO")}
-            style={styles.avatarContainer}
+            onPress={handleAddPhoto}
+            style={[
+              styles.avatarContainer,
+              adopterData.profilePhoto && { borderStyle: "solid" },
+              errors.profilePhoto && [styles.inputError],
+            ]}
           >
-            {adopterData.profilePicture ? (
+            {adopterData.profilePhoto ? (
               <Image
-                source={{ uri: adopterData.profilePicture }}
+                source={{ uri: adopterData.profilePhoto.url }}
                 style={styles.avatar}
               />
             ) : (
@@ -142,7 +141,14 @@ export default function APCStep1Component({
               </View>
             )}
           </TouchableOpacity>
-          <Text style={styles.avatarLabel}>Upload Profile Picture</Text>
+          <Text
+            style={[
+              styles.avatarLabel,
+              errors.profilePhoto && styles.errorText,
+            ]}
+          >
+            Upload Profile Picture
+          </Text>
         </View>
       </View>
       {/* Personal Information */}
@@ -180,7 +186,7 @@ export default function APCStep1Component({
           <View style={{ flex: 1, marginRight: 12 }}>
             <FormInput
               label="Age"
-              value={String(adopterData.age)}
+              value={String(adopterData.age || "")}
               onChange={(v) => update("age", v)}
               error={errors.age}
               placeholder="18+"
@@ -202,6 +208,9 @@ export default function APCStep1Component({
               <SelectionChip label="F" value="female" field="gender" />
               <SelectionChip label="Other" value="other" field="gender" />
             </View>
+            {errors.gender && (
+              <Text style={styles.errorText}> {errors.gender} </Text>
+            )}
           </View>
         </View>
       </View>

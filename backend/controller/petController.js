@@ -368,6 +368,7 @@ export async function presignUploadURL(req, res) {
     });
   }
 }
+
 export async function presignDeleteURL(req, res) {
   try {
     console.log("GENERATING presignDeleteURL");

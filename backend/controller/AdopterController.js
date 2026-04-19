@@ -6,8 +6,12 @@ import Notification from "../models/Notification.js";
 import Pet from "../models/Pet.js";
 import Rating from "../models/Rating.js";
 import jwt from "jsonwebtoken";
-import { S3Client, PutObjectCommand, DeleteObjectCommand} from "@aws-sdk/client-s3";
-
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -18,6 +22,7 @@ const s3 = new S3Client({
 
 export async function createAdopter(req, res) {
   console.log("Create Adopter Called");
+  console.log("Req Body is", req.body);
   try {
     const {
       firstName,
@@ -38,6 +43,7 @@ export async function createAdopter(req, res) {
       googleId,
       gender,
       hadPets,
+      profilePhoto,
     } = req.body;
     const adopter = new Adopter({
       firstName: firstName,
@@ -58,6 +64,7 @@ export async function createAdopter(req, res) {
       googleId: googleId,
       gender: gender,
       hadPets: hadPets,
+      profilePhoto: profilePhoto,
     });
 
     const newAdopter = await adopter.save();
@@ -77,7 +84,7 @@ export async function createAdopter(req, res) {
       token: jwttoken,
     });
   } catch (err) {
-    console.err(err);
+    console.error(err);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
@@ -276,21 +283,21 @@ export async function uploadAdopterPhoto(req, res) {
     // }));
 
     const uploadedPhoto = {
-      url: `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${req.body.photo.key}`,
-      key: req.body.photo.key,
-      timeStamp: req.body.photo.key
-    }
+      url: `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${req.body.key}`,
+      key: req.body.key,
+      timeStamp: req.body.timeStamp,
+    };
 
-    console.log("BACKED END HERE UPLOADED PHOTOS ARE", uploadedPhotos);
+    console.log("BACKED END HERE UPLOADED PHOTOS ARE", uploadedPhoto);
     const updatedAdopter = await Adopter.findByIdAndUpdate(
       req.user.id,
-      { $set: { photos: { $each: uploadedPhotos } } },
+      { $set: { profilePhoto: uploadedPhoto } },
       { new: true }, // Returns the pet with the new photos included
     );
 
     return res.status(200).json({
       message: "Succesfully uploaded photo",
-      body: updatedPet,
+      body: updatedAdopter,
     });
   } catch (err) {
     console.log("ERROR IN UPLOADING PET PHOTO:", err);
@@ -339,7 +346,7 @@ export async function presignUploadURL(req, res) {
 export async function presignDeleteURL(req, res) {
   try {
     console.log("GENERATING presignDeleteURL");
-    const key = req.body.key
+    const key = req.body.key;
     const command = new DeleteObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,

@@ -10,21 +10,7 @@ import ProfileCard from "../../AdopterProfileCard";
 import * as Themes from "../../../assets/themes/themes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-export default function APCStep4Component({
-  adopterData,
-  onCreate,
-  uploading,
-}) {
-  const handleNext = async () => {
-    try {
-      const success = await onCreate();
-      if (success) {
-        onNext();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+export default function APCStep4Component({ adopterData, uploading }) {
   return (
     <View style={styles.container}>
       <Modal transparent={true} visible={uploading} animationType="fade">

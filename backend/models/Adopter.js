@@ -78,9 +78,19 @@ const AdopterSchema = new mongoose.Schema({
     required: true,
   },
   profilePhoto: {
-    url: { type: String, required: true },
-    key: { type: String, required: true },
-    timeStamp: { type: Date, required: true, default: Date.now() },
+    url: {
+      type: String,
+      required: function () {
+        return this.profilePhoto !== null;
+      },
+    },
+    key: {
+      type: String,
+      required: function () {
+        return this.profilePhoto !== null;
+      },
+    },
+    timeStamp: { type: Date, required: true, default: Date.now },
   },
 });
 

@@ -139,18 +139,25 @@ export default function createAdopterProfile() {
   };
 
   const saveEditAdopter = async () => {
-    console.log("Saving Editing of Adopter");
+    const { profilePhoto: oldUserPhoto, ...oldUserForm } = user;
+    const { profilePhoto: newUserPhoto, ...newUserForm } = adopterForm;
+
+    const isFormUnchanged =
+      JSON.stringify(oldUserForm) === JSON.stringify(newUserForm);
+    const isPhotoUnchanged = newUserPhoto?.key === oldUserPhoto?.key;
+
+    console.log("=================Saving Editing of Adopter");
+    console.log("OG ====== ", adopterForm, "NEW ================", user);
+
+    if (isFormUnchanged && isPhotoUnchanged) {
+      console.log("No changes detected. Skipping API calls.");
+      return;
+    }
     try {
       setUploading(true);
       const updatePhoto =
-        adopterForm.profilePhoto.key !== user.profilePhoto.key;
-      console.log("Will I Update the photo", updatePhoto);
-      console.log(
-        "FORMS LOOK LIKE THIS",
-        adopterForm.profilePhoto.key,
-        " ",
-        user.profilePhoto.key,
-      );
+        adopterForm.profilePhoto?.key !== user.profilePhoto?.key;
+      let finalUploadKey = user.profilePhoto?.key;
       if (updatePhoto) {
         const presignDeleteUrl = await api.post(`/api/user/presignDeleteURL`, {
           key: user.profilePhoto.key,
@@ -162,19 +169,16 @@ export default function createAdopterProfile() {
         const awsDelRes = await fetch(deleteUrl, {
           method: "DELETE",
         });
-        console.log("Was it deleted?", awsDelRes.ok);
-        const s3Status = awsDelRes.status;
-        const s3ErrorText = await awsDelRes.text();
-        console.log("--- S3 DELETE RESULT ---");
-        console.log("STATUS CODE:", s3Status);
-        console.log("RAW XML ERROR:", s3ErrorText);
+        console.log("Deleting Photo", awsDelRes.ok);
+
         const presignUploadUrl = await api.post(`/api/user/presignUploadUrl`, {
           fileName: adopterForm.profilePhoto.name,
-          fileType: adopterForm.profilePhoto.fileType,
+          fileType: adopterForm.profilePhoto.type,
+          fileSize: adopterForm.profilePhoto.size,
         });
         console.log("PROCEEDING TO UPLOAD");
         const uploadUrl = presignUploadUrl.data.body.url;
-        const uploadKey = presignUploadUrl.data.body.key;
+        finalUploadKey = presignUploadUrl.data.body.key;
         // const { url, key } = presignUploadUrl.data.body;
         const fetchImage = await fetch(adopterForm.profilePhoto.url);
         const blob = await fetchImage.blob();
@@ -182,15 +186,32 @@ export default function createAdopterProfile() {
         await fetch(uploadUrl, {
           method: "PUT",
           body: blob,
-          contentType: adopterForm.profilePhoto.fileType,
+          headers: {
+            "Content-Type": adopterForm.profilePhoto.type,
+          },
         });
 
         console.log("SUCCESSFULLY UPLOADED NEW PHOTOS");
       }
       const adopterUpdateRes = await api.patch(`/api/user/update`, {
         ...adopterForm,
+        profilePhoto: null,
       });
-      setUser(adopterUpdateRes.data.body);
+      let finalUserData = adopterUpdateRes.data.body;
+
+      if (updatePhoto) {
+        const finalAdopterFormRes = await api.patch(`/api/user/photo`, {
+          key: finalUploadKey,
+          timeStamp: Date.now(),
+        });
+        finalUserData = finalAdopterFormRes.data.body;
+      }
+
+      console.log("DID PROCEED TO UPDATE MAKING FINAL CHANGES");
+
+      console.log("=============EDITED FORM IS============");
+      console.log(finalUserData);
+      setUser(finalUserData);
     } catch (error) {
       console.log("Error in saveEdit");
       console.error(error);
@@ -212,7 +233,8 @@ export default function createAdopterProfile() {
 
       const presignUrl = await api.post(`/api/user/presignUploadUrl`, {
         fileName: adopterForm.profilePhoto.name,
-        fileType: adopterForm.profilePhoto.fileType,
+        fileType: adopterForm.profilePhoto.type,
+        fileSize: adopterForm.profilePhoto.size,
       });
 
       console.log("Presigned URL obtained ");
@@ -231,7 +253,10 @@ export default function createAdopterProfile() {
         key: key,
         timeStamp: Date.now(),
       });
-      console.log("THE FINAL FORM IS ,", finalAdopterFormRes.data.body);
+      console.log(
+        "-------------------THE FINAL FORM IS ,",
+        finalAdopterFormRes.data.body,
+      );
       setUser(finalAdopterFormRes.data.body);
       return true;
     } catch (error) {

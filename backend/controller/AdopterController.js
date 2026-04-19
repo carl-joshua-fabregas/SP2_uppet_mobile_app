@@ -317,7 +317,7 @@ export async function uploadAdopterPhoto(req, res) {
 export async function presignUploadURL(req, res) {
   console.log("IN THE UPLOAD PRESIGN URL");
   try {
-    const key = `user/${req.user.id}/${Date.now()}_${req.body.fileName}`;
+    const key = `user/${req.user.id}/${req.body.fileSize}_${req.body.fileName}`;
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,

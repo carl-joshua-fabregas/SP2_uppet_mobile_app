@@ -43,7 +43,8 @@ export default function APCStep1Component({
             url: asset[0].uri,
             name: asset[0].fileName,
             type: asset[0].type,
-            key: asset[0].fileName + asset[0].fileSize,
+            size: asset[0].fileSize,
+            key: `user/${adopterData._id}/${asset[0].fileSize}_${asset[0].fileName}`,
           };
           console.log("Selected zucc", newProfilePicture);
           update("profilePhoto", newProfilePicture);

@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
-
+const implicitPhotoSchema = new mongoose.Schema({
+  key: { type: String, required: true },
+  url: { type: String, required: true },
+  timeStamp: { type: Date, required: true, default: Date.now },
+});
 const AdopterSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -78,19 +82,7 @@ const AdopterSchema = new mongoose.Schema({
     required: true,
   },
   profilePhoto: {
-    url: {
-      type: String,
-      required: function () {
-        return this.profilePhoto !== null;
-      },
-    },
-    key: {
-      type: String,
-      required: function () {
-        return this.profilePhoto !== null;
-      },
-    },
-    timeStamp: { type: Date, default: Date.now },
+    type: implicitPhotoSchema,
   },
 });
 

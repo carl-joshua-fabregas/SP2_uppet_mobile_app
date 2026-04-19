@@ -119,7 +119,7 @@ export default function ProfileCard({ adopter, isOwner, handleEditing }) {
           <InfoSection
             icon="heart-outline"
             label="Hobbies"
-            value={adopter.hobies}
+            value={adopter.hobbies}
           />
         </View>
       </View>

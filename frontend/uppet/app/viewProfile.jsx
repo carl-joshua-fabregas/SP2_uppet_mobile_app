@@ -10,6 +10,7 @@ export default function AdopterProfile() {
   const handleEditing = () => {
     navigation.navigate("createAdopterProfile");
   };
+  console.log("Current Profile", user);
 
   return (
     <ScrollView style={{ flex: 1 }}>

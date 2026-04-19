@@ -125,7 +125,7 @@ export default function APCStep2Component({
 
         <FormInput
           label="Monthly Income (PHP)"
-          value={String(adopterData.income || "")}
+          value={String(adopterData.income ?? "")}
           onChange={(v) => update("income", v)}
           error={errors.income}
           placeholder="e.g. 25000"
@@ -170,7 +170,7 @@ export default function APCStep2Component({
 
         <FormInput
           label="Household Members"
-          value={String(adopterData.householdMem || "")}
+          value={String(adopterData.householdMem ?? "")}
           onChange={(v) => update("householdMem", v)}
           error={errors.householdMem}
           placeholder="Number of people living with you"

@@ -90,7 +90,7 @@ const AdopterSchema = new mongoose.Schema({
         return this.profilePhoto !== null;
       },
     },
-    timeStamp: { type: Date, required: true, default: Date.now },
+    timeStamp: { type: Date, default: Date.now },
   },
 });
 

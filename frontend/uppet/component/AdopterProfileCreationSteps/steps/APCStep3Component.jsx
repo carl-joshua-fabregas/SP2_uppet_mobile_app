@@ -127,7 +127,7 @@ export default function APCStep3Component({
 
         <FormInput
           label="Currently Owned Pets"
-          value={String(adopterData.currentOwnedPets || "")}
+          value={String(adopterData.currentOwnedPets ?? "")}
           onChange={(v) => update("currentOwnedPets", v)}
           error={errors.currentOwnedPets}
           placeholder="0"

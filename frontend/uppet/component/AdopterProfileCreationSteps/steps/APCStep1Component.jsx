@@ -43,7 +43,7 @@ export default function APCStep1Component({
             url: asset[0].uri,
             name: asset[0].fileName,
             type: asset[0].type,
-            key: asset[0].fileName + Date.now().toString(),
+            key: asset[0].fileName + asset[0].fileSize,
           };
           console.log("Selected zucc", newProfilePicture);
           update("profilePhoto", newProfilePicture);
@@ -186,7 +186,7 @@ export default function APCStep1Component({
           <View style={{ flex: 1, marginRight: 12 }}>
             <FormInput
               label="Age"
-              value={String(adopterData.age || "")}
+              value={String(adopterData.age ?? "")}
               onChange={(v) => update("age", v)}
               error={errors.age}
               placeholder="18+"

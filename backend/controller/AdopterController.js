@@ -84,6 +84,7 @@ export async function createAdopter(req, res) {
       token: jwttoken,
     });
   } catch (err) {
+    console.log("===========Creation Error===========");
     console.error(err);
     return res.status(500).json({
       message: "Server Error",
@@ -112,6 +113,8 @@ export async function findAllUser(req, res) {
       body: user,
     });
   } catch (err) {
+    console.log("-----FIND ALL USER ERROR----------");
+    console.error(err);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
@@ -135,6 +138,8 @@ export async function findUserByID(req, res) {
       body: user,
     });
   } catch (err) {
+    console.log("---------FIND USER BY ID ERROR----------");
+    console.error(err);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
@@ -156,6 +161,9 @@ export async function findCurrentUser(req, res) {
       body: user,
     });
   } catch (err) {
+    console.log("===========FIND CURRENT USER ERROR==========");
+    console.error(err);
+
     return res.status(500).json({
       message: "Server Errorr",
       body: err.message,
@@ -164,30 +172,22 @@ export async function findCurrentUser(req, res) {
 }
 
 export async function updateUser(req, res) {
+  console.log("---------------------UPDATING----------------");
   try {
     const options = {
       new: true,
       runValidators: true,
     };
 
-    const user = await Adopter.findById(req.params.id);
+    const user = await Adopter.findById(req.user.id);
     if (!user) {
       return res.status(404).json({
         message: "Not Found",
       });
     }
 
-    if (
-      req.user.id.toString() !== user._id.toString() &&
-      req.user.role.toString() !== "admin"
-    ) {
-      return res.status(403).json({
-        message: "Forbidden",
-      });
-    }
-
     const newUser = await Adopter.findByIdAndUpdate(
-      req.params.id,
+      req.user.id,
       { $set: req.body },
       options,
     );
@@ -197,6 +197,8 @@ export async function updateUser(req, res) {
       body: newUser,
     });
   } catch (err) {
+    console.log("==========ERROR IN UPDATING=========");
+    console.error(err);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
@@ -216,6 +218,8 @@ export async function deleteAllUser(req, res) {
       message: "Successfully deleted all user",
     });
   } catch (err) {
+    console.log("-----------DELETE ALL USER ERROR--------------");
+    console.error(err);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
@@ -256,6 +260,9 @@ export async function deleteUser(req, res) {
       message: "Successfully deleted user",
     });
   } catch (err) {
+    console.log("---------------DELETE ACOUNT ERROR-------------");
+    console.error(err);
+
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
@@ -308,6 +315,7 @@ export async function uploadAdopterPhoto(req, res) {
   }
 }
 export async function presignUploadURL(req, res) {
+  console.log("IN THE UPLOAD PRESIGN URL");
   try {
     const key = `user/${req.user.id}/${Date.now()}_${req.body.fileName}`;
     const command = new PutObjectCommand({
@@ -319,17 +327,17 @@ export async function presignUploadURL(req, res) {
       //   name: req.body.name || ""
       // }
     });
-    console.log(
-      process.env.AWS_BUCKET_NAME,
-      process.env.AWS_REGION,
-      process.env.AWS_ACCESS_KEY_ID,
-      process.env.AWS_SECRET_ACCESS_KEY,
-    );
-    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
-    console.log("WITH COMMAND:", command);
+    // console.log(
+    //   process.env.AWS_BUCKET_NAME,
+    //   process.env.AWS_REGION,
+    //   process.env.AWS_ACCESS_KEY_ID,
+    //   process.env.AWS_SECRET_ACCESS_KEY,
+    // );
+    // console.log("GENERATING PRESIGNED URL FOR KEY:", key);
+    // console.log("WITH COMMAND:", command);
 
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
-    console.log("PRESIGNED URL GENERATED:", url);
+    // console.log("PRESIGNED URL GENERATED:", url);
 
     return res.status(200).json({
       message: "Successfully obtained presigned URL",
@@ -345,8 +353,9 @@ export async function presignUploadURL(req, res) {
 }
 export async function presignDeleteURL(req, res) {
   try {
-    console.log("GENERATING presignDeleteURL");
+    console.log("GENERATING presignDeleteURL", req.body);
     const key = req.body.key;
+    console.log("THIS IS THE KEY", key);
     const command = new DeleteObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,

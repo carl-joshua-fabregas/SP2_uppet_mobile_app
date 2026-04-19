@@ -142,9 +142,55 @@ export default function createAdopterProfile() {
     console.log("Saving Editing of Adopter");
     try {
       setUploading(true);
+      const updatePhoto =
+        adopterForm.profilePhoto.key !== user.profilePhoto.key;
+      console.log("Will I Update the photo", updatePhoto);
+      console.log(
+        "FORMS LOOK LIKE THIS",
+        adopterForm.profilePhoto.key,
+        " ",
+        user.profilePhoto.key,
+      );
+      if (updatePhoto) {
+        const presignDeleteUrl = await api.post(`/api/user/presignDeleteURL`, {
+          key: user.profilePhoto.key,
+        });
+        const deleteUrl = presignDeleteUrl.data.body.url;
+        const deleteKey = presignDeleteUrl.data.body.key;
+        // const { url, key } = presignDeleteUrl.data.body;
+        console.log("Updating Photo with Key", deleteKey);
+        const awsDelRes = await fetch(deleteUrl, {
+          method: "DELETE",
+        });
+        console.log("Was it deleted?", awsDelRes.ok);
+        const s3Status = awsDelRes.status;
+        const s3ErrorText = await awsDelRes.text();
+        console.log("--- S3 DELETE RESULT ---");
+        console.log("STATUS CODE:", s3Status);
+        console.log("RAW XML ERROR:", s3ErrorText);
+        const presignUploadUrl = await api.post(`/api/user/presignUploadUrl`, {
+          fileName: adopterForm.profilePhoto.name,
+          fileType: adopterForm.profilePhoto.fileType,
+        });
+        console.log("PROCEEDING TO UPLOAD");
+        const uploadUrl = presignUploadUrl.data.body.url;
+        const uploadKey = presignUploadUrl.data.body.key;
+        // const { url, key } = presignUploadUrl.data.body;
+        const fetchImage = await fetch(adopterForm.profilePhoto.url);
+        const blob = await fetchImage.blob();
+
+        await fetch(uploadUrl, {
+          method: "PUT",
+          body: blob,
+          contentType: adopterForm.profilePhoto.fileType,
+        });
+
+        console.log("SUCCESSFULLY UPLOADED NEW PHOTOS");
+      }
       const adopterUpdateRes = await api.patch(`/api/user/update`, {
         ...adopterForm,
       });
+      setUser(adopterUpdateRes.data.body);
     } catch (error) {
       console.log("Error in saveEdit");
       console.error(error);
@@ -157,7 +203,7 @@ export default function createAdopterProfile() {
     console.log(adopterForm);
     try {
       setUploading(true);
-      const adopterCreationRes = await api.post(`api/user/post`, {
+      const adopterCreationRes = await api.post(`/api/user/post`, {
         ...adopterForm,
       });
       console.log("ADOPTER IS CREATED IN THE DB");

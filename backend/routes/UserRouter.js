@@ -15,6 +15,7 @@ import {
 
 // POST Requests
 router.post("/post", createAdopter);
+router.post("/presignDeleteURL", presignDeleteURL);
 router.post("/presignUploadURL", presignUploadURL);
 
 // GET Requests
@@ -28,7 +29,6 @@ router.patch("/update", updateUser);
 router.patch("/photo", uploadAdopterPhoto);
 
 //Delete Requests
-router.delete("/presignDeleteURL", presignDeleteURL);
 router.delete("/:id", deleteUser);
 router.delete("/all", deleteAllUser);
 

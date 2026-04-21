@@ -2,7 +2,7 @@ import { View, ScrollView } from "react-native";
 import { useState, useEffect } from "react";
 import { useRoute } from "@react-navigation/native";
 import ProfileCard from "../component/AdopterProfileCard";
-const api = require("../api/axios");
+import { api } from "../api/axios";
 export default function ViewAdopterProfile() {
   const router = useRoute();
 

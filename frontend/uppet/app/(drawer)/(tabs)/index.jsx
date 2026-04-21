@@ -6,73 +6,71 @@ import {
   ActivityIndicator,
   Button,
   Dimensions,
+  RefreshControl,
 } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigation } from "@react-navigation/native";
 import PetCardHome from "../../../component/PetCardHome";
 import PetModal from "../../../component/PetModal";
 import * as Themes from "../../../assets/themes/themes";
-const api = require("../../../api/axios");
+import { api } from "../../../api/axios";
 export default function Index() {
   const router = useNavigation();
   const [pets, setPets] = useState([]);
+  const [livePets, setLivePets] = useState([]);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
-  const [refresh, setRefresh] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedPet, setSelectedPet] = useState(null);
 
   const setSelectedPetLatest = selectedPet
     ? pets.find((pet) => pet._id === selectedPet._id)
     : null;
 
-  const getPets = async (pageNum = 1, isRefreshing = false) => {
-    if (loading || (!hasMore && !isRefreshing)) {
-      return;
-    }
+  const fetchPets = async (pageNum, isRefreshing = false) => {
     setLoading(true);
-
     try {
-      console.log("pageNum:", pageNum);
-
       const res = await api.get("/api/pet/avail", {
         params: { page: pageNum },
       });
       const newPets = res.data.body;
-      setPets((prev) => [...prev, ...newPets]);
 
-      if (newPets.length < 10) {
-        console.log("THERE ARE NO MORE PETS");
+      if (newPets?.length < 10) {
         setHasMore(false);
       }
+      setPets((prev) => {
+        if (isRefreshing) return newPets;
+        else return [...prev, ...newPets];
+      });
+      console.log("FINISHED FETHCING PETS");
     } catch (err) {
       console.error("Error fetching pets:", err);
       console.error("Status:", err.response?.status); // Is it actually 404?
       console.error("Data:", err.response?.data); // Does it say "Pet not found"?
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const onRefresh = () => {
-    setHasMore(true);
-    setPets([]);
-
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
     setPage(1);
-    getPets(1, true);
-  };
-
-  const loadMore = () => {
-    if (hasMore && !loading) {
-      setPage((prev) => prev + 1);
-      getPets(page + 1);
-    }
-  };
-
-  useEffect(() => {
-    getPets(page);
+    setHasMore(true);
+    await fetchPets(1, true);
   }, []);
 
+  useEffect(() => {
+    fetchPets(page);
+  }, []);
+
+  const handleLoadMore = () => {
+    if (!loading && hasMore) {
+      fetchPets(page + 1);
+      setPage((prev) => prev + 1);
+    }
+  };
   return (
     <View style={styles.container}>
       <FlatList
@@ -84,23 +82,26 @@ export default function Index() {
               pet={item}
               onPress={() => {
                 setSelectedPet(item);
-                console.log("Selected pet:", item);
               }}
             ></PetCardHome>
           );
         }}
-        ListEmptyComponent={<Text>No pets found</Text>}
-        ListFooterComponent={
-          hasMore ? (
-            <ActivityIndicator size="large" />
-          ) : !hasMore ? (
-            <Text>No more pets</Text>
-          ) : null
+        ListEmptyComponent={
+          !loading && (
+            <Text style={styles.emptyText}>No Available Pets Found</Text>
+          )
         }
-        onEndReached={hasMore ? loadMore : null}
-        onEndReachedThreshold={0.1}
-        refreshing={refresh}
-        onRefresh={onRefresh}
+        ListFooterComponent={
+          hasMore ? <ActivityIndicator size="large" /> : null
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          ></RefreshControl>
+        }
       ></FlatList>
       <View style={styles.buttonContainer}>
         <Button
@@ -139,5 +140,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: Dimensions.get("window").height / 15,
     right: Dimensions.get("window").width / 9,
+  },
+  emptyText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: 16,
+    color: Themes.COLORS.textFaded || "#888",
+    textAlign: "center",
+    marginTop: 100, // Pushes it down so it's not hugging the top
+    paddingHorizontal: Themes.SPACING.lg,
+    lineHeight: 22,
   },
 });

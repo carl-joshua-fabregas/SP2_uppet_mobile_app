@@ -5,26 +5,23 @@ import {
   ActivityIndicator,
   FlatList,
   SectionList,
+  RefreshControl,
 } from "react-native";
 import ViewAdopteesCard from "../../../component/ViewMyAdopteesCard";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import * as Themes from "../../../assets/themes/themes";
-
-const api = require("../../../api/axios");
-
+import { api } from "../../../api/axios";
+//NEED TO QUERY ALL WITHOUT PAGINATIONS
 export default function MyAdoptee() {
   const [pets, setPets] = useState([]);
   const [page, setPage] = useState(1);
+  const [livePets, setLivePetse] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [refresh, setRefresh] = useState(false);
-  console.log(`HEY THIS IS THE PAGE FOR MYPETS ${page}`);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const getPets = async (pageNum = 1, isRefreshing = false) => {
-    if (loading || (!hasMore && !isRefreshing)) return;
+  const fetchPets = async (pageNum = 1, isRefreshing = false) => {
     setLoading(true);
-    console.log("ITS ME MARIO");
-
     try {
       const res = await api.get("/api/pet/myPets", {
         params: {
@@ -32,26 +29,32 @@ export default function MyAdoptee() {
         },
       });
       const myAdoptees = res.data.body;
-      setPets((prev) => [...prev, ...myAdoptees]);
       if (myAdoptees.length < 10) {
         setHasMore(false);
       }
+      setPets((prev) => {
+        if (isRefreshing) return myAdoptees;
+        else return [...prev, ...myAdoptees];
+      });
     } catch (err) {
-      console.log(err);
+      console.error("Error fetching pets:", err);
+      console.error("Status:", err.response?.status); // Is it actually 404?
+      console.error("Data:", err.response?.data); // Does it say "Pet not found"?
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
-  const onRefresh = () => {
-    setHasMore(true);
-    setPets([]);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
     setPage(1);
-    getPets(1, true);
-  };
-  const loadMore = () => {
+    setHasMore(true);
+    await fetchPets(1, true);
+  }, []);
+  const handleLoadMore = () => {
     if (!loading && hasMore) {
-      setPage((prev) => prev + 1);
-      getPets(page + 1);
+      fetchPets(page + 1);
+      setPage(prev + prev + 1);
     }
   };
   const getStructuredData = (rawData) => {
@@ -77,7 +80,7 @@ export default function MyAdoptee() {
     );
   };
   useEffect(() => {
-    getPets(page);
+    fetchPets(page);
   }, []);
   return (
     <View style={styles.cardContainer}>
@@ -87,11 +90,22 @@ export default function MyAdoptee() {
         renderItem={({ item }) => {
           return <ViewAdopteesCard pet={item}></ViewAdopteesCard>;
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          ></RefreshControl>
+        }
         renderSectionHeader={renderSectionHeader}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-          !loading && <Text style={styles.emptyText}>No Applicants found</Text>
+          !loading && <Text style={styles.emptyText}>No Adoptees Found</Text>
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          hasMore ? <ActivityIndicator size="large" /> : null
         }
       ></SectionList>
     </View>

@@ -133,6 +133,7 @@ export async function findPetApplicants(req, res) {
     if (adoptAppList.length == 0) {
       return res.status(200).json({
         message: "No Applicants found",
+        body: [],
       });
     }
     return res.status(200).json({

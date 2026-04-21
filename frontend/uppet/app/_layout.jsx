@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { UserProvider, useUser } from "../context/UserContext";
+import { SocketProvider, useSocket } from "../context/SocketContext";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
@@ -74,7 +75,9 @@ function NavigationStack() {
 export default function RootLayout() {
   return (
     <UserProvider>
-      <NavigationStack></NavigationStack>
+      <SocketProvider>
+        <NavigationStack></NavigationStack>
+      </SocketProvider>
     </UserProvider>
   );
 }

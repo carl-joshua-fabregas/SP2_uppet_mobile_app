@@ -3,8 +3,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import { GoogleSigninButton } from "@react-native-google-signin/google-signin";
 import { useUser } from "../context/UserContext";
-
-const api = require("../api/axios");
+import { api } from "../api/axios";
 
 // WebBrowser.maybeCompleteAuthSession();
 // https://expo.dev/accounts/seafret/projects/uppet/builds/bbc888c4-30ba-4995-ae01-c564006f8b7b

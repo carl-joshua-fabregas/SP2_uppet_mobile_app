@@ -18,7 +18,7 @@ import APCStep3Component from "../component/AdopterProfileCreationSteps/steps/AP
 import APCStep4Component from "../component/AdopterProfileCreationSteps/steps/APCStep4Component";
 import APCStep5Component from "../component/AdopterProfileCreationSteps/steps/APCStep5Component";
 
-const api = require("../api/axios");
+import { api } from "../api/axios";
 
 export default function createAdopterProfile() {
   const { user, setNewUser, login, setUser, newUser } = useUser();

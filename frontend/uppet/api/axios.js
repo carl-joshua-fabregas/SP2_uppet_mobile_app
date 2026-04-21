@@ -1,6 +1,5 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
-
 import Constants from "expo-constants";
 
 const getBaseURL = () => {
@@ -29,4 +28,4 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-module.exports = api;
+export { api, getBaseURL };

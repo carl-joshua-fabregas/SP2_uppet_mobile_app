@@ -13,8 +13,7 @@ import PCStep3Component from "../component/PetCreationSteps/steps/PCStep3Compone
 import PCStep4Component from "../component/PetCreationSteps/steps/PCStep4Component";
 import PCStep5Component from "../component/PetCreationSteps/steps/PCStep5Component";
 import * as Themes from "../assets/themes/themes";
-
-const api = require("../api/axios");
+import { api } from "../api/axios";
 
 import { useState } from "react";
 export default function CreateProfile() {

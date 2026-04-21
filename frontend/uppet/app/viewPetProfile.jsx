@@ -4,7 +4,7 @@ import { useNavigation } from "expo-router";
 import PetProfileCardViewMore from "../component/PetProfileCard";
 import { useEffect, useState } from "react";
 import * as Themes from "../assets/themes/themes";
-const api = require("../api/axios");
+import { api } from "../api/axios";
 
 export default function ViewPetProfile() {
   const route = useRoute();

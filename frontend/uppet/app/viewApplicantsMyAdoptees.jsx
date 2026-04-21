@@ -5,20 +5,22 @@ import {
   ActivityIndicator,
   FlatList,
   SectionList,
+  RefreshControl,
 } from "react-native";
 import ViewApplicantsCard from "../component/ViewApplicantsListCard";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRoute } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
-const api = require("../api/axios");
+import { api } from "../api/axios";
 
 export default function ViewApplicantList(props) {
   const router = useRoute();
   const [applicants, setApplicants] = useState([]);
+  const [liveApplicants, setLiveApplicants] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [refresh, setRefresh] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleAccept = async (id) => {
     try {
@@ -66,8 +68,7 @@ export default function ViewApplicantList(props) {
       console.log(err);
     }
   };
-  const getApplicants = async (pageNum = 1) => {
-    if (loading || !hasMore) return;
+  const fetchApplicants = async (pageNum, isRefreshing = false) => {
     setLoading(true);
     try {
       const res = await api.get(
@@ -79,27 +80,31 @@ export default function ViewApplicantList(props) {
         },
       );
       const applicantsArr = res.data.body;
-      setApplicants((prev) => [...prev, ...applicantsArr]);
 
       if (applicantsArr.length < 10) {
         setHasMore(false);
       }
+      setApplicants((prev) => {
+        if (isRefreshing) return applicantsArr;
+        else return [...prev, ...applicantsArr];
+      });
     } catch (err) {
       console.log(err);
     } finally {
       setLoading(false);
-      if (refresh) setRefresh(false);
+      setRefreshing(false);
     }
   };
-  const onRefresh = () => {
-    setRefresh(true);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
     setHasMore(true);
-    setApplicants([]);
     setPage(1);
-  };
-  const loadMore = () => {
+    await fetchApplicants(1, true);
+  }, []);
+
+  const handleLoadMore = () => {
     if (!loading && hasMore) {
-      setLoading(true);
+      fetchApplicants(page + 1);
       setPage((prev) => prev + 1);
     }
   };
@@ -134,8 +139,8 @@ export default function ViewApplicantList(props) {
     );
   };
   useEffect(() => {
-    getApplicants(page);
-  }, [page, hasMore, loading, refresh]);
+    fetchApplicants(1, true);
+  }, []);
 
   return (
     <View style={styles.cardContainer}>
@@ -156,6 +161,17 @@ export default function ViewApplicantList(props) {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           !loading && <Text style={styles.emptyText}>No Applicants found</Text>
+        }
+        ListFooterComponent={
+          hasMore ? <ActivityIndicator size="large" /> : null
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        refreshControl={
+          <RefreshControl
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+          ></RefreshControl>
         }
       ></SectionList>
     </View>

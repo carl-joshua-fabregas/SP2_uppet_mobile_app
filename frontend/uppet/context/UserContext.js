@@ -5,7 +5,7 @@ import {
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 import * as SecureStore from "expo-secure-store";
-const api = require("../api/axios");
+import { api } from "../api/axios";
 
 GoogleSignin.configure({
   webClientId:

@@ -2,7 +2,6 @@ import { Drawer } from "expo-router/drawer";
 import ProfileDrawer from "../../component/DrawerContentCard";
 export default function Menu() {
   console.log("THEY SEE ME ROLLING");
-  c;
   return (
     <Drawer
       screenOptions={{

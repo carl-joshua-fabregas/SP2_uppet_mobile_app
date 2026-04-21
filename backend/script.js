@@ -1,14 +1,14 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv/config";
+import "dotenv/config";
 import connectToDatabase from "./config/database.js";
+import { Server } from "socket.io";
 
 const app = express();
 
 const corsOption = {
   origin: "*",
-  methods: "GET, POST, PUT, PATCH, DELETE",
-  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 };
 
 import petRouter from "./routes/PetRouter.js";
@@ -17,7 +17,7 @@ import authMiddleWare from "./middleware/authMiddleware.js";
 import authGoogle from "./routes/authRouter.js";
 import adoptionAppRouter from "./routes/adoptionAppRouter.js";
 import notificationRouter from "./routes/notificationRouter.js";
-
+import socketMiddleware from "./middleware/socketMiddleware.js";
 app.use(cors(corsOption));
 app.use(express.json());
 
@@ -47,6 +47,21 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   if (address) {
     console.log(
       "Server is accessible on " + address.address + ":" + address.port,
+      address,
     );
   }
+});
+
+const io = new Server(server, {
+  cors: corsOption,
+});
+
+io.use(socketMiddleware);
+
+io.on("connection", (socket) => {
+  console.log("--------Socket Connected ----------");
+
+  socket.on("disconnect", () => {
+    console.log("===========Socket Disconnected==========");
+  });
 });

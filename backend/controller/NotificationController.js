@@ -1,6 +1,6 @@
 import Notification from "../models/Notification.js";
 
-export async function createNotification (req, res) {
+export async function createNotification(req, res) {
   try {
     const { notifRecipient, body, notifType } = req.body;
     const newNotif = new Notification({
@@ -21,15 +21,16 @@ export async function createNotification (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findAllNotification (req, res) {
+export async function findAllNotification(req, res) {
   try {
     const notifications = await Notification.find({});
 
-    if (notifications.length == 0) {
-      return res.status(404).json({
+    if (notifications.length === 0) {
+      return res.status(200).json({
         message: "No notifications found",
+        body: [],
       });
     }
 
@@ -43,9 +44,9 @@ export async function findAllNotification (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findAllUserNotification (req, res) {
+export async function findAllUserNotification(req, res) {
   try {
     const notifications = await Notification.find({
       notifRecipient: req.user.id,
@@ -54,8 +55,9 @@ export async function findAllUserNotification (req, res) {
       .limit(10);
 
     if (notifications.length == 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No notifications found",
+        body: [],
       });
     }
 
@@ -69,9 +71,9 @@ export async function findAllUserNotification (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteAllNotification (req, res) {
+export async function deleteAllNotification(req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -88,9 +90,9 @@ export async function deleteAllNotification (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteAllUserNotification (req, res) {
+export async function deleteAllUserNotification(req, res) {
   try {
     const userNotif = await Notification.deleteMany({
       notifRecipient: req.user.id,
@@ -105,9 +107,9 @@ export async function deleteAllUserNotification (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteUserNotification (req, res) {
+export async function deleteUserNotification(req, res) {
   try {
     const user = await Notification.findById(req.params.id);
 
@@ -130,4 +132,4 @@ export async function deleteUserNotification (req, res) {
       body: err.message,
     });
   }
-};
+}

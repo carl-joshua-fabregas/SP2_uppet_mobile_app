@@ -11,46 +11,12 @@ import * as Themes from "../../../assets/themes/themes";
 export default function PCStep1Component({
   petData,
   setPetData,
-  onNext,
-  onBack,
+  errors,
+  renderFooter,
 }) {
-  const [errors, setErrors] = useState({});
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
 
-  const handleNext = async () => {
-    let newErrors = {};
-    // Validate required fields
-    if (!petData.name) {
-      newErrors.name = "Name is required";
-    }
-    if (!petData.age) {
-      newErrors.age = "Age is required";
-    }
-    if (isNaN(Number(petData.age))) {
-      newErrors.age = "Please enter a valid number for Age";
-    }
-    if (!petData.sex) {
-      newErrors.sex = "Sex is required";
-    }
-    if (!petData.species) {
-      newErrors.species = "Species is required";
-    }
-    if (!petData.breed) {
-      newErrors.breed = "Breed is required";
-    }
-    if (!petData.bio) {
-      newErrors.bio = "Bio is required";
-    }
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-    } else {
-      setErrors({});
-      // Proceed to next step
-      console.log("Pet Data is valid, proceeding to next step:", petData);
-      onNext();
-    }
-  };
   const SelectionChip = ({ label, value, field }) => (
     <TouchableOpacity
       style={[styles.chip, petData[field] === value && styles.chipActive]}
@@ -150,11 +116,12 @@ export default function PCStep1Component({
         ></TextInput>
         {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
       </View>
-      <View style={styles.buttonContainer}>
+      {renderFooter()}
+      {/* <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
           <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </ScrollView>
   );
 }

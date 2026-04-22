@@ -4,7 +4,10 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from "react-native";
+import { useRoute } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 // import PCProgressBar from "../component/PetCreationSteps/PCProgressBar";
 import PCProgressTracker from "../component/PetCreationSteps/PCProgressTracker";
 import PCStep1Component from "../component/PetCreationSteps/steps/PCStep1Component";
@@ -17,25 +20,33 @@ import { api } from "../api/axios";
 
 import { useState } from "react";
 export default function CreateProfile() {
+  const router = useRoute();
+  const navigation = useNavigation();
+  const { editPetData } = router.params ?? {};
+  console.log(router.params);
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [pets, setPets] = useState({
-    name: "",
-    age: "",
-    bio: "",
-    sex: "",
-    species: "",
-    breed: "",
-    size: "",
-    weight: "",
-    vaccination: "",
-    sn: "",
-    healthCond: "",
-    behavior: "",
-    specialNeeds: "",
-    otherInfo: "",
-    photos: [],
-  });
+  const [pet, setPet] = useState(
+    editPetData ?? {
+      name: "",
+      age: "",
+      bio: "",
+      sex: "",
+      species: "",
+      breed: "",
+      size: "",
+      weight: "",
+      vaccination: "",
+      sn: "",
+      healthCond: "",
+      behavior: "",
+      specialNeeds: "",
+      otherInfo: "",
+      photos: [],
+    },
+  );
+  const [errors, setErrors] = useState({});
+  console.log("HERE IS GOOD", pet);
   const STEPS = [
     { label: "Basic Info" },
     { label: "Health & Behavior" },
@@ -43,13 +54,92 @@ export default function CreateProfile() {
     { label: "Review" },
     { label: "PET PROFILE CARD CREATED" },
   ];
-
+  const validators = () => {
+    console.log("Validators here");
+    const newErrors = {};
+    switch (currentStep) {
+      case 0: {
+        if (!pet.name) {
+          newErrors.name = "Name is required";
+        }
+        if (!pet.age) {
+          newErrors.age = "Age is required";
+        }
+        if (isNaN(Number(pet.age))) {
+          newErrors.age = "Please enter a valid number for Age";
+        }
+        if (!pet.sex) {
+          newErrors.sex = "Sex is required";
+        }
+        if (!pet.species) {
+          newErrors.species = "Species is required";
+        }
+        if (!pet.breed) {
+          newErrors.breed = "Breed is required";
+        }
+        if (!pet.bio) {
+          newErrors.bio = "Bio is required";
+        }
+        break;
+      }
+      case 1: {
+        if (!pet.size) {
+          newErrors.size = "Size is required";
+        }
+        if (!pet.vaccination) {
+          newErrors.vaccination = "Vaccination status is required";
+        }
+        if (isNaN(Number(pet.weight))) {
+          newErrors.weight = "Please enter a valid number for Weight";
+        }
+        if (!pet.sex) {
+          newErrors.sex = "Please specify sex";
+        }
+        if (!pet.sn) {
+          newErrors.sn = "Please specify if your pet is spayed/neutered";
+        }
+        if (!pet.specialNeeds) {
+          newErrors.specialNeeds = "Please Put NA";
+        }
+        if (!pet.healthCond) {
+          newErrors.healthCond = "Health condition is required";
+        }
+        if (!pet.behavior) {
+          newErrors.behavior = "Behavior is required";
+        }
+        break;
+      }
+      case 3: {
+        if (pet.photos.length === 0) {
+          newErrors.photos = "At least one photo is required";
+        }
+        break;
+      }
+      default:
+        break;
+      // Validate required fields
+    }
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return false;
+    } else {
+      setErrors({});
+      // Proceed to next step
+      console.log("Pet Data is valid, proceeding to next step:", pet);
+      return true;
+    }
+  };
   const handleNext = () => {
     console.log("HANDLE NEXT CALLED. CURRENT STEP:", currentStep);
-    if (currentStep < STEPS.length - 1) {
+    if (currentStep < STEPS.length - 1 && validators()) {
+      if (currentStep === STEPS.length - 2 && !editPetData) {
+        createPet();
+      } else if (currentStep === STEPS.length - 2 && editPetData) {
+        saveEditPet();
+      }
       setCurrentStep((prev) => prev + 1);
     }
-    console.log(`update ${currentStep} `, pets);
+    console.log(`update ${currentStep} `, pet);
   };
   const handleBack = () => {
     console.log("HANDLE Back CALLED. CURRENT STEP:", currentStep);
@@ -57,13 +147,127 @@ export default function CreateProfile() {
       setCurrentStep((prev) => prev - 1);
     }
   };
+  const saveEditPet = async () => {
+    const { photos: oldPetPhotos, ...oldPetForm } = editPetData;
+    const { photos: newPetPhotos, ...newPetForm } = pet;
 
+    const photosDeleted = oldPetPhotos.filter(
+      (oldPhoto) =>
+        !newPetPhotos.find((newPhoto) => newPhoto.key === oldPhoto.key),
+    );
+    const hasDeleted = photosDeleted.length > 0;
+
+    const photosAdded = newPetPhotos.filter(
+      (newPhoto) =>
+        !oldPetPhotos.find((oldPhoto) => oldPhoto.key === newPhoto.key),
+    );
+    const hasNewPhoto = photosAdded.length > 0;
+
+    //Check if there are any caption changes
+    const hasNewCaptions = newPetPhotos.some((newPhoto) => {
+      const matchedPhoto = oldPetPhotos.find(
+        (oldPhoto) => oldPhoto.key === newPhoto.key,
+      );
+      return matchedPhoto && matchedPhoto.caption !== newPhoto.caption;
+    });
+
+    const oldMain = oldPetPhotos.find((p) => p.isProfile)?.key;
+    const newMain = newPetPhotos.find((p) => p.isProfile)?.key;
+    const hasMainPhotoChanged = oldMain !== newMain;
+    const isFormUnchanged =
+      JSON.stringify(oldPetForm) === JSON.stringify(newPetForm);
+
+    const isPhotoUnchanged =
+      !hasDeleted && !hasNewCaptions && !hasNewPhoto && !hasMainPhotoChanged;
+
+    if (isPhotoUnchanged && isFormUnchanged) {
+      return;
+    }
+    try {
+      setUploading(true);
+      if (hasDeleted) {
+        const resDelete = await Promise.all(
+          photosDeleted.map(async (photo) => {
+            console.log("THIS IS THE PHOTO TO DELETE", photo);
+            const preSignDeletUrlRes = await api.post(
+              `/api/pet/presignDeleteURL`,
+              {
+                key: photo.key,
+              },
+            );
+
+            const { url, key } = preSignDeletUrlRes.data.body;
+            console.log("Starting to Delete Photo", key);
+            const awsDelRes = await fetch(url, {
+              method: "DELETE",
+            });
+            console.log("DELETE PHOTO RESPONSE", awsDelRes.status);
+          }),
+        );
+      }
+      let finalPetPhotosArray = [...newPetPhotos];
+      if (hasNewPhoto) {
+        console.log("FOUND NEW PHOTOS");
+        const uploadedPhotos = await Promise.all(
+          photosAdded.map(async (photo) => {
+            console.log("This is the photo being updated", photo.key);
+            const preSignRes = await api.post(`/api/pet/presignUploadURL`, {
+              fileName: photo.name,
+              petID: pet._id,
+              fileType: photo.type,
+              fileSize: photo.size,
+            });
+
+            const { url, key } = preSignRes.data.body;
+            const fetchImage = await fetch(photo.url);
+            const blob = await fetchImage.blob();
+
+            await fetch(url, {
+              method: "PUT",
+              body: blob,
+              contentType: photo.type,
+            });
+            return {
+              url: url,
+              key: key,
+              caption: photo.caption,
+              isProfile: photo.isProfile,
+              timeStamp: Date.now(),
+            };
+          }),
+        );
+        finalPetPhotosArray = finalPetPhotosArray.map((photo) => {
+          const uploadedFinal = uploadedPhotos.find(
+            (up) => up.key === photo.key,
+          );
+          if (uploadedFinal) {
+            return uploadedFinal;
+          }
+          return photo;
+        });
+        console.log(
+          "THHHHHIS IS THE FINAL ARRAY",
+          finalPetPhotosArray,
+          uploadedPhotos,
+        );
+      }
+
+      const finalPetFormRes = await api.patch(`/api/pet/${pet._id}`, {
+        ...newPetForm,
+        photos: finalPetPhotosArray,
+      });
+    } catch (err) {
+      console.log("Error in save edit", err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
   const createPet = async () => {
-    console.log("IM DONE");
+    console.log("Creating Pet");
     try {
       setUploading(true);
       const petCreationRes = await api.post(`api/pet/post`, {
-        ...pets,
+        ...pet,
         photos: [],
       });
       const petCreated = petCreationRes.data;
@@ -71,12 +275,13 @@ export default function CreateProfile() {
       console.log("PET CREATED PETID", petCreated, petID);
 
       const uploadedPhotos = await Promise.all(
-        pets.photos.map(async (photo) => {
+        pet.photos.map(async (photo) => {
           console.log(photo);
           const preSignRes = await api.post(`api/pet/presignUploadURL`, {
             fileName: photo.name,
             petId: petID,
             fileType: photo.type,
+            fileSize: photo.size,
           });
 
           const { url, key } = preSignRes.data.body;
@@ -110,48 +315,75 @@ export default function CreateProfile() {
       console.log("OKAY NA NA UPLOAD NA TEH");
     }
   };
+  const renderFooter = () => {
+    return (
+      <View style={styles.inlineFooterContainer}>
+        {currentStep > 0 && (
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Text style={styles.backButtonText}>Back</Text>
+          </TouchableOpacity>
+        )}
 
+        <TouchableOpacity
+          style={[styles.nextButton, uploading && styles.disabledButton]}
+          onPress={handleNext}
+          disabled={uploading}
+        >
+          <Text style={styles.nextButtonText}>
+            {currentStep === STEPS.length - 2 ? "Finish & Save" : "Next"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+  const onFinish = (petData) => {
+    console.log("FINISHED CREATING PET");
+    navigation.navigate("(drawer)/myAdoptee");
+  };
   const renderStep = () => {
     switch (currentStep) {
       case 0:
         return (
           <PCStep1Component
-            petData={pets}
-            setPetData={setPets}
-            onNext={handleNext}
-            onBack={handleBack}
+            petData={pet}
+            setPetData={setPet}
+            errors={errors}
+            renderFooter={renderFooter}
           />
         );
       case 1:
         return (
           <PCStep2Component
-            petData={pets}
-            setPetData={setPets}
-            onNext={handleNext}
-            onBack={handleBack}
+            petData={pet}
+            setPetData={setPet}
+            errors={errors}
+            renderFooter={renderFooter}
           />
         );
       case 2:
         return (
           <PCStep3Component
-            petData={pets}
-            setPetData={setPets}
-            onNext={handleNext}
-            onBack={handleBack}
+            petData={pet}
+            setPetData={setPet}
+            errors={errors}
+            renderFooter={renderFooter}
           />
         );
       case 3:
         return (
           <PCStep4Component
-            petData={pets}
-            onNext={handleNext}
-            onBack={handleBack}
-            onCreate={createPet}
+            petData={pet}
             uploading={uploading}
+            renderFooter={renderFooter}
           ></PCStep4Component>
         );
       case 4:
-        return <PCStep5Component petData={pets}></PCStep5Component>;
+        return (
+          <PCStep5Component
+            petData={pet}
+            onFinish={onFinish}
+          ></PCStep5Component>
+        );
       default:
         return null;
     }
@@ -200,6 +432,46 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: Themes.COLORS.primary, // Forest Green
     marginTop: 4,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between", // 👈 Spaces them out
+    marginTop: 30,
+    paddingBottom: 20, // 👈 Ensures it's not hugging the bottom of the screen
+  },
+  backButton: {
+    paddingVertical: Themes.SPACING.md,
+    paddingHorizontal: 25,
+    borderRadius: Themes.RADIUS.md,
+    backgroundColor: "#F5F5F5", // 👈 Give it a light background to look like a button
+    marginRight: 10,
+    elevation: 3,
+  },
+  nextButton: {
+    flex: 1, // 👈 Takes up the remaining width
+    backgroundColor: Themes.COLORS.primary,
+    paddingVertical: Themes.SPACING.md,
+    borderRadius: Themes.RADIUS.md,
+    alignItems: "center",
+    elevation: 3,
+  },
+  backButtonText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    color: Themes.COLORS.textMuted, // A light gray
+    fontSize: 16,
+  },
+  nextButtonText: {
+    color: "#FFF",
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+  },
+  inlineFooterContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 30, // Pushes the buttons down from the last input
+    marginBottom: 20,
+    width: "100%",
   },
 });
 
@@ -275,3 +547,21 @@ const styles = StyleSheet.create({
 //   currentStep={currentStep}
 //   totalSteps={STEPS.length}
 // ></PCProgressBar>
+
+// const [pet, setPet] = useState({
+//     name: "",
+//     age: "",
+//     bio: "",
+//     sex: "",
+//     species: "",
+//     breed: "",
+//     size: "",
+//     weight: "",
+//     vaccination: "",
+//     sn: "",
+//     healthCond: "",
+//     behavior: "",
+//     specialNeeds: "",
+//     otherInfo: "",
+//     photos: [],
+//   });

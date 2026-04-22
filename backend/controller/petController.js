@@ -1,6 +1,10 @@
 import Pet from "../models/Pet.js";
 import AdoptionApplication from "../models/AdoptionApplication.js";
-import { S3Client, PutObjectCommand, DeleteObjectCommand} from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import mongoose from "mongoose";
 
@@ -334,7 +338,7 @@ export async function updatePet(req, res) {
 
 export async function presignUploadURL(req, res) {
   try {
-    const key = `pets/${req.body.petId}/${Date.now()}_${req.body.fileName}`;
+    const key = `pets/${req.body.petID}/${req.body.fileSize}_${req.body.fileName}`;
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
@@ -372,7 +376,7 @@ export async function presignUploadURL(req, res) {
 export async function presignDeleteURL(req, res) {
   try {
     console.log("GENERATING presignDeleteURL");
-    const key = req.body.key
+    const key = req.body.key;
     const command = new DeleteObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,

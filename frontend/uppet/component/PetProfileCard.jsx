@@ -10,13 +10,7 @@ import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
 
-export default function PetProfileCardViewMore({
-  pet,
-  onMessagePress,
-  buttonProps,
-  isOwner,
-  editingFooter,
-}) {
+export default function PetProfileCardViewMore({ pet }) {
   const profilePhoto = pet.photos.find((photo) => photo.isProfile);
   const form = {
     name: pet.name,
@@ -37,109 +31,98 @@ export default function PetProfileCardViewMore({
   };
   return (
     <View style={styles.profileContainer}>
-      <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingBottom: 20,
-        }}
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        alwaysBounceVertical={true}
-      >
-        <Image
-          source={
-            profilePhoto
-              ? { uri: profilePhoto.url }
-              : require("../assets/images/doggoe.jpg")
-          }
-          style={styles.imageStyle}
-        />
-        <View style={styles.contentPadding}>
-          {/* identifiers */}
-          <Text style={styles.petName}>{form.name}</Text>
-          <Text style={styles.petBreed}>
-            {form.breed} • {form.sex}
-          </Text>
-          {/* Stats */}
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Age</Text>
-              <Text style={styles.statValue}>{form.age} years old</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Size</Text>
-              <Text style={styles.statValue}>{form.size}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Weight</Text>
-              <Text style={styles.statValue}>{form.weight}kg</Text>
-            </View>
+      <Image
+        source={
+          profilePhoto
+            ? { uri: profilePhoto.url }
+            : require("../assets/images/doggoe.jpg")
+        }
+        style={styles.imageStyle}
+      />
+      <View style={styles.contentPadding}>
+        {/* identifiers */}
+        <Text style={styles.petName}>{form.name}</Text>
+        <Text style={styles.petBreed}>
+          {form.breed} • {form.sex}
+        </Text>
+        {/* Stats */}
+        <View style={styles.statsGrid}>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Age</Text>
+            <Text style={styles.statValue}>{form.age} years old</Text>
           </View>
-          {/* Bio */}
-          <Text style={styles.sectionTitle}>Bio</Text>
-          <Text style={styles.petBio}>{form.bio}</Text>
-          {/* Technical Information */}
-          <Text style={styles.sectionTitle}>Health and Behavior</Text>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Vaccination Status</Text>
-            <Text style={styles.infoValue}>{form.vaccination}</Text>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Size</Text>
+            <Text style={styles.statValue}>{form.size}</Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Spayed/Neutered</Text>
-            <Text style={styles.infoValue}>{form.sn ? "Yes" : "No"}</Text>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Weight</Text>
+            <Text style={styles.statValue}>{form.weight}kg</Text>
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Health Condition</Text>
-            <Text style={styles.infoValue}>{form.healthCond || "None"}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Behavior</Text>
-            <Text style={styles.infoValue}>{form.behavior}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Special Needs</Text>
-            <Text style={styles.infoValue}>{form.specialNeeds || "None"}</Text>
-          </View>
-          {/* Additional Info */}
-          {pet.otherInfo && (
-            <>
-              <Text style={styles.sectionTitle}>Additional Information</Text>
-              <Text style={styles.petBio}>{form.otherInfo}</Text>
-            </>
-          )}
-          {editingFooter ? (
-            editingFooter
-          ) : (
-            <View style={styles.buttonSection}>
-              <TouchableOpacity
-                style={[
-                  styles.primaryButtonContainer,
-                  {
-                    backgroundColor: buttonProps.color || Themes.COLORS.primary,
-                  },
-                ]}
-                onPress={buttonProps.onPress}
-              >
-                <Text style={styles.primaryButtonText}>
-                  {buttonProps.title}
-                </Text>
-              </TouchableOpacity>
-              {!isOwner && (
-                <TouchableOpacity
-                  style={[styles.secondaryButtonContainer]}
-                  onPress={onMessagePress}
-                >
-                  <Text style={styles.secondaryButtonText}>Message Owner</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
         </View>
-      </ScrollView>
+        {/* Bio */}
+        <Text style={styles.sectionTitle}>Bio</Text>
+        <Text style={styles.petBio}>{form.bio}</Text>
+        {/* Technical Information */}
+        <Text style={styles.sectionTitle}>Health and Behavior</Text>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Vaccination Status</Text>
+          <Text style={styles.infoValue}>{form.vaccination}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Spayed/Neutered</Text>
+          <Text style={styles.infoValue}>{form.sn ? "Yes" : "No"}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Health Condition</Text>
+          <Text style={styles.infoValue}>{form.healthCond || "None"}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Behavior</Text>
+          <Text style={styles.infoValue}>{form.behavior}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Special Needs</Text>
+          <Text style={styles.infoValue}>{form.specialNeeds || "None"}</Text>
+        </View>
+        {/* Additional Info */}
+        {pet.otherInfo && (
+          <>
+            <Text style={styles.sectionTitle}>Additional Information</Text>
+            <Text style={styles.petBio}>{form.otherInfo}</Text>
+          </>
+        )}
+      </View>
     </View>
   );
 }
-
+// {editingFooter ? (
+//             editingFooter
+//           ) : (
+//             <View style={styles.buttonSection}>
+//               <TouchableOpacity
+//                 style={[
+//                   styles.primaryButtonContainer,
+//                   {
+//                     backgroundColor: buttonProps.color || Themes.COLORS.primary,
+//                   },
+//                 ]}
+//                 onPress={buttonProps.onPress}
+//               >
+//                 <Text style={styles.primaryButtonText}>
+//                   {buttonProps.title}
+//                 </Text>
+//               </TouchableOpacity>
+//               {!isOwner && (
+//                 <TouchableOpacity
+//                   style={[styles.secondaryButtonContainer]}
+//                   onPress={onMessagePress}
+//                 >
+//                   <Text style={styles.secondaryButtonText}>Message Owner</Text>
+//                 </TouchableOpacity>
+//               )}
+//             </View>
+//           )}
 const styles = StyleSheet.create({
   profileContainer: {
     flex: 1,

@@ -19,6 +19,7 @@ import {
 // POST Requests
 router.post("/post", createPet);
 router.post("/presignUploadURL", presignUploadURL);
+router.post("/presignDeleteURL", presignDeleteURL);
 router.post("/:id/photo", uploadPetPhoto);
 
 // GET Requests
@@ -37,7 +38,6 @@ router.patch("/:id/photo", uploadPetPhoto);
 //Delete Requests
 
 router.delete("/", deleteAll);
-router.delete("/presignDeleteURL", presignDeleteURL);
 router.delete("/:id", deleteByID);
 router.delete("/:id/photo/:photoId", deletePetPhoto);
 

@@ -16,31 +16,17 @@ import { useState } from "react";
 export default function PCStep3Component({
   petData,
   setPetData,
-  onNext,
-  onBack,
+  errors,
+  renderFooter,
 }) {
-  const [errors, setErrors] = useState({});
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
 
-  const handleNext = async () => {
-    let newErrors = {};
-
-    if (petData.photos.length === 0) {
-      newErrors.photos = "At least one photo is required";
-    }
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-    } else {
-      setErrors({});
-      onNext();
-    }
-  };
   const removePhoto = (photoID) => {
     const filtered = petData.photos.filter((p) => {
       p.id !== photoID;
     });
-    if (filtered.length > 0 && !filtered.find((p) => p.isProfile === 1)) {
+    if (filtered.length > 0 && !filtered.find((p) => p.isProfile)) {
       filtered[0].isProfile = 1;
     }
     update("photos", filtered);
@@ -113,12 +99,13 @@ export default function PCStep3Component({
             name: asset.fileName,
             type: asset.type,
             caption: "",
-            id: asset.fileName + Date.now().toString() + index, // Use fileName as a temporary ID,
+            size: asset.fileSize,
+            id: `pets/${petData._id}/${asset.fileSize}_${asset.fileName}`,
+            key: `pets/${petData._id}/${asset.fileSize}_${asset.fileName}`,
             isProfile:
               petData.photos.length === 0 && index === 0 ? true : false, // Set first photo as profile by default
           }));
-          //   console.log("Pet ID IN HANDLE IMAGE READ", petId);
-
+          console.log(newPhotos);
           update("photos", [...petData.photos, ...newPhotos]);
         }
       },
@@ -167,16 +154,7 @@ export default function PCStep3Component({
             )}
           </View>
         }
-        ListFooterComponent={
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-              <Text style={styles.nextButtonText}>Next</Text>
-            </TouchableOpacity>
-          </View>
-        }
+        ListFooterComponent={() => renderFooter()}
       />
     </View>
     // <View style={styles.container}>

@@ -1,4 +1,10 @@
-import { View } from "react-native";
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
 import PetProfileCardViewMore from "../component/PetProfileCard";
@@ -11,13 +17,12 @@ export default function ViewPetProfile() {
   const navigation = useNavigation();
   const [status, setStatus] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const pet = route.params.pet;
+  console.log("View Profile The pet data transferred isr", pet._id);
 
   const getstatus = async () => {
     try {
-      const res = await api.get(
-        `/api/adoptionApp/${route.params.pet._id}/applied`,
-        {},
-      );
+      const res = await api.get(`/api/adoptionApp/${pet._id}/applied`, {});
       setStatus(res.data.status);
       setIsOwner(res.data.isOwner);
       console.log(res.data.status, res.data.isOwner);
@@ -27,8 +32,10 @@ export default function ViewPetProfile() {
   };
 
   useEffect(() => {
-    getstatus();
-  }, [status]);
+    if (pet._id) {
+      getstatus();
+    }
+  }, [pet._id]);
 
   //   const handleViewGallery = () => {
   //     console.log("HandleViewClicked");
@@ -41,14 +48,14 @@ export default function ViewPetProfile() {
 
   const handleApply = async () => {
     await api.post(`/api/adoptionApp/applied`, {
-      petToAdopt: route.params.pet._id,
+      petToAdopt: pet._id,
     });
     setStatus("Pending");
     console.log("HandleApplyClicked");
   };
 
   const handleCancel = async () => {
-    await api.delete(`/api/adoptionApp/${route.params.pet._id}/cancelled`, {});
+    await api.delete(`/api/adoptionApp/${pet._id}/cancelled`, {});
     setStatus("Cancelled");
     console.log("HandleCancelClicked");
   };
@@ -56,46 +63,174 @@ export default function ViewPetProfile() {
   const handleViewApplicants = () => {
     console.log("handleViewApplicantsClicked");
     navigation.navigate("viewApplicantsMyAdoptees", {
-      petID: route.params.pet._id,
+      petID: pet._id,
     });
   };
 
-  let buttonProps;
+  const handleEditPetProfile = () => {
+    navigation.navigate("createPetProfile", { editPetData: pet });
+  };
+
+  const handleDeletPetProfile = () => {
+    console.log("Handle Delete Profile Clicked");
+  };
+
+  const buttons = [];
+
   if (isOwner) {
-    buttonProps = { title: "View Applicants", onPress: handleViewApplicants };
+    buttons.push({
+      title: "View Applicants",
+      onPress: handleViewApplicants,
+      styleType: "calm",
+    });
+    buttons.push({
+      title: "Edit Pet Profile",
+      onPress: handleEditPetProfile,
+      styleType: "neutral",
+    });
+    buttons.push({
+      title: "Delete Pet Profile",
+      onPress: handleDeletPetProfile,
+      styleType: "warning",
+    });
   } else {
-    switch (status) {
-      case "Pending":
-        buttonProps = {
-          title: "Cancel Application",
-          onPress: handleCancel,
-          color: "#FF8A80",
-        };
-        break;
-      case "Rejected":
-        buttonProps = {
-          title: "Apply Again",
-          onPress: handleApply,
-          color: Themes.COLORS.primary,
-        };
-        break;
-      default:
-        buttonProps = {
-          title: "Apply",
-          onPress: handleApply,
-          color: Themes.COLORS.primary,
-        };
+    if (status === "Pending") {
+      buttons.push({
+        title: "Cancel Application",
+        onPress: handleCancel,
+        styleType: "warning",
+      });
+    } else if (status === "Rejected") {
+      buttons.push({
+        title: "Apply Again",
+        onPress: handleApply,
+        styleType: "calm",
+      });
+    } else {
+      buttons.push({
+        title: "Apply",
+        onPress: handleApply,
+        styleType: "calm",
+      });
     }
+    buttons.push({
+      title: "Message Owner",
+      onPress: handleMessage,
+      styleType: "neutral",
+    });
   }
+
   return (
-    <View style={{ flex: 1 }}>
-      <PetProfileCardViewMore
-        pet={route.params.pet}
-        onMessagePress={handleMessage}
-        buttonProps={buttonProps}
-        isOwner={isOwner}
-        isEditing={false}
-      ></PetProfileCardViewMore>
-    </View>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <PetProfileCardViewMore pet={route.params.pet} />
+
+      {/* FIX: Actually rendering the buttons to the screen */}
+      <View style={styles.buttonSection}>
+        {buttons.map((btn, index) => {
+          // Assign styles dynamically based on the styleType defined above
+          const containerStyle =
+            btn.styleType === "warning"
+              ? styles.warningButtonContainer
+              : btn.styleType === "neutral"
+                ? styles.neutralButtonContainer
+                : styles.calmButtonContainer;
+
+          const textStyle =
+            btn.styleType === "warning"
+              ? styles.warningButtonText
+              : btn.styleType === "neutral"
+                ? styles.neutralButtonText
+                : styles.calmButtonText;
+
+          return (
+            <TouchableOpacity
+              key={index}
+              style={containerStyle}
+              onPress={btn.onPress}
+            >
+              <Text style={textStyle}>{btn.title}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: Themes.SPACING?.xl || 32, // Padding at the bottom so the last button isn't cut off
+    backgroundColor: Themes.COLORS.background,
+  },
+  buttonSection: {
+    marginTop: Themes.SPACING?.lg || 16,
+    paddingHorizontal: Themes.SPACING?.md || 16, // Added horizontal padding so buttons don't touch screen edges
+    gap: Themes.SPACING?.md || 12,
+    width: "100%",
+  },
+  calmButtonContainer: {
+    backgroundColor: Themes.COLORS.primary, // Your original Green color
+    paddingVertical: Themes.SPACING?.md || 12,
+    borderRadius: Themes.RADIUS?.md || 8,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  calmButtonText: {
+    color: "#fff",
+    fontSize: Themes.TYPOGRAPHY?.subheading?.fontSize || 16,
+    fontFamily: Themes.TYPOGRAPHY?.subheading?.fontFamily,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  neutralButtonContainer: {
+    backgroundColor: "#F5F5F5", // A soft gray instead of bright blue
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    minHeight: 48,
+    paddingVertical: Themes.SPACING?.md || 12,
+    borderRadius: Themes.RADIUS?.md || 8,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    // Removed elevation so it sits flat behind the primary button
+  },
+  neutralButtonText: {
+    color: "#686262", // Dark gray text for readability
+    fontSize: Themes.TYPOGRAPHY?.subheading?.fontSize || 16,
+    fontFamily: Themes.TYPOGRAPHY?.subheading?.fontFamily,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+
+  // DESTRUCTIVE ACTION (Cancel / Delete) - Clear, but not overwhelming
+  warningButtonContainer: {
+    // backgroundColor: "transparent", // Removing the solid red block
+    backgroundColor: "#f37270",
+    // borderWidth: 1,
+    // borderColor: "#EF5350", // Red outline
+    minHeight: 48,
+    paddingVertical: Themes.SPACING?.md || 12,
+    borderRadius: Themes.RADIUS?.md || 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  warningButtonText: {
+    // color: "#EF5350", // Red text alerts the user without shouting
+    color: "#fff",
+
+    fontSize: Themes.TYPOGRAPHY?.subheading?.fontSize || 16,
+    fontFamily: Themes.TYPOGRAPHY?.subheading?.fontFamily,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+});

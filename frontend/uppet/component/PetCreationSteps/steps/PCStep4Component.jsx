@@ -5,29 +5,19 @@ import {
   Text,
   ActivityIndicator,
   Modal,
+  ScrollView,
 } from "react-native";
 import PetProfileCardViewMore from "../../PetProfileCard";
 import * as Themes from "../../../assets/themes/themes";
 
 export default function PCStep4Component({
   petData,
-  onNext,
-  onBack,
   onCreate,
   uploading,
+  renderFooter,
 }) {
-  const handleNext = async () => {
-    try {
-      const success = await onCreate();
-      if (success) {
-        onNext();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
   return (
-    <View style={{ flex: 1 }}>
+    <ScrollView style={{ flex: 1 }}>
       <Modal transparent={true} visible={uploading} animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.activityIndicatorWrapper}>
@@ -41,21 +31,9 @@ export default function PCStep4Component({
           </View>
         </View>
       </Modal>
-      <PetProfileCardViewMore
-        pet={petData}
-        isOwner={true}
-        editingFooter={
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity onPress={onBack} style={styles.backButton}>
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-              <Text style={styles.nextButtonText}>Next</Text>
-            </TouchableOpacity>
-          </View>
-        }
-      ></PetProfileCardViewMore>
-    </View>
+      <PetProfileCardViewMore pet={petData}></PetProfileCardViewMore>
+      {renderFooter()}
+    </ScrollView>
   );
 }
 

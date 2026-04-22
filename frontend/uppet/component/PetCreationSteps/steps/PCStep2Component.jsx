@@ -12,52 +12,11 @@ import * as Themes from "../../../assets/themes/themes";
 export default function PCStep2Component({
   petData,
   setPetData,
-  onNext,
-  onBack,
+  errors,
+  renderFooter,
 }) {
-  const [errors, setErrors] = useState({});
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
-
-  const handleNext = async () => {
-    let newErrors = {};
-    // Validate required fields
-
-    if (!petData.size) {
-      newErrors.size = "Size is required";
-    }
-    if (!petData.vaccination) {
-      newErrors.vaccination = "Vaccination status is required";
-    }
-    if (isNaN(Number(petData.weight))) {
-      newErrors.weight = "Please enter a valid number for Weight";
-    }
-    if (!petData.sex) {
-      newErrors.sex = "Please specify sex";
-    }
-    if (!petData.sn) {
-      newErrors.sn = "Please specify if your pet is spayed/neutered";
-    }
-    if (!petData.specialNeeds) {
-      newErrors.specialNeeds = "Please Put NA";
-    }
-    if (!petData.healthCond) {
-      newErrors.healthCond = "Health condition is required";
-    }
-    if (!petData.behavior) {
-      newErrors.behavior = "Behavior is required";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-    } else {
-      setErrors({});
-      // Proceed to next step
-
-      console.log("Pet Data is valid, proceeding to next step:", petData);
-      onNext();
-    }
-  };
 
   const SelectionChip = ({ label, value, field }) => (
     <TouchableOpacity
@@ -199,14 +158,15 @@ export default function PCStep2Component({
           <Text style={styles.errorText}>{errors.otherInfo}</Text>
         )}
       </View>
-      <View style={styles.buttonContainer}>
+      {renderFooter()}
+      {/* <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
           <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
     </ScrollView>
   );
 }

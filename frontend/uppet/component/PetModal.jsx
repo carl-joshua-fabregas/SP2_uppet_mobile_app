@@ -10,9 +10,13 @@ import {
 } from "react-native";
 import * as Themes from "../assets/themes/themes";
 import { useNavigation } from "@react-navigation/native";
+import { useUser } from "../context/UserContext";
 
 export default function PetModal({ pet, onClose }) {
+  const { user } = useUser();
   const navigator = useNavigation();
+  const isOwner = user._id === pet.ownerId;
+
   const petProfilePhoto = pet?.photos?.find((photo) => photo.isProfile);
   return (
     <Modal
@@ -60,7 +64,9 @@ export default function PetModal({ pet, onClose }) {
                 navigator.navigate("viewPetProfile", { pet: pet });
               }}
             >
-              <Text style={styles.meetButtonText}>Meet {pet.name}!</Text>
+              <Text style={styles.meetButtonText}>
+                {isOwner ? `Review Adoptee Profile` : `Meet ${pet.name}!`}{" "}
+              </Text>
             </TouchableOpacity>
           </View>
         </Pressable>

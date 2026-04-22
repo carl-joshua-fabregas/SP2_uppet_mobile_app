@@ -144,19 +144,17 @@ export default function createAdopterProfile() {
 
     const isFormUnchanged =
       JSON.stringify(oldUserForm) === JSON.stringify(newUserForm);
-    const isPhotoUnchanged = newUserPhoto?.key === oldUserPhoto?.key;
+    const updatePhoto = newUserPhoto?.key === oldUserPhoto?.key;
 
     console.log("=================Saving Editing of Adopter");
     console.log("OG ====== ", adopterForm, "NEW ================", user);
 
-    if (isFormUnchanged && isPhotoUnchanged) {
+    if (isFormUnchanged && updatePhoto) {
       console.log("No changes detected. Skipping API calls.");
       return;
     }
     try {
       setUploading(true);
-      const updatePhoto =
-        adopterForm.profilePhoto?.key !== user.profilePhoto?.key;
       let finalUploadKey = user.profilePhoto?.key;
       if (updatePhoto) {
         const presignDeleteUrl = await api.post(`/api/user/presignDeleteURL`, {

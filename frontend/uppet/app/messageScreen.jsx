@@ -4,58 +4,113 @@ import { useRoute } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
 import { useChats } from "../context/ChatContext";
 import { api } from "../api/axios";
-import { View, FlatList } from "react-native";
+import {
+  View,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+} from "react-native";
+import * as Themes from "../assets/themes/themes";
 
 export default function messageScreen() {
-  const { user } = useUser();
-  const { socket } = useSocket();
-  const { updateInboxPreview } = useChats();
   const router = useRoute();
-  const { chatThreadOrigin, receiver } = router.params;
+
+  const { user } = useUser();
+  const socket = useSocket();
+  const { receiverID } = router.params;
+
   const [messages, setMessages] = useState([]);
+  const [textInput, setTextInput] = useState("");
+  const [msgMedia, setMsgMedia] = useState(null);
+
+  const roomID = [user._id, receiverID].sort().join("_");
+  // const { chatThreadOrigin, receiver } = router.params;
+
+  // const messageData = {
+  //   roomID: roomID,
+  //   sender: user._id,
+  //   receiver: receiverID,
+  //   chatThreadOrigin: //idk about this essentially
+  //   body: text,
+  //   // media: //
+  // }
+  // socket.emit("send_message", messageData)
 
   useEffect(() => {
     if (!socket) return;
 
-    socket.emit("join_chat", chatThreadOrigin._id);
-
+    socket.emit("join_chat", roomID);
     socket.on("receive_message", (newMessage) => {
-      setMessages((prev) => [newMessage, ...prev]);
+      setMessages((prev) => [...prev, newMessage]);
     });
 
     return () => {
-      socket.emit("leave_chat", chatThreadOrigin._id);
+      socket.emit("leave_chat", roomID);
       socket.off("receive_message");
     };
-  }, [socket, chatThreadOrigin]);
+  }, [socket]);
 
-  const handleMessage = async (text) => {
+  const mediaSelection = () => {
+    console.log("Puttin Empty media for handling later");
+  };
+
+  const onPress = () => {
+    console.log("Message Bubble HAS BEEN PRESSED");
+  };
+
+  const renderMessages = ({ item }) => {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        style={[
+          styles.messageBubble,
+          item.senderID === user._id
+            ? styles.senderMessage
+            : styles.receiverMessage,
+        ]}
+      >
+        <Text style={styles.messageText}> {item.body}</Text>
+        <Text style={styles.timestamp}>{item.timestamp}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const handleChangeInputText = (text) => {
+    setTextInput(text);
+  };
+
+  const handleSend = async () => {
     // A temporay message so we can show if a message has been sent successfully or is still pending
+
     const tempMessage = {
       _id: `temp-${Date.now()}`,
-      text: text,
-      createdAt: new Date().toISOString(),
+      body: textInput,
+      media: msgMedia,
+      senderID: user._id,
+      timestamp: new Date().toISOString(),
       status: "pending",
+      receiverID: receiverID,
     };
-
-    setMessages((prev) => [tempMessage, ...prev]);
-    updateInboxPreview(chatThreadOrigin._id, tempMessage, receiver.firstName);
-
+    socket.emit("send_message", tempMessage);
+    setMessages((prev) => [...prev, tempMessage]);
     try {
-      const messageRes = await api.post(`/api/message/send`, {
-        chatThreadOrigin: chatThreadOrigin._id,
-        receiver: receiver._id,
-        sender: user._id,
-        body: text,
-      });
-
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg._id === tempMessage._id
-            ? { ...messageRes.data.body, status: "sent" }
-            : msg,
-        ),
-      );
+      // const messageRes = await api.post(`/api/message/send`, {
+      //   chatThreadOrigin: chatThreadOrigin._id,
+      //   receiver: receiverID,
+      //   sender: user._id,
+      //   body: text,
+      // });
+      // setMessages((prev) =>
+      //   prev.map((msg) =>
+      //     msg._id === tempMessage._id
+      //       ? { ...messageRes.data.body, status: "sent" }
+      //       : msg,
+      //   ),
+      // );
     } catch (err) {
       console.log("ERROR IN SENDING MESSAGE");
       setMessages((prev) =>
@@ -65,7 +120,97 @@ export default function messageScreen() {
             : msg,
         ),
       );
+    } finally {
+      setTextInput("");
+      setMsgMedia("");
     }
   };
-  return <></>;
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <FlatList
+        data={messages}
+        renderItem={renderMessages}
+        keyExtractor={(item) => item._id}
+        contentContainerStyle={styles.flatListContents}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>Start a conversation</Text>
+        }
+        ListFooterComponent={
+          <View style={styles.footerContainer}>
+            <TextInput
+              style={styles.inputTextArea}
+              value={textInput}
+              placeholderTextColor={"black"}
+              onChangeText={handleChangeInputText}
+              placeholder="Enter Message"
+            ></TextInput>
+            <TouchableOpacity onPress={handleSend}>
+              <Text>PRESS ME!</Text>
+            </TouchableOpacity>
+          </View>
+        }
+      ></FlatList>
+    </KeyboardAvoidingView>
+  );
 }
+
+const styles = StyleSheet.create({
+  flatListContainer: {
+    flex: 1,
+  },
+  flatListContents: {
+    padding: Themes.SPACING.md,
+    backgroundColor: Themes.COLORS.background,
+    flexGrow: 1,
+  },
+  messageBubble: {
+    paddingHorizontal: Themes.SPACING.md,
+    paddingVertical: Themes.SPACING.sm,
+    borderRadius: Themes.RADIUS.md,
+    marginVertical: Themes.SPACING.xs,
+  },
+  messageText: {
+    color: Themes.COLORS.textDark,
+    fontFamily: Themes.TYPOGRAPHY.body,
+    fontSize: Themes.TYPOGRAPHY.fontSize,
+  },
+  senderMessage: {
+    backgroundColor: Themes.COLORS.primary,
+    alignSelf: "flex-end",
+    borderBottomRightRadius: 0,
+  },
+  receiverMessage: {
+    backgroundColor: "#E5E5EA",
+    alignSelf: "flex-start",
+    borderBottomLeftRadius: 0,
+  },
+  footerContainer: {
+    flexDirection: "row",
+    padding: Themes.SPACING.sm,
+    alignItems: "center",
+  },
+  inputTextArea: {
+    borderRadius: Themes.RADIUS.pill,
+    flex: 1,
+    borderWidth: 2,
+    borderColor: "black",
+  },
+  emptyText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: 16,
+    color: Themes.COLORS.textFaded || "#888",
+    textAlign: "center",
+    marginTop: 100, // Pushes it down so it's not hugging the top
+    paddingHorizontal: Themes.SPACING.lg,
+    lineHeight: 22,
+  },
+  timestamp: {
+    fontSize: 10,
+    color: "#8E8E93",
+    marginTop: 4,
+    alignSelf: "flex-end", // Keeps the time tucked in the corner
+  },
+});

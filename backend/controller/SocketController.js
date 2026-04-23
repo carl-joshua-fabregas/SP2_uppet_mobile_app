@@ -7,11 +7,16 @@ const socketController = {
         socket.join(userId);
         console.log(`User has initialized with their global room: ${userId}`);
       });
-      socket.on("join_chat", (conversationId) => {
-        socket.join(conversationId);
+      socket.on("send_message", (data) => {
         console.log(
-          `User ${socket.id} has joined converstaion ${conversationId}`,
+          `Messaged Sent by ${data.senderID} using socket`,
+          socket.id,
         );
+        socket.to(data.roomID).emit("receive_message", data); //Im not sure if data was the right one here
+      });
+      socket.on("join_chat", (roomID) => {
+        socket.join(roomID);
+        console.log(`User ${socket.id} has joined converstaion ${roomID}`);
       });
       socket.on("leave_chat", (conversationId) => {
         socket.leave(conversationId);

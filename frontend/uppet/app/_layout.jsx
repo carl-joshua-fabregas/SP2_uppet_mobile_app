@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { UserProvider, useUser } from "../context/UserContext";
 import { SocketProvider, useSocket } from "../context/SocketContext";
-import { ChatProvider, useChats } from "../context/ChatContext";
+// import { ChatProvider, useChats } from "../context/ChatContext";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
@@ -81,9 +81,9 @@ export default function RootLayout() {
   return (
     <UserProvider>
       <SocketProvider>
-        <ChatProvider>
-          <NavigationStack></NavigationStack>
-        </ChatProvider>
+        {/* <ChatProvider> */}
+        <NavigationStack></NavigationStack>
+        {/* </ChatProvider> */}
       </SocketProvider>
     </UserProvider>
   );

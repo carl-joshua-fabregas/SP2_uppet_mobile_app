@@ -18,11 +18,12 @@ export default function ViewPetProfile() {
   const [status, setStatus] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const pet = route.params.pet;
-  console.log("View Profile The pet data transferred isr", pet._id);
+  console.log("View Profile The pet data transferred is", pet);
 
   const getstatus = async () => {
     try {
       const res = await api.get(`/api/adoptionApp/${pet._id}/applied`, {});
+      console.log("In view pet profile...", res.data);
       setStatus(res.data.status);
       setIsOwner(res.data.isOwner);
       console.log(res.data.status, res.data.isOwner);
@@ -44,7 +45,9 @@ export default function ViewPetProfile() {
 
   const handleMessage = () => {
     console.log("HandleMessageClicked");
-    navigation.navigate("messageScreen");
+    navigation.navigate("messageScreen", {
+      receiverID: pet.ownerID,
+    });
   };
 
   const handleApply = async () => {

@@ -54,8 +54,9 @@ export async function findAdoptAppByID(req, res) {
   try {
     const adoptApp = await AdoptionApplication.findById(req.params.id);
     if (!adoptApp) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No Applications Found",
+        body: [],
       });
     }
     return res.status(200).json({

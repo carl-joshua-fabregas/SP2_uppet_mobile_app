@@ -23,7 +23,6 @@ export default function CreateProfile() {
   const router = useRoute();
   const navigation = useNavigation();
   const { editPetData } = router.params ?? {};
-  console.log(router.params);
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [pet, setPet] = useState(
@@ -46,7 +45,6 @@ export default function CreateProfile() {
     },
   );
   const [errors, setErrors] = useState({});
-  console.log("HERE IS GOOD", pet);
   const STEPS = [
     { label: "Basic Info" },
     { label: "Health & Behavior" },
@@ -55,7 +53,6 @@ export default function CreateProfile() {
     { label: "PET PROFILE CARD CREATED" },
   ];
   const validators = () => {
-    console.log("Validators here");
     const newErrors = {};
     switch (currentStep) {
       case 0: {
@@ -109,7 +106,7 @@ export default function CreateProfile() {
         }
         break;
       }
-      case 3: {
+      case 2: {
         if (pet.photos.length === 0) {
           newErrors.photos = "At least one photo is required";
         }
@@ -125,24 +122,20 @@ export default function CreateProfile() {
     } else {
       setErrors({});
       // Proceed to next step
-      console.log("Pet Data is valid, proceeding to next step:", pet);
       return true;
     }
   };
-  const handleNext = () => {
-    console.log("HANDLE NEXT CALLED. CURRENT STEP:", currentStep);
+  const handleNext = async () => {
     if (currentStep < STEPS.length - 1 && validators()) {
       if (currentStep === STEPS.length - 2 && !editPetData) {
-        createPet();
+        await createPet();
       } else if (currentStep === STEPS.length - 2 && editPetData) {
-        saveEditPet();
+        await saveEditPet();
       }
       setCurrentStep((prev) => prev + 1);
     }
-    console.log(`update ${currentStep} `, pet);
   };
   const handleBack = () => {
-    console.log("HANDLE Back CALLED. CURRENT STEP:", currentStep);
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
     }
@@ -150,7 +143,8 @@ export default function CreateProfile() {
   const saveEditPet = async () => {
     const { photos: oldPetPhotos, ...oldPetForm } = editPetData;
     const { photos: newPetPhotos, ...newPetForm } = pet;
-
+    console.log("SAVE AND EDIT OLD", editPetData);
+    console.log("NEW PET DATA", pet);
     const photosDeleted = oldPetPhotos.filter(
       (oldPhoto) =>
         !newPetPhotos.find((newPhoto) => newPhoto.key === oldPhoto.key),
@@ -181,6 +175,7 @@ export default function CreateProfile() {
       !hasDeleted && !hasNewCaptions && !hasNewPhoto && !hasMainPhotoChanged;
 
     if (isPhotoUnchanged && isFormUnchanged) {
+      console.log("NOTHING TO CHANGE");
       return;
     }
     try {
@@ -205,7 +200,7 @@ export default function CreateProfile() {
           }),
         );
       }
-      let finalPetPhotosArray = [...newPetPhotos];
+      let finalPetArray = pet;
       if (hasNewPhoto) {
         console.log("FOUND NEW PHOTOS");
         const uploadedPhotos = await Promise.all(
@@ -227,8 +222,8 @@ export default function CreateProfile() {
               body: blob,
               contentType: photo.type,
             });
+
             return {
-              url: url,
               key: key,
               caption: photo.caption,
               isProfile: photo.isProfile,
@@ -236,25 +231,28 @@ export default function CreateProfile() {
             };
           }),
         );
-        finalPetPhotosArray = finalPetPhotosArray.map((photo) => {
-          const uploadedFinal = uploadedPhotos.find(
-            (up) => up.key === photo.key,
-          );
-          if (uploadedFinal) {
-            return uploadedFinal;
-          }
-          return photo;
+        const finalPetPhotoRes = await api.patch(`api/pet/${pet._id}/photo`, {
+          photos: uploadedPhotos,
         });
-        console.log(
-          "THHHHHIS IS THE FINAL ARRAY",
-          finalPetPhotosArray,
-          uploadedPhotos,
-        );
+        // finalPetPhotosArray = finalPetPhotosArray.map((photo) => {
+        //   const uploadedFinal = uploadedPhotos.find(
+        //     (up) => up.key === photo.key,
+        //   );
+        //   if (uploadedFinal) {
+        //     return uploadedFinal;
+        //   }
+        //   return photo;
+        // });
+        // console.log(
+        //   "THHHHHIS IS THE FINAL ARRAY",
+        //   finalPetPhotosArray,
+        //   uploadedPhotos,
+        // );
+        finalPetArray = finalPetPhotoRes.data.body;
       }
-
+      console.log("FINAL PHOTOS ARRAY", finalPetArray);
       const finalPetFormRes = await api.patch(`/api/pet/${pet._id}`, {
-        ...newPetForm,
-        photos: finalPetPhotosArray,
+        ...finalPetArray,
       });
     } catch (err) {
       console.log("Error in save edit", err.message);
@@ -279,7 +277,7 @@ export default function CreateProfile() {
           console.log(photo);
           const preSignRes = await api.post(`api/pet/presignUploadURL`, {
             fileName: photo.name,
-            petId: petID,
+            petID: petID,
             fileType: photo.type,
             fileSize: photo.size,
           });
@@ -338,7 +336,7 @@ export default function CreateProfile() {
   };
   const onFinish = (petData) => {
     console.log("FINISHED CREATING PET");
-    navigation.navigate("(drawer)/myAdoptee");
+    navigation.goBack();
   };
   const renderStep = () => {
     switch (currentStep) {

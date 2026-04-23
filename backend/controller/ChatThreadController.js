@@ -1,8 +1,7 @@
-
 import ChatThread from "../models/ChatThread.js";
 import Message from "../models/Messages.js";
 
-export async function createChatThread (req, res) {
+export async function createChatThread(req, res) {
   try {
     const { members, lastMessage } = req.body;
     const chatThread = new ChatThread({
@@ -21,9 +20,9 @@ export async function createChatThread (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findAllChatThread (req, res) {
+export async function findAllChatThread(req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
       return res.status(403).json({
@@ -46,9 +45,9 @@ export async function findAllChatThread (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findChatThreadByID (req, res) {
+export async function findChatThreadByID(req, res) {
   try {
     const chatThread = await ChatThread.findById(req.params.id);
     if (!chatThread) {
@@ -76,9 +75,32 @@ export async function findChatThreadByID (req, res) {
       body: err.message,
     });
   }
-};
+}
+export async function findAllUserChatThread(req, res) {
+  try {
+    const chatThread = await ChatThread.find({
+      members: { $in: req.user._id },
+    });
+    if (chatThread.length === 0) {
+      return res.status(200).json({
+        message: "Not Found",
+        body: [],
+      });
+    }
 
-export async function deleteChatThread (req, res) {
+    return res.status(200).json({
+      message: "Succesfully obtained chat thread",
+      body: chatThread,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+}
+
+export async function deleteChatThread(req, res) {
   try {
     const chatThread = await ChatThread.findById(req.params.id);
     if (!chatThread) {
@@ -108,5 +130,4 @@ export async function deleteChatThread (req, res) {
       body: err.message,
     });
   }
-};
-
+}

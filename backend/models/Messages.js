@@ -31,6 +31,10 @@ const messageSchema = new mongoose.Schema({
     default: Date.now,
     required: true,
   },
+  isEdited: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const Message = mongoose.model("Message", messageSchema);

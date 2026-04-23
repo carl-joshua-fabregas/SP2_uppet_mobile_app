@@ -119,7 +119,7 @@ export default function createAdopterProfile() {
       navigation.navigate("viewProfile");
     } else {
       setNewUser(false);
-      navigation.navigate("(drawer)");
+      navigation.goBack();
     }
   };
 

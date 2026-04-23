@@ -44,6 +44,7 @@ export default function ViewPetProfile() {
 
   const handleMessage = () => {
     console.log("HandleMessageClicked");
+    navigation.navigate("messageScreen");
   };
 
   const handleApply = async () => {

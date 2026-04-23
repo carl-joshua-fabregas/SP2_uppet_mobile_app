@@ -22,12 +22,10 @@ export default function PCStep3Component({
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
 
-  const removePhoto = (photoID) => {
-    const filtered = petData.photos.filter((p) => {
-      p.id !== photoID;
-    });
+  const removePhoto = (photoKey) => {
+    const filtered = petData.photos.filter((p) => p.key !== photoKey);
     if (filtered.length > 0 && !filtered.find((p) => p.isProfile)) {
-      filtered[0].isProfile = 1;
+      filtered[0].isProfile = true;
     }
     update("photos", filtered);
   };
@@ -36,7 +34,7 @@ export default function PCStep3Component({
       <View style={styles.photoCard}>
         <TouchableOpacity
           style={styles.deleteIcon}
-          onPress={() => removePhoto(item.id)}
+          onPress={() => removePhoto(item.key)}
         >
           <Ionicons
             name="trash-outline"
@@ -50,12 +48,12 @@ export default function PCStep3Component({
             placeholder="Enter caption for this photo"
             placeholderTextColor="#A9A9A9"
             value={item.caption}
-            onChangeText={(text) => handleCaptionChange(text, item.id)}
+            onChangeText={(text) => handleCaptionChange(text, item.key)}
             multiline={true}
             style={styles.captionInput}
           />
           <TouchableOpacity
-            onPress={() => handleSetProfile(item.id)}
+            onPress={() => handleSetProfile(item.key)}
             style={[
               styles.mainIndicator,
               item.isProfile && styles.mainIndicatorActive,
@@ -100,63 +98,59 @@ export default function PCStep3Component({
             type: asset.type,
             caption: "",
             size: asset.fileSize,
-            id: `pets/${petData._id}/${asset.fileSize}_${asset.fileName}`,
-            key: `pets/${petData._id}/${asset.fileSize}_${asset.fileName}`,
+            id: `pets/${petData._id ?? Date.now()}/${asset.fileSize}_${asset.fileName}`,
+            key: `pets/${petData._id ?? Date.now()}/${asset.fileSize}_${asset.fileName}`,
             isProfile:
               petData.photos.length === 0 && index === 0 ? true : false, // Set first photo as profile by default
           }));
-          console.log(newPhotos);
+          // console.log("This are the new Photos ", newPhotos);
           update("photos", [...petData.photos, ...newPhotos]);
         }
       },
     );
   };
 
-  const handleCaptionChange = (text, photoId) => {
+  const handleCaptionChange = (text, photoKey) => {
     const updatedPhotos = petData.photos.map((photo) =>
-      photo.id === photoId ? { ...photo, caption: text } : photo,
+      photo.key === photoKey ? { ...photo, caption: text } : photo,
     );
     update("photos", updatedPhotos);
   };
 
-  const handleSetProfile = (photoId) => {
+  const handleSetProfile = (photoKey) => {
     const updatedPhotos = petData.photos.map((photo) => ({
       ...photo,
-      isProfile: photo.id === photoId ? true : false,
+      isProfile: photo.key === photoKey ? true : false,
     }));
     update("photos", updatedPhotos);
   };
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={petData.photos}
-        renderItem={renderImages}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.scrollPadding}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <View>
-            <TouchableOpacity
-              onPress={handleAddPhoto}
-              style={styles.uploadArea}
-            >
-              <Ionicons
-                name={"image-outline"}
-                color={Themes.COLORS.primary}
-                size={28}
-              ></Ionicons>
-              <Text style={styles.uploadTitle}>Add Pet Photos</Text>
-              <Text style={styles.uploadSub}>Show off their best angles!</Text>
-            </TouchableOpacity>
-            {errors.photos && (
-              <Text style={styles.errorText}>{errors.photos}</Text>
-            )}
-          </View>
-        }
-        ListFooterComponent={() => renderFooter()}
-      />
-    </View>
+    <FlatList
+      style={styles.container}
+      data={petData.photos}
+      renderItem={renderImages}
+      keyExtractor={(item, index) => item._id || item.key}
+      contentContainerStyle={styles.scrollPadding}
+      showsVerticalScrollIndicator={false}
+      ListHeaderComponent={
+        <View>
+          <TouchableOpacity onPress={handleAddPhoto} style={styles.uploadArea}>
+            <Ionicons
+              name={"image-outline"}
+              color={Themes.COLORS.primary}
+              size={28}
+            ></Ionicons>
+            <Text style={styles.uploadTitle}>Add Pet Photos</Text>
+            <Text style={styles.uploadSub}>Show off their best angles!</Text>
+          </TouchableOpacity>
+          {errors.photos && (
+            <Text style={styles.errorText}>{errors.photos}</Text>
+          )}
+        </View>
+      }
+      ListFooterComponent={() => renderFooter()}
+    />
     // <View style={styles.container}>
     //   <TouchableOpacity onPress={handleAddPhoto} style={styles.nextButton}>
     //     <Text style={styles.nextButtonText}>Add Photos</Text>

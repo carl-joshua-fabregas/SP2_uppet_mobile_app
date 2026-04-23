@@ -17,7 +17,7 @@ export default function PCStep4Component({
   renderFooter,
 }) {
   return (
-    <ScrollView style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <Modal transparent={true} visible={uploading} animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.activityIndicatorWrapper}>
@@ -31,9 +31,11 @@ export default function PCStep4Component({
           </View>
         </View>
       </Modal>
-      <PetProfileCardViewMore pet={petData}></PetProfileCardViewMore>
-      {renderFooter()}
-    </ScrollView>
+      <ScrollView style={{ flex: 1 }}>
+        <PetProfileCardViewMore pet={petData}></PetProfileCardViewMore>
+        {renderFooter()}
+      </ScrollView>
+    </View>
   );
 }
 

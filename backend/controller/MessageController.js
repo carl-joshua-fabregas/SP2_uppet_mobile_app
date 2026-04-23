@@ -1,24 +1,26 @@
 import ChatThread from "../models/ChatThread.js";
 import Message from "../models/Messages.js";
 
-export async function sendMessage (req, res) {
+export async function sendMessage(req, res) {
   try {
     const options = {
       new: true,
       runValidator: true,
     };
-    const { chatThreadOrigin, sender, body, media } = req.body;
+    const { chatThreadOrigin, sender, receiver, body, media, isEdited } =
+      req.body;
 
     const message = new Message({
       chatThreadOrigin: chatThreadOrigin,
       sender: sender,
       body: body,
       media: media,
+      isEdited: isEdited,
     });
 
     const newMessage = await message.save();
 
-    await ChatThread.findByIdAndUpdate(
+    const updatedChatList = await ChatThread.findByIdAndUpdate(
       message.chatThreadOrigin,
       {
         $set: {
@@ -26,22 +28,27 @@ export async function sendMessage (req, res) {
           timeStamp: Date.now(),
         },
       },
-      options
-    );
+      options,
+    ).populate("lastMessage");
 
+    const io = req.app.get("io");
+
+    io.to(chatThreadOrigin).emit("receive_message", newMessage);
     return res.status(200).json({
       message: "Succsefully",
       body: newMessage,
     });
+
+    io.to(receiver).emit("update_chatlist", updatedChatList);
   } catch (err) {
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });
   }
-};
+}
 
-export async function findMessageById (req, res) {
+export async function findMessageById(req, res) {
   try {
     const chatThread = await ChatThread.findById(req.params.chatThreadId);
     if (!chatThread) {
@@ -74,9 +81,9 @@ export async function findMessageById (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteAMessage (req, res) {
+export async function deleteAMessage(req, res) {
   try {
     const message = await Message.findById(req.params.id);
 
@@ -106,5 +113,4 @@ export async function deleteAMessage (req, res) {
       body: err.message,
     });
   }
-};
-
+}

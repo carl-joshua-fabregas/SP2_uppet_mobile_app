@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { UserProvider, useUser } from "../context/UserContext";
 import { SocketProvider, useSocket } from "../context/SocketContext";
+import { ChatProvider, useChats } from "../context/ChatContext";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
@@ -60,6 +61,10 @@ function NavigationStack() {
           name="viewPetProfile"
           options={{ headerShown: true, title: "Pet Profile" }}
         ></Stack.Screen>
+        <Stack.Screen
+          name="messageScreen"
+          options={{ headerShown: true, title: "Messages" }}
+        ></Stack.Screen>
       </Stack.Protected>
       <Stack.Protected guard={!token && !newUser}>
         <Stack.Screen name="index"></Stack.Screen>
@@ -76,7 +81,9 @@ export default function RootLayout() {
   return (
     <UserProvider>
       <SocketProvider>
-        <NavigationStack></NavigationStack>
+        <ChatProvider>
+          <NavigationStack></NavigationStack>
+        </ChatProvider>
       </SocketProvider>
     </UserProvider>
   );

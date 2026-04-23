@@ -29,6 +29,7 @@ export const SocketProvider = ({ children }) => {
       console.log("SOCKET ERROR IN FRONTEND", err.message);
     });
     setSocket(newSocket);
+    newSocket.emit("setup", user._id);
     console.log("SUCCESSFUL IN CONNECTING ");
     return () => {
       newSocket.disconnect();

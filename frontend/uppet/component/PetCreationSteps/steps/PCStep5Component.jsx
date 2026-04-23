@@ -20,7 +20,12 @@ export default function PCStep5Component({ petData, onFinish }) {
 
       {/* Final Action Button */}
       <View style={styles.footer}>
-        <TouchableOpacity onPress={onFinish} style={styles.finishButton}>
+        <TouchableOpacity
+          onPress={() => {
+            onFinish;
+          }}
+          style={styles.finishButton}
+        >
           <Text style={styles.finishButtonText}>View My Adoptees</Text>
         </TouchableOpacity>
       </View>

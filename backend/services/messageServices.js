@@ -6,11 +6,11 @@ const options = {
 };
 export async function saveMessageToDb(messageData) {
   try {
-    const { chatThreadOrigin, senderID, body, media, isEdited } = messageData;
+    const { chatThreadOrigin, sender, body, media, isEdited } = messageData;
 
     const message = new Message({
       chatThreadOrigin: chatThreadOrigin,
-      sender: senderID,
+      sender: sender,
       body: body,
       media: media,
       isEdited: isEdited,

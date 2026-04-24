@@ -47,7 +47,27 @@ export async function sendMessage(req, res) {
     });
   }
 }
-
+export async function findMessagesFromUser(req, res){
+  try{
+    const messages = await Message.find({
+      chatThreadOrigin: req.params.chatThreadOrigin
+    }).skip((req.query.page - 1) * 10).limit(10)
+    if(messages.length === 0){
+      return res.status(200).json({
+        message: "No Messages Found"
+      })
+    }
+    return res.status(200).json({
+      message: "Here are the messages found",
+      body: messages
+    })
+  } catch (err){
+    console.log("Error in finding user to user messages", err.message)
+    return res.status(500).json({
+      message: "Server Error"
+    })
+  }
+}
 export async function findMessageById(req, res) {
   try {
     const chatThread = await ChatThread.findById(req.params.chatThreadId);

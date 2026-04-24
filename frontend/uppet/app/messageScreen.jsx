@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSocket } from "../context/SocketContext";
 import { useRoute } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
@@ -28,6 +28,11 @@ export default function messageScreen() {
   const [messages, setMessages] = useState([]);
   const [textInput, setTextInput] = useState("");
   const [msgMedia, setMsgMedia] = useState(null);
+
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const [refreshing, setRefreshing] = useState(false)
 
   const roomID = [user._id, receiverID].sort().join("_");
   console.log("Receiver ID is ", receiverID);
@@ -60,6 +65,49 @@ export default function messageScreen() {
     };
   }, [socket]);
 
+  useEffect(() =>{
+    if(!chatThreadOrigin) return
+    fetchMessages(1);
+  }, [])
+  
+  const fetchMessages = async (pageNum, isRefreshing = false) => {
+    console.log("I tried to fetch messages")
+    try{
+      setLoading(true);
+      const res = await api.get(`/api/message/${chatThreadOrigin._id}`, {
+        page: pageNum
+      })
+      const moreMessages = res.data.body;
+      setMessages((prev) => {
+        if(isRefreshing) return moreMessages
+        else return [...prev, ...moreMessages]
+      })
+      console.log("Messages here", moreMessages)
+      if(moreMessages.length < 10){
+        setHasMore(false)
+      }
+
+    }catch (err) {
+      console.log("Error Fetching Previous Messages", err.message);
+    } finally{
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  const handleLoadMore = () => {
+    if (!loading && hasMore) {
+      fetchMessages(page + 1);
+      setPage((prev) => prev + 1);
+    }
+  };
+ const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setPage(1);
+    setHasMore(true);
+    await fetchMessages(1, true);
+  }, []);
+
   const mediaSelection = () => {
     console.log("Puttin Empty media for handling later");
   };
@@ -74,7 +122,7 @@ export default function messageScreen() {
         onPress={onPress}
         style={[
           styles.messageBubble,
-          item.senderID === user._id
+          item.sender === user._id
             ? styles.senderMessage
             : styles.receiverMessage,
         ]}
@@ -109,7 +157,7 @@ export default function messageScreen() {
       _id: `temp-${Date.now()}`,
       body: textInput,
       media: msgMedia,
-      senderID: user._id,
+      sender: user._id,
       timestamp: new Date().toISOString(),
       status: "pending",
       roomID: roomID,
@@ -119,6 +167,8 @@ export default function messageScreen() {
 
     socket.emit("send_message", tempMessage);
     setMessages((prev) => [...prev, tempMessage]);
+    setTextInput("")
+    setMsgMedia("")
   };
   return (
     <KeyboardAvoidingView
@@ -130,6 +180,8 @@ export default function messageScreen() {
         renderItem={renderMessages}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.flatListContents}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.4}
         ListEmptyComponent={
           <Text style={styles.emptyText}>Start a conversation</Text>
         }

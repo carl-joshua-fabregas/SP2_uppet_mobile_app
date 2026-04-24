@@ -22,12 +22,16 @@ export default function messageScreen() {
   const { user } = useUser();
   const socket = useSocket();
   const { receiverID } = router.params;
-
+  const [chatThreadOrigin, setChatThreadOrigin] = useState(
+    router.params.chatThreadOrigin,
+  );
   const [messages, setMessages] = useState([]);
   const [textInput, setTextInput] = useState("");
   const [msgMedia, setMsgMedia] = useState(null);
 
   const roomID = [user._id, receiverID].sort().join("_");
+  console.log("Receiver ID is ", receiverID);
+  console.log("Chat Thread Origin in Message Screen", chatThreadOrigin);
   // const { chatThreadOrigin, receiver } = router.params;
 
   // const messageData = {
@@ -46,6 +50,8 @@ export default function messageScreen() {
     socket.emit("join_chat", roomID);
     socket.on("receive_message", (newMessage) => {
       setMessages((prev) => [...prev, newMessage]);
+
+      socket.emit("message_delivered", { messageID: newMessage._id });
     });
 
     return () => {
@@ -84,7 +90,20 @@ export default function messageScreen() {
   };
 
   const handleSend = async () => {
-    // A temporay message so we can show if a message has been sent successfully or is still pending
+    let dbChatThread = chatThreadOrigin;
+
+    if (!chatThreadOrigin) {
+      try {
+        const res = await api.post(`api/chatlist/make`, {
+          members: [user._id, receiverID],
+        });
+        dbChatThread = res.data.body;
+        setChatThreadOrigin(dbChatThread);
+        console.log("Chat Thread has been initialized", dbChatThread);
+      } catch (err) {
+        console.log("Error in making chatlist", err.message);
+      }
+    }
 
     const tempMessage = {
       _id: `temp-${Date.now()}`,
@@ -93,37 +112,13 @@ export default function messageScreen() {
       senderID: user._id,
       timestamp: new Date().toISOString(),
       status: "pending",
+      roomID: roomID,
+      chatThreadOrigin: dbChatThread,
       receiverID: receiverID,
     };
+
     socket.emit("send_message", tempMessage);
     setMessages((prev) => [...prev, tempMessage]);
-    try {
-      // const messageRes = await api.post(`/api/message/send`, {
-      //   chatThreadOrigin: chatThreadOrigin._id,
-      //   receiver: receiverID,
-      //   sender: user._id,
-      //   body: text,
-      // });
-      // setMessages((prev) =>
-      //   prev.map((msg) =>
-      //     msg._id === tempMessage._id
-      //       ? { ...messageRes.data.body, status: "sent" }
-      //       : msg,
-      //   ),
-      // );
-    } catch (err) {
-      console.log("ERROR IN SENDING MESSAGE");
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg._id === tempMessage._id
-            ? { ...messageRes.data.body, status: "failed" }
-            : msg,
-        ),
-      );
-    } finally {
-      setTextInput("");
-      setMsgMedia("");
-    }
   };
   return (
     <KeyboardAvoidingView
@@ -214,3 +209,31 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end", // Keeps the time tucked in the corner
   },
 });
+
+// try {
+//   // const messageRes = await api.post(`/api/message/send`, {
+//   //   chatThreadOrigin: chatThreadOrigin._id,
+//   //   receiver: receiverID,
+//   //   sender: user._id,
+//   //   body: text,
+//   // });
+//   // setMessages((prev) =>
+//   //   prev.map((msg) =>
+//   //     msg._id === tempMessage._id
+//   //       ? { ...messageRes.data.body, status: "sent" }
+//   //       : msg,
+//   //   ),
+//   // );
+// } catch (err) {
+//   console.log("ERROR IN SENDING MESSAGE");
+//   setMessages((prev) =>
+//     prev.map((msg) =>
+//       msg._id === tempMessage._id
+//         ? { ...messageRes.data.body, status: "failed" }
+//         : msg,
+//     ),
+//   );
+// } finally {
+//   setTextInput("");
+//   setMsgMedia("");
+// }

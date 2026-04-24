@@ -43,11 +43,21 @@ export default function ViewPetProfile() {
   //   };
   //       <Button title="View Gallery" onPress={handleViewGallery}></Button>
 
-  const handleMessage = () => {
-    console.log("HandleMessageClicked");
-    navigation.navigate("messageScreen", {
-      receiverID: pet.ownerID,
-    });
+  const handleMessage = async () => {
+    console.log("HandleMessageClicked: ", pet.ownerId);
+    try {
+      const res = await api.get(`/api/chatlist/get/${pet.ownerId}`);
+      const chatThreadOrigin = res.data.body;
+      if (!chatThreadOrigin)
+        console.log("No Chat Thread Origin Yet, sending: ", chatThreadOrigin);
+
+      navigation.navigate("messageScreen", {
+        receiverID: pet.ownerId,
+        chatThreadOrigin: chatThreadOrigin,
+      });
+    } catch (err) {
+      console.log("ERROR in handling Message", err.message);
+    }
   };
 
   const handleApply = async () => {

@@ -25,6 +25,7 @@ export const SocketProvider = ({ children }) => {
       query: { userId: user._id },
     });
     if (!newSocket) return;
+    newSocket.emit("setup", user._id);
     newSocket.on("connect_error", (err) => {
       console.log("SOCKET ERROR IN FRONTEND", err.message);
     });

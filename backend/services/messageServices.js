@@ -22,7 +22,7 @@ export async function saveMessageToDb(messageData) {
       { $set: { lastMessage: newMessage._id, timeStamp: Date.now() } },
       options,
     ).populate("lastMessage");
-    return (newMessage, updatedChatList);
+    return {newMessage, updatedChatList};
   } catch (err) {
     console.log("ERROR IN SAVE MESSAGE TO DB services");
   }

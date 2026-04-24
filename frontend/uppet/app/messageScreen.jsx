@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSocket } from "../context/SocketContext";
 import { useRoute } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
@@ -13,12 +13,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  RefreshControl,
+  ActivityIndicator
 } from "react-native";
 import * as Themes from "../assets/themes/themes";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function messageScreen() {
   const router = useRoute();
-
+  const isFetchingRef = useRef(false);
   const { user } = useUser();
   const socket = useSocket();
   const { receiverID } = router.params;
@@ -29,14 +32,14 @@ export default function messageScreen() {
   const [textInput, setTextInput] = useState("");
   const [msgMedia, setMsgMedia] = useState(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  const [cursorID, setCursorID] = useState(null);
   const [refreshing, setRefreshing] = useState(false)
 
   const roomID = [user._id, receiverID].sort().join("_");
-  console.log("Receiver ID is ", receiverID);
-  console.log("Chat Thread Origin in Message Screen", chatThreadOrigin);
+  // console.log("Receiver ID is ", receiverID);
+  // console.log("Chat Thread Origin in Message Screen", chatThreadOrigin);
   // const { chatThreadOrigin, receiver } = router.params;
 
   // const messageData = {
@@ -53,59 +56,112 @@ export default function messageScreen() {
     if (!socket) return;
 
     socket.emit("join_chat", roomID);
-    socket.on("receive_message", (newMessage) => {
-      setMessages((prev) => [...prev, newMessage]);
 
-      socket.emit("message_delivered", { messageID: newMessage._id });
+    // When the screen loads, mark all messages as read
+    if (chatThreadOrigin) {
+      socket.emit("messages_read", {
+        chatThreadOrigin: chatThreadOrigin._id || chatThreadOrigin,
+        receiverId: user._id,
+        roomID
+      });
+    }
+
+    socket.on("receive_message", (newMessage) => {
+
+      setMessages((prevMessages) => {
+        const exists = prevMessages.some((m) => m._id === newMessage._id)
+        if(exists) return prevMessages
+        
+        return [newMessage, ...prevMessages]
+      });
+
+      // Emit delivered
+      socket.emit("message_delivered", { messageID: newMessage._id, roomID });
+      
+      // Since we are actively on the screen, we also read it immediately
+      if (chatThreadOrigin) {
+        socket.emit("messages_read", {
+          chatThreadOrigin: chatThreadOrigin._id || chatThreadOrigin,
+          receiverId: user._id,
+          roomID
+        });
+      }
+    }
+  );
+
+    socket.on("message_receipt", ({ messageID, chatThreadOrigin: updatedThreadOrigin, status }) => {
+      setMessages((prev) =>
+        prev.map((msg) => {
+          // If a specific message was delivered
+          if (messageID && msg._id === messageID) {
+            return { ...msg, status };
+          }
+          // If the whole thread was read
+          if (updatedThreadOrigin && msg.status !== "read" && msg.sender === user._id) {
+            return { ...msg, status };
+          }
+          return msg;
+        })
+      );
     });
 
     return () => {
       socket.emit("leave_chat", roomID);
       socket.off("receive_message");
+      socket.off("message_receipt");
     };
   }, [socket]);
 
   useEffect(() =>{
     if(!chatThreadOrigin) return
-    fetchMessages(1);
+    const initialMount = async () =>{
+      await fetchMessages(null, false);
+    }
+    initialMount()
   }, [])
   
-  const fetchMessages = async (pageNum, isRefreshing = false) => {
+  const fetchMessages = async (lastMessageId, isRefreshing = false) => {
     console.log("I tried to fetch messages")
+    isFetchingRef.current = true;
+    setLoading(true);
     try{
-      setLoading(true);
       const res = await api.get(`/api/message/${chatThreadOrigin._id}`, {
-        page: pageNum
+        params: { lastMessageId: lastMessageId },
       })
-      const moreMessages = res.data.body;
+      const moreMessages = res.data.body || [];
+      console.log("More Messages", moreMessages)
       setMessages((prev) => {
         if(isRefreshing) return moreMessages
-        else return [...prev, ...moreMessages]
+        return [...prev, ...moreMessages]
       })
-      console.log("Messages here", moreMessages)
       if(moreMessages.length < 10){
+        console.log("DIIIIIIIIIID WE EVEREEEEER SSTTTTTOPP")
         setHasMore(false)
       }
-
+      if(moreMessages.length > 0){
+        console.log("================ MESSAGE IS ++++++++++++++++++++++", cursorID, moreMessages[moreMessages.length - 1]._id)
+        setCursorID(moreMessages[moreMessages.length - 1]._id)
+      }
     }catch (err) {
       console.log("Error Fetching Previous Messages", err.message);
     } finally{
       setLoading(false)
       setRefreshing(false)
+      isFetchingRef.current = false;
     }
   }
 
-  const handleLoadMore = () => {
-    if (!loading && hasMore) {
-      fetchMessages(page + 1);
-      setPage((prev) => prev + 1);
+  const handleLoadMore = async () => {
+    if (!loading && hasMore && !isFetchingRef.current) {
+      await fetchMessages(cursorID)
     }
+    return
   };
  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setPage(1);
     setHasMore(true);
-    await fetchMessages(1, true);
+    setCursorID(null)
+    await fetchMessages(null, true);
   }, []);
 
   const mediaSelection = () => {
@@ -117,18 +173,28 @@ export default function messageScreen() {
   };
 
   const renderMessages = ({ item }) => {
+    const isSender = item.sender === user._id;
     return (
       <TouchableOpacity
         onPress={onPress}
         style={[
           styles.messageBubble,
-          item.sender === user._id
-            ? styles.senderMessage
-            : styles.receiverMessage,
+          isSender ? styles.senderMessage : styles.receiverMessage,
         ]}
       >
         <Text style={styles.messageText}> {item.body}</Text>
-        <Text style={styles.timestamp}>{item.timestamp}</Text>
+        <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
+          <Text style={styles.timestamp}>{item.timestamp || item.timeStamp}</Text>
+          {isSender && (
+            <View style={{ marginLeft: 5 }}>
+              {item.status === "pending" && <MaterialCommunityIcons name="clock-outline" size={14} color="#8E8E93" />}
+              {item.status === "sent" && <MaterialCommunityIcons name="check" size={16} color="#8E8E93" />}
+              {item.status === "delivered" && <MaterialCommunityIcons name="check-all" size={16} color="#8E8E93" />}
+              {item.status === "read" && <MaterialCommunityIcons name="check-all" size={16} color="#34B7F1" />}
+              {item.status === "failed" && <MaterialCommunityIcons name="alert-circle-outline" size={16} color="red" />}
+            </View>
+          )}
+        </View>
       </TouchableOpacity>
     );
   };
@@ -165,10 +231,36 @@ export default function messageScreen() {
       receiverID: receiverID,
     };
 
-    socket.emit("send_message", tempMessage);
-    setMessages((prev) => [...prev, tempMessage]);
-    setTextInput("")
-    setMsgMedia("")
+    setMessages((prev) => [tempMessage, ...prev]);
+
+    try {
+      const messageRes = await api.post(`/api/message/send`, {
+        chatThreadOrigin: dbChatThread._id || dbChatThread,
+        receiver: receiverID,
+        sender: user._id,
+        body: textInput,
+      });
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === tempMessage._id
+            ? { ...messageRes.data.body, status: "sent" }
+            : msg
+        )
+      );
+    } catch (err) {
+      console.log("ERROR IN SENDING MESSAGE", err.message);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === tempMessage._id
+            ? { ...tempMessage, status: "failed" }
+            : msg
+        )
+      );
+    } finally {
+      setTextInput("");
+      setMsgMedia(null);
+    }
   };
   return (
     <KeyboardAvoidingView
@@ -186,7 +278,17 @@ export default function messageScreen() {
           <Text style={styles.emptyText}>Start a conversation</Text>
         }
         ListFooterComponent={
-          <View style={styles.footerContainer}>
+          loading && !refreshing ? <ActivityIndicator size="large" color="black" /> : null
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          ></RefreshControl>
+        }
+        inverted
+      ></FlatList>
+      <View style={styles.footerContainer}>
             <TextInput
               style={styles.inputTextArea}
               value={textInput}
@@ -198,8 +300,6 @@ export default function messageScreen() {
               <Text>PRESS ME!</Text>
             </TouchableOpacity>
           </View>
-        }
-      ></FlatList>
     </KeyboardAvoidingView>
   );
 }
@@ -238,6 +338,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: Themes.SPACING.sm,
     alignItems: "center",
+    paddingBottom: 25,
+    bottom: 25,
+    flex: 1,
+    backgroundColor: Themes.COLORS.background,
   },
   inputTextArea: {
     borderRadius: Themes.RADIUS.pill,
@@ -262,30 +366,3 @@ const styles = StyleSheet.create({
   },
 });
 
-// try {
-//   // const messageRes = await api.post(`/api/message/send`, {
-//   //   chatThreadOrigin: chatThreadOrigin._id,
-//   //   receiver: receiverID,
-//   //   sender: user._id,
-//   //   body: text,
-//   // });
-//   // setMessages((prev) =>
-//   //   prev.map((msg) =>
-//   //     msg._id === tempMessage._id
-//   //       ? { ...messageRes.data.body, status: "sent" }
-//   //       : msg,
-//   //   ),
-//   // );
-// } catch (err) {
-//   console.log("ERROR IN SENDING MESSAGE");
-//   setMessages((prev) =>
-//     prev.map((msg) =>
-//       msg._id === tempMessage._id
-//         ? { ...messageRes.data.body, status: "failed" }
-//         : msg,
-//     ),
-//   );
-// } finally {
-//   setTextInput("");
-//   setMsgMedia("");
-// }

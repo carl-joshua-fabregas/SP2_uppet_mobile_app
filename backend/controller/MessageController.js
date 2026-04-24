@@ -32,14 +32,17 @@ export async function sendMessage(req, res) {
     ).populate("lastMessage");
 
     const io = req.app.get("io");
+    
+    // The frontend joins rooms named by sorting the two user IDs
+    const roomID = [sender, receiver].sort().join("_");
 
-    io.to(chatThreadOrigin).emit("receive_message", newMessage);
+    io.to(roomID).emit("receive_message", newMessage);
+    io.to(receiver).emit("update_chatlist", updatedChatList);
+
     return res.status(200).json({
-      message: "Succsefully",
+      message: "Successfully",
       body: newMessage,
     });
-
-    io.to(receiver).emit("update_chatlist", updatedChatList);
   } catch (err) {
     return res.status(500).json({
       message: "Server Error",
@@ -48,23 +51,35 @@ export async function sendMessage(req, res) {
   }
 }
 export async function findMessagesFromUser(req, res){
-  
   try{
+    if(!req.query.lastMessageId){
+      const messages = await Message.find({
+        chatThreadOrigin: req.params.chatThreadOrigin,
+      }).sort({ _id: -1 }).limit(10)
+      return res.status(200).json({
+      message: "Here are the messages found",
+      body: messages
+    })
+    }
     const messages = await Message.find({
-      chatThreadOrigin: req.params.chatThreadOrigin
-    }).skip((req.query.page - 1) * 10).limit(10)
+      chatThreadOrigin: req.params.chatThreadOrigin,
+      _id: { $lt: req.query.lastMessageId }
+    }).sort({ _id: -1 }).limit(10)
+    
     if(messages.length === 0){
       return res.status(200).json({
-        message: "No Messages Found"
+        message: "No Messages Found",
+        body: []
       })
     }
+    console.log("MESSAGES----------------", messages[0]._id, req.query.lastMessageId);
+    console.log("MESSAGES2----------------", messages[messages.length - 1]._id);
     return res.status(200).json({
       message: "Here are the messages found",
       body: messages
     })
   } catch (err){
     console.log("Error in finding user to user messages", err.message)
-    console.log(req.params)
     return res.status(500).json({
       message: "Server Error"
     })

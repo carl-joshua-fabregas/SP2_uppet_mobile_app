@@ -4,29 +4,7 @@ const options = {
   new: true,
   runValidator: true,
 };
-export async function saveMessageToDb(messageData) {
-  try {
-    const { chatThreadOrigin, sender, body, media, isEdited } = messageData;
 
-    const message = new Message({
-      chatThreadOrigin: chatThreadOrigin,
-      sender: sender,
-      body: body,
-      media: media,
-      isEdited: isEdited,
-    });
-    const newMessage = await message.save();
-
-    const updatedChatList = await ChatThread.findByIdAndUpdate(
-      chatThreadOrigin,
-      { $set: { lastMessage: newMessage._id, timeStamp: Date.now() } },
-      options,
-    ).populate("lastMessage");
-    return {newMessage, updatedChatList};
-  } catch (err) {
-    console.log("ERROR IN SAVE MESSAGE TO DB services");
-  }
-}
 
 export async function setMessageStatusToDeliver(messageData) {
   try {
@@ -37,8 +15,26 @@ export async function setMessageStatusToDeliver(messageData) {
       options,
     );
 
-    return updateMessages;
+    return { updateMessages };
   } catch (Err) {
     console.log("Error in setting message to deliver");
+  }
+}
+
+export async function setMessageStatusToRead(chatThreadOrigin, receiverId) {
+  try {
+    // Update all messages in this thread where the receiver is the one reading them, and they aren't 'read' yet
+    const updateResult = await Message.updateMany(
+      { 
+        chatThreadOrigin: chatThreadOrigin,
+        sender: { $ne: receiverId }, // Only update messages the OTHER person sent
+        status: { $in: ["sent", "delivered"] }
+      },
+      { $set: { status: "read" } }
+    );
+
+    return { updateResult };
+  } catch (err) {
+    console.log("Error in setting messages to read", err.message);
   }
 }

@@ -26,11 +26,6 @@ const messageSchema = new mongoose.Schema({
       enum: ["image", "video"],
     },
   },
-  timeStamp: {
-    type: Date,
-    default: Date.now,
-    required: true,
-  },
   isEdited: {
     type: Boolean,
     default: false,

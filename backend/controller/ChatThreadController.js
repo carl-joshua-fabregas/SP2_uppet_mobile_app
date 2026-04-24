@@ -109,10 +109,16 @@ export async function findChatThreadByID(req, res) {
   }
 }
 export async function findAllUserChatThread(req, res) {
+  console.log("FINDING THE CHAT THREAD OF USER___________________")
   try {
     const chatThread = await ChatThread.find({
-      members: { $in: req.user._id },
+      members: { $in: req.user.id },
+    }).populate({
+      path: "members",
+      match: {_id: { $ne: req.user.id}},
+      select: "firstName middleName lastName"
     });
+    console.log("CHAT THREAD ISSSSSSSSSSSSSSSSSSSSSSSSS____________ ", chatThread)
     if (chatThread.length === 0) {
       return res.status(200).json({
         message: "Not Found",

@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   RefreshControl,
+  TouchableOpacity
 } from "react-native";
 import { useState, useEffect, useCallback } from "react";
 import NotificationCard from "../../../component/notificationCard";
@@ -12,10 +13,14 @@ import { api } from "../../../api/axios";
 import * as Themes from "../../../assets/themes/themes";
 import { useSocket } from "../../../context/SocketContext";
 import { useUser } from "../../../context/UserContext";
-import { useChats } from "../../../context/ChatContext";
+import { useNavigation } from "@react-navigation/native";
+// import { useChats } from "../../../context/ChatContext";
+
 
 export default function ChatList() {
-  const { chatList, setChatList } = useChats();
+  // const { chatlist, setChatlist } = useChats();
+  const navigation = useNavigation()
+  const [chatlist, setChatlist] = useState([])
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
@@ -38,10 +43,11 @@ export default function ChatList() {
         console.log("TRUE");
         setHasMore(false);
       }
-      setChatList((prev) => {
+      setChatlist((prev) => {
         if (isRefresing) return newChatList;
         else return [...prev, ...newChatList];
       });
+      console.log("THIS IS THE CHATLIST", newChatList)
     } catch (err) {
       console.log(err);
     } finally {
@@ -72,7 +78,7 @@ export default function ChatList() {
     if (!socket) return;
 
     socket.on("update_chatlist", (updatedConversation) => {
-      setChatList((prevChats) => {
+      setChatlist((prevChats) => {
         const chatIndexLoc = prevChats.findIndex(
           (chatlist) => chatlist._id === updatedConversation._id,
         );
@@ -98,22 +104,24 @@ export default function ChatList() {
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() =>
-        navigation.navigate("MessageScreen", {
-          chatThreadOrigin: item.chatThreadOrigin,
-          receiver: item.receiver,
-        })
+      onPress={() =>{
+        console.log("I have been clicked this are my values", item)
+        navigation.navigate("messageScreen", {
+          chatThreadOrigin: item,
+          receiverID: item.members[0]._id,
+        })}
       }
     >
       <View style={styles.avatar}>
         <Text
-          style={{ ...Themes.TYPOGRAPHY.subheading, color: COLORS.primaryDark }}
+          style={{ ...Themes.TYPOGRAPHY.subheading, color: Themes.COLORS.primaryDark }}
         >
-          {item.receiver.firstName ||
-          item.receiver.middleName ||
-          item.receiver.lastName
-            ? `${item.receiver.firstName} ${item.receiver.middleName || ""} ${item.receiver.lastName}`
+          {item.members[0].firstName ||
+          item.members[0].middleName ||
+          item.members[0].lastName
+            ? `${item.members[0].firstName} ${item.members[0].middleName || ""} ${item.members[0].lastName}`
             : "U"}
+            
         </Text>
       </View>
       <View style={{ flex: 1 }}>
@@ -128,7 +136,7 @@ export default function ChatList() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={chatList}
+        data={chatlist}
         keyExtractor={(item) => item._id}
         renderItem={renderItem}
         contentContainerStyle={{ paddingVertical: Themes.SPACING.md }}
@@ -163,7 +171,7 @@ export default function ChatList() {
 //         console.log("TRUE");
 //         setHasMore(false);
 //       }
-//       setChatList((prev) => {
+//       setChatlist((prev) => {
 //         if (isRefresing) return newChatList;
 //         else return [...prev, ...newChatList];
 //       });
@@ -195,7 +203,7 @@ export default function ChatList() {
 //   return (
 //     <View style={{ flex: 1 }}>
 //       <FlatList
-//         data={chatList}
+//         data={chatlist}
 //         keyExtractor={(item) => item._id}
 //         renderItem={({ item }) => {
 //           return <MessageCard message={item.message}></MessageCard>;

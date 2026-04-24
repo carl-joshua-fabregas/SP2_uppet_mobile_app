@@ -48,6 +48,7 @@ export async function sendMessage(req, res) {
   }
 }
 export async function findMessagesFromUser(req, res){
+  
   try{
     const messages = await Message.find({
       chatThreadOrigin: req.params.chatThreadOrigin
@@ -63,6 +64,7 @@ export async function findMessagesFromUser(req, res){
     })
   } catch (err){
     console.log("Error in finding user to user messages", err.message)
+    console.log(req.params)
     return res.status(500).json({
       message: "Server Error"
     })

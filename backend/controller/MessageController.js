@@ -52,10 +52,11 @@ export async function sendMessage(req, res) {
 }
 export async function findMessagesFromUser(req, res){
   try{
+    const limit = req.query.limit ? parseInt(req.query.limit) : 20;
     if(!req.query.lastMessageId){
       const messages = await Message.find({
         chatThreadOrigin: req.params.chatThreadOrigin,
-      }).sort({ _id: -1 }).limit(10)
+      }).sort({ _id: -1 }).limit(limit)
       return res.status(200).json({
       message: "Here are the messages found",
       body: messages
@@ -64,7 +65,7 @@ export async function findMessagesFromUser(req, res){
     const messages = await Message.find({
       chatThreadOrigin: req.params.chatThreadOrigin,
       _id: { $lt: req.query.lastMessageId }
-    }).sort({ _id: -1 }).limit(10)
+    }).sort({ _id: -1 }).limit(limit)
     
     if(messages.length === 0){
       return res.status(200).json({

@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { UserProvider, useUser } from "../context/UserContext";
 import { SocketProvider, useSocket } from "../context/SocketContext";
-// import { ChatProvider, useChats } from "../context/ChatContext";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
@@ -81,9 +81,9 @@ export default function RootLayout() {
   return (
     <UserProvider>
       <SocketProvider>
-        {/* <ChatProvider> */}
-        <NavigationStack></NavigationStack>
-        {/* </ChatProvider> */}
+        <SafeAreaProvider>
+          <NavigationStack></NavigationStack>
+        </SafeAreaProvider>
       </SocketProvider>
     </UserProvider>
   );

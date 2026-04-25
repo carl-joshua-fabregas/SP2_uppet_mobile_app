@@ -14,12 +14,21 @@ import {
   Platform,
   StyleSheet,
   RefreshControl,
-  ActivityIndicator
+  ActivityIndicator,
+  Dimensions
 } from "react-native";
 import * as Themes from "../assets/themes/themes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useHeaderHeight } from '@react-navigation/elements';
+
+
+
 export default function messageScreen() {
+  const initialLimit = Math.ceil(Dimensions.get('window').height / Themes.TYPOGRAPHY.badgeText.fontSize);
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   const router = useRoute();
   const isFetchingRef = useRef(false);
   const { user } = useUser();
@@ -32,7 +41,7 @@ export default function messageScreen() {
   const [textInput, setTextInput] = useState("");
   const [msgMedia, setMsgMedia] = useState(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cursorID, setCursorID] = useState(null);
   const [refreshing, setRefreshing] = useState(false)
@@ -67,12 +76,15 @@ export default function messageScreen() {
     }
 
     socket.on("receive_message", (newMessage) => {
+      // Ignore messages sent by the current user since we handle them optimistically
+      if (newMessage.sender === user._id) return;
 
       setMessages((prevMessages) => {
-        const exists = prevMessages.some((m) => m._id === newMessage._id)
-        if(exists) return prevMessages
-        
-        return [newMessage, ...prevMessages]
+        // Prevent duplicate keys if the message already exists
+        if (prevMessages.some((msg) => msg._id === newMessage._id)) {
+          return prevMessages;
+        }
+        return [newMessage, ...prevMessages];
       });
 
       // Emit delivered
@@ -86,8 +98,7 @@ export default function messageScreen() {
           roomID
         });
       }
-    }
-  );
+    });
 
     socket.on("message_receipt", ({ messageID, chatThreadOrigin: updatedThreadOrigin, status }) => {
       setMessages((prev) =>
@@ -103,6 +114,7 @@ export default function messageScreen() {
           return msg;
         })
       );
+      console.log("Message Receipt Received", messageID, updatedThreadOrigin, status);
     });
 
     return () => {
@@ -121,25 +133,22 @@ export default function messageScreen() {
   }, [])
   
   const fetchMessages = async (lastMessageId, isRefreshing = false) => {
-    console.log("I tried to fetch messages")
     isFetchingRef.current = true;
     setLoading(true);
     try{
+      const limit = messages.length > 0 ? 15 : initialLimit;
       const res = await api.get(`/api/message/${chatThreadOrigin._id}`, {
-        params: { lastMessageId: lastMessageId },
+        params: { lastMessageId: lastMessageId, limit: limit },
       })
       const moreMessages = res.data.body || [];
-      console.log("More Messages", moreMessages)
       setMessages((prev) => {
         if(isRefreshing) return moreMessages
         return [...prev, ...moreMessages]
       })
-      if(moreMessages.length < 10){
-        console.log("DIIIIIIIIIID WE EVEREEEEER SSTTTTTOPP")
+      if(moreMessages.length < limit){
         setHasMore(false)
       }
       if(moreMessages.length > 0){
-        console.log("================ MESSAGE IS ++++++++++++++++++++++", cursorID, moreMessages[moreMessages.length - 1]._id)
         setCursorID(moreMessages[moreMessages.length - 1]._id)
       }
     }catch (err) {
@@ -231,9 +240,10 @@ export default function messageScreen() {
       receiverID: receiverID,
     };
 
-    setMessages((prev) => [tempMessage, ...prev]);
+    
 
     try {
+      setMessages((prev) => [tempMessage, ...prev]);
       const messageRes = await api.post(`/api/message/send`, {
         chatThreadOrigin: dbChatThread._id || dbChatThread,
         receiver: receiverID,
@@ -266,14 +276,21 @@ export default function messageScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+      keyboardVerticalOffset={headerHeight}
+      >
       <FlatList
+      style={{ flex: 1 }}
+
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
         data={messages}
         renderItem={renderMessages}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.flatListContents}
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.4}
+        onEndReachedThreshold={0.5}
+        bounces={true}
+overScrollMode="always"
         ListEmptyComponent={
           <Text style={styles.emptyText}>Start a conversation</Text>
         }
@@ -288,18 +305,27 @@ export default function messageScreen() {
         }
         inverted
       ></FlatList>
-      <View style={styles.footerContainer}>
-            <TextInput
-              style={styles.inputTextArea}
-              value={textInput}
-              placeholderTextColor={"black"}
-              onChangeText={handleChangeInputText}
-              placeholder="Enter Message"
-            ></TextInput>
-            <TouchableOpacity onPress={handleSend}>
-              <Text>PRESS ME!</Text>
-            </TouchableOpacity>
-          </View>
+      
+      <View style={[styles.footerContainer,{ paddingBottom: Platform.OS === 'ios' ? insets.bottom : Themes.SPACING.sm }]}>
+        <TouchableOpacity onPress={mediaSelection} style={styles.iconButton}>
+          <MaterialCommunityIcons name="image" size={28} color="#8E8E93" />
+        </TouchableOpacity>
+        <TextInput
+          style={styles.inputTextArea}
+          value={textInput}
+          placeholderTextColor="#8E8E93"
+          onChangeText={handleChangeInputText}
+          placeholder="Message..."
+          multiline
+        />
+        <TouchableOpacity 
+          onPress={handleSend} 
+          style={[styles.sendButton, !textInput.trim() && { opacity: 0.5 }]} 
+          disabled={!textInput.trim()}
+        >
+          <MaterialCommunityIcons name="send" size={20} color="white" style={{ marginLeft: 2 }} />
+        </TouchableOpacity>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -309,9 +335,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   flatListContents: {
-    padding: Themes.SPACING.md,
-    backgroundColor: Themes.COLORS.background,
-    flexGrow: 1,
   },
   messageBubble: {
     paddingHorizontal: Themes.SPACING.md,
@@ -335,19 +358,37 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 0,
   },
   footerContainer: {
-    flexDirection: "row",
-    padding: Themes.SPACING.sm,
-    alignItems: "center",
-    paddingBottom: 25,
-    bottom: 25,
-    flex: 1,
-    backgroundColor: Themes.COLORS.background,
+  flexDirection: "row",
+  paddingHorizontal: Themes.SPACING.md,
+  paddingTop: Themes.SPACING.sm,        // ← top only
+  alignItems: "center",
+  backgroundColor: Themes.COLORS.background,
+  borderTopWidth: 1,
+  borderTopColor: "#E5E5EA",
   },
   inputTextArea: {
-    borderRadius: Themes.RADIUS.pill,
+    borderRadius: 20,
     flex: 1,
-    borderWidth: 2,
-    borderColor: "black",
+    borderWidth: 1,
+    borderColor: "#E5E5EA",
+    backgroundColor: "#F2F2F7",
+    paddingHorizontal: Themes.SPACING.md,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+    marginHorizontal: Themes.SPACING.sm,
+    fontSize: 16,
+    maxHeight: 100,
+  },
+  iconButton: {
+    padding: Themes.SPACING.xs,
+  },
+  sendButton: {
+    backgroundColor: Themes.COLORS.primary,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: Themes.SPACING.xs,
   },
   emptyText: {
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,

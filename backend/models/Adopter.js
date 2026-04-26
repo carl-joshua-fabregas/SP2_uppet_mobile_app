@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { set } from "mongoose";
 const implicitPhotoSchema = new mongoose.Schema({
   key: { type: String, required: true },
   url: { type: String, required: true },
@@ -81,10 +81,19 @@ const AdopterSchema = new mongoose.Schema({
     enum: ["yes", "no"],
     required: true,
   },
+  avarageRating: {
+    type: Number,
+    default: 0,
+    set: val => Math.round((val * 10) / 10)
+  },
+  totalRating: {
+    type: Number,
+    default: 0,
+  },
   profilePhoto: {
     type: implicitPhotoSchema,
   },
-});
+}, {timestamps: true});
 
 const Adopter = mongoose.model("Adopter", AdopterSchema);
 export default Adopter;

@@ -112,7 +112,7 @@ export default function PetProfileCardViewMore({ pet }) {
             </View>
 
             {!isGalleryExpanded ? (
-              <View key={`carousel-${currentPhotoIndex}-${isGalleryExpanded}`} style={[styles.carouselContainer, { width: "100%" }] }>
+              <View key={`carousel-${isGalleryExpanded}`} style={[styles.carouselContainer, { width: "100%" }] }>
                 <Image 
                   key={`carousel-${currentPhotoIndex}-${isGalleryExpanded}`}
                   source={{ uri: form.photos[currentPhotoIndex]?.url }} 

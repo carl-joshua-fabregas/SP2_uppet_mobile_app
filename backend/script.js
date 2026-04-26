@@ -13,7 +13,7 @@ import socketMiddleware from "./middleware/socketMiddleware.js";
 import socketController from "./controller/SocketController.js";
 import messageRouter from "./routes/messageRouter.js";
 import chatThreadRouter from "./routes/chatThreadRouter.js";
-
+import ratingRouter from "./routes/ratingRouter.js"
 const app = express();
 const corsOption = {
   origin: "*",
@@ -53,6 +53,7 @@ app.use("/api/adoptionApp", adoptionAppRouter);
 app.use("/api/notification", notificationRouter);
 app.use("/api/message", messageRouter);
 app.use("/api/chatlist", chatThreadRouter);
+app.use("/api/rating", ratingRouter);
 //Connecting To MONGODB ATLAS
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/sp2_uppet";

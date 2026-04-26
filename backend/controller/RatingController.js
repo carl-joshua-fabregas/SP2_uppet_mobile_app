@@ -2,20 +2,30 @@ import Rating from "../models/Rating.js";
 
 export async function createRating (req, res) {
   try {
-    const { ratedUser, score, reviewer, body } = req.body;
-
+    const { ratedUser, score, body } = req.body;
+    const existingReview = await Rating.find({
+      ratedUser: ratedUser,
+      reviewer: req.user.id
+    })
+    if(existingReview.length > 0){
+      return res.status(200).json({
+        message: "You have already rated this user",
+        body: []
+      });
+    }
     const rating = new Rating({
       ratedUser: ratedUser,
       score: score,
-      reviewer: reviewer,
+      reviewer: req.user.id,
       body: body,
     });
 
-    const status = await rating.save();
-
+    const newRating = await rating.save();
+    const io = req.app.get("io");
+    io.emit(`newRating-${ratedUser}`, newRating);
     return res.status(200).json({
       message: "Successfully made Rating",
-      body: status,
+      body: newRating,
     });
   } catch (err) {
     return res.status(500).json({
@@ -52,10 +62,36 @@ export async function findAllRating (req, res) {
 
 export async function findRatingsOfUser (req, res) {
   try {
-    const notification = await Rating.find({ ratedUser: req.user.id });
+    const limit = req.query.limit;
+    const lastRatingID = req.query.lastRatingID;
+    if (!lastRatingID) {
+      const notification = await Rating.find({
+        ratedUser: req.user.id,
+      })
+        .sort({ updatedAt: -1 })
+        .limit(limit);
+      if (notification.length == 0) {
+        return res.status(200).json({
+          message: "Nothing Found",
+          body: [],
+        });
+      }
+      return res.status(200).json({
+        message: "Successfully found all ratings",
+        body: notification,
+      });
+    }
+    const notification = await Rating.find({
+      ratedUser: req.user.id,
+      _id: { $lt: lastRatingID },
+    })
+      .sort({ updatedAt: -1 })
+      .limit(limit);
+
     if (notification.length == 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "Nothing Found",
+        body: [],
       });
     }
     return res.status(200).json({
@@ -98,7 +134,7 @@ export async function updateRating (req, res) {
       new: true,
       runValidators: true,
     };
-    const rating = await Rating.findById(req.params.id);
+    const rating = await Rating.findById(req.params.ratedID);
     if (!rating) {
       return res.status(404).json({
         message: "Rating not found",
@@ -110,10 +146,11 @@ export async function updateRating (req, res) {
     ) {
       return res.status(403).json({
         message: "Forbidden",
+        body: []
       });
     }
     const newRating = await Rating.findByIdAndUpdate(
-      req.params.id,
+      req.params.ratedID,
       { $set: req.body },
       options
     );

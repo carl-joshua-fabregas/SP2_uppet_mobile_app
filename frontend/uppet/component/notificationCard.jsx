@@ -53,7 +53,10 @@ export default function NotificationCard(props) {
     if (!notification?.relatedEntity) return;
 
     try {
-      if (type.startsWith('ADOPTER_')) {
+      if(type.startsWith('ADOPTER_NEW')){
+        navigation.navigate("viewProfile");
+      }
+      else if (type.startsWith('ADOPTER_')) {
         navigation.navigate("viewAdopterProfile", { id: notification.relatedEntity });
       } 
       else if (type.startsWith('PET_') && type !== 'PET_DELETED') {

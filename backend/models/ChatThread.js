@@ -13,13 +13,7 @@ const chatThreadSchema = new mongoose.Schema({
     required: false,
     index: true,
   },
-
-  timeStamp: {
-    type: Date,
-    default: Date.now,
-    required: true,
-  },
-});
+}, {timestamps: true});
 
 const ChatThread = mongoose.model("ChatThread", chatThreadSchema);
 export default ChatThread;

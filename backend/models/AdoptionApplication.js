@@ -20,14 +20,8 @@ const adoptionApplicationSchema = new mongoose.Schema({
     enum: ["Pending", "Approved", "Rejected", "Cancelled"],
     default: "Pending",
     index: true,
-  },
-
-  timeStamp: {
-    type: Date,
-    default: Date.now,
-    required: true,
-  },
-});
+  }
+}, {timestamps: true});
 
 const AdoptionApplication = mongoose.model(
   "AdoptionApplication",

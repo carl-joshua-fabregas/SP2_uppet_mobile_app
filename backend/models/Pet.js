@@ -95,7 +95,7 @@ const petSchema = new mongoose.Schema({
       },
     ],
   },
-});
+}, {timestamps: true});
 
 const Pet = mongoose.model("Pet", petSchema);
 

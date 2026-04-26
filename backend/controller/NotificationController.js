@@ -54,15 +54,20 @@ export async function findAllUserNotification(req, res) {
     const cursorID = req.query.cursorID || null;
 
     if (!cursorID) {
-      const notifcations = await Notification.find({
+      const notifications = await Notification.find({
         recepient: req.user.id
       })
       .sort({createdAt: -1})
       .limit(limit);
-
+      if(notifications.length == 0){
+        return res.status(200).json({
+          message: "There are no notifications",
+          body: []
+        })
+      }
       return res.status(200).json({
         message: "Successfully obtained Notifications",
-        body: notifcations,
+        body: notifications,
       });
     }
 

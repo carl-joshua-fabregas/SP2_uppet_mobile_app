@@ -11,7 +11,11 @@ import { useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
 
 export default function PetProfileCardViewMore({ pet }) {
-  const profilePhoto = pet.photos.find((photo) => photo.isProfile);
+  const profilePhoto = pet.photos && pet.photos.length > 0 
+    ? pet.photos.find((photo) => photo.isProfile) 
+    : null;
+  const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const form = {
     name: pet.name,
     age: pet.age,
@@ -91,6 +95,90 @@ export default function PetProfileCardViewMore({ pet }) {
             <Text style={styles.sectionTitle}>Additional Information</Text>
             <Text style={styles.petBio}>{form.otherInfo}</Text>
           </>
+        )}
+
+        {/* Gallery Section */}
+        {form.photos && form.photos.length > 0 && (
+          <View style={styles.gallerySection}>
+            <View style={styles.galleryHeader}>
+              <Text style={styles.sectionTitle}>Photos</Text>
+              {form.photos.length > 3 && (
+                <TouchableOpacity onPress={() => setIsGalleryExpanded((prev) => !prev)}>
+                  <Text style={styles.galleryToggleButton}>
+                    {isGalleryExpanded ? "Show Less" : "View More..."}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {!isGalleryExpanded ? (
+              <View key={`carousel-${currentPhotoIndex}-${isGalleryExpanded}`} style={[styles.carouselContainer, { width: "100%" }] }>
+                <Image 
+                  key={`carousel-${currentPhotoIndex}-${isGalleryExpanded}`}
+                  source={{ uri: form.photos[currentPhotoIndex]?.url }} 
+                  style={styles.carouselImage} 
+                />
+                {form.photos.length > 1 && (
+                  <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+                    <TouchableOpacity 
+                      style={styles.carouselPrevButton} 
+                      onPress={() => setCurrentPhotoIndex(prev => prev === 0 ? form.photos.length - 1 : prev - 1)}
+                    >
+                      <Text style={styles.carouselArrow}>‹</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.carouselNextButton} 
+                      onPress={() => setCurrentPhotoIndex(prev => prev === form.photos.length - 1 ? 0 : prev + 1)}
+                    >
+                      <Text style={styles.carouselArrow}>›</Text>
+                    </TouchableOpacity>
+                    <View style={styles.carouselDotsContainer}>
+                      {form.photos.map((_, index) => (
+                        <View 
+                          key={index} 
+                          style={[
+                            styles.carouselDot, 
+                            index === currentPhotoIndex && styles.carouselDotActive
+                          ]} 
+                        />
+                      ))}
+                    </View>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={styles.expandedGalleryContainer}>
+                <ScrollView 
+                  style={styles.expandedGalleryScroll} 
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                >
+                  <View style={styles.photoCardsList}>
+                    {form.photos.map((photo, index) => (
+                      <View key={index} style={styles.photoCard}>
+                        <Image 
+                          source={{ uri: photo.url }} 
+                          style={styles.photoCardImage} 
+                        />
+                        <View style={styles.photoCardContent}>
+                          <Text style={styles.photoCardTitle}>🐾 About this photo</Text>
+                          <Text style={styles.photoCardCaption}>
+                            {photo.caption || "Just being cute! No caption provided yet."}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </ScrollView>
+                <TouchableOpacity 
+                  style={styles.closeGalleryButton}
+                  onPress={() => setIsGalleryExpanded(false)}
+                >
+                  <Text style={styles.closeGalleryButtonText}>Close Gallery</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         )}
       </View>
     </View>
@@ -262,5 +350,156 @@ const styles = StyleSheet.create({
     marginTop: Themes.SPACING.lg,
     gap: Themes.SPACING.md,
     width: "100%",
+  },
+  gallerySection: {
+    marginTop: Themes.SPACING.sm,
+  },
+  galleryHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  galleryToggleButton: {
+    color: Themes.COLORS.primary,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    marginTop: Themes.SPACING.md,
+  },
+  carouselContainer: {
+    marginTop: Themes.SPACING.xs,
+    position: "relative",
+    borderRadius: Themes.RADIUS.md,
+    overflow: "hidden",
+    height: 250,
+  },
+  carouselImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+    backgroundColor: Themes.COLORS.soft,
+  },
+  carouselPrevButton: {
+    position: "absolute",
+    left: Themes.SPACING.sm,
+    top: "50%",
+    marginTop: -20, // Half of button height to center
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  carouselNextButton: {
+    position: "absolute",
+    right: Themes.SPACING.sm,
+    top: "50%",
+    marginTop: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  carouselArrow: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
+    lineHeight: 26,
+  },
+  carouselDotsContainer: {
+    position: "absolute",
+    bottom: Themes.SPACING.sm,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+  },
+  carouselDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+  },
+  carouselDotActive: {
+    backgroundColor: "#fff",
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginTop: -1,
+  },
+  expandedGalleryContainer: {
+    marginTop: Themes.SPACING.xs,
+    height: 350,
+    backgroundColor: Themes.COLORS.soft,
+    borderRadius: Themes.RADIUS.md,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  expandedGalleryScroll: {
+    flex: 1,
+    padding: Themes.SPACING.sm,
+  },
+  photoCardsList: {
+    paddingBottom: 70, // Space for the floating button
+  },
+  photoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 20, // Extra rounded for cuteness
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    marginBottom: Themes.SPACING.lg,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+  },
+  photoCardImage: {
+    width: "100%",
+    height: 280, // A bit taller to show off the pet
+    resizeMode: "cover",
+  },
+  photoCardContent: {
+    padding: Themes.SPACING.md,
+    backgroundColor: "#FFF9F2", // A warm, soft cutesy background color
+    borderTopWidth: 1,
+    borderTopColor: "#FDEFE2",
+  },
+  photoCardTitle: {
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.label.fontSize,
+    color: Themes.COLORS.primary,
+    marginBottom: Themes.SPACING.xs,
+    fontWeight: "600",
+  },
+  photoCardCaption: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: "#555",
+    lineHeight: 22,
+    fontStyle: "italic", // Gives it a scrapbook journal feel
+  },
+  closeGalleryButton: {
+    position: "absolute",
+    bottom: Themes.SPACING.md,
+    alignSelf: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingVertical: Themes.SPACING.sm,
+    paddingHorizontal: Themes.SPACING.lg,
+    borderRadius: Themes.RADIUS.pill,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  closeGalleryButtonText: {
+    color: "#fff",
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
   },
 });

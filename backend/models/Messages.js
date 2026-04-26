@@ -26,16 +26,19 @@ const messageSchema = new mongoose.Schema({
       enum: ["image", "video"],
     },
   },
-  isEdited: {
-    type: Boolean,
-    default: false,
-  },
   status: {
     type: String,
     enum: ["sent", "delivered", "read"],
     default: "sent",
   },
-});
+}, {timestamps: true});
 
+messageSchema.virtual("isEdited").get(function(){
+  if (!this.createdAt || this.updatedAt) return false
+  return this.updatedAt.getTime() > this.createdAt.getTime()
+})
+
+messageSchema.set("toJSON", {virtuals: true});
+messageSchema.set("toObject", {virtuals: true})
 const Message = mongoose.model("Message", messageSchema);
 export default Message;

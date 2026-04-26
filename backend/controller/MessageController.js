@@ -1,5 +1,6 @@
 import ChatThread from "../models/ChatThread.js";
 import Message from "../models/Messages.js";
+import { ObjectId } from "mongodb";
 
 export async function sendMessage(req, res) {
   try {
@@ -56,7 +57,7 @@ export async function findMessagesFromUser(req, res){
     if(!req.query.lastMessageId){
       const messages = await Message.find({
         chatThreadOrigin: req.params.chatThreadOrigin,
-      }).sort({ _id: -1 }).limit(limit)
+      }).sort({ createdAt: -1 }).limit(limit)
       return res.status(200).json({
       message: "Here are the messages found",
       body: messages
@@ -64,7 +65,7 @@ export async function findMessagesFromUser(req, res){
     }
     const messages = await Message.find({
       chatThreadOrigin: req.params.chatThreadOrigin,
-      _id: { $lt: req.query.lastMessageId }
+      _id: { $lt: new ObjectId(req.query.lastMessageId) }
     }).sort({ _id: -1 }).limit(limit)
     
     if(messages.length === 0){

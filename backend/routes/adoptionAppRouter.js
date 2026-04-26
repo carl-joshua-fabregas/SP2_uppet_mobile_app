@@ -8,12 +8,14 @@ import {
   approveAdoption,
   rejectApplicant,
   cancelAdoptApp,
+  findAdoptAppByID,
 } from "../controller/AdoptionApplicationController.js";
 
 router.get("/myAdoptees", findMyListAdoptApp);
 
 router.get("/:id/applicants", findPetApplicants);
 router.get("/:id/applied", findPetUserApplication);
+router.get("/:id", findAdoptAppByID);
 
 router.post("/applied", createAdoptApp);
 router.post("/:id/approve", approveAdoption);

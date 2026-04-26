@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useSocket } from "../context/SocketContext";
 import { useRoute } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
-import { useChats } from "../context/ChatContext";
+
 import { api } from "../api/axios";
 import {
   View,
@@ -193,7 +193,7 @@ export default function messageScreen() {
       >
         <Text style={styles.messageText}> {item.body}</Text>
         <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
-          <Text style={styles.timestamp}>{item.timestamp || item.timeStamp}</Text>
+          <Text style={styles.timestamp}>{item.updatedAt}</Text>
           {isSender && (
             <View style={{ marginLeft: 5 }}>
               {item.status === "pending" && <MaterialCommunityIcons name="clock-outline" size={14} color="#8E8E93" />}
@@ -275,14 +275,13 @@ export default function messageScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={headerHeight}
       >
       <FlatList
-      style={{ flex: 1 }}
-
-      keyboardShouldPersistTaps="handled"
-      keyboardDismissMode="on-drag"
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         data={messages}
         renderItem={renderMessages}
         keyExtractor={(item) => item._id}
@@ -290,7 +289,7 @@ export default function messageScreen() {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         bounces={true}
-overScrollMode="always"
+        overScrollMode="always"
         ListEmptyComponent={
           <Text style={styles.emptyText}>Start a conversation</Text>
         }
@@ -335,6 +334,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   flatListContents: {
+    flexGrow: 1,
+    padding: Themes.SPACING.sm,
   },
   messageBubble: {
     paddingHorizontal: Themes.SPACING.md,

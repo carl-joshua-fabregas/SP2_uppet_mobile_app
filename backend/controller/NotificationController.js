@@ -2,11 +2,13 @@ import Notification from "../models/Notification.js";
 
 export async function createNotification(req, res) {
   try {
-    const { notifRecipient, body, notifType } = req.body;
+    const { notifRecipient, body, notifType, relatedEntiy } = req.body;
     const newNotif = new Notification({
       notifRecipient: notifRecipient,
       body: body,
       notifType,
+      relatedEntiy,
+      entityModel
     });
 
     const status = await newNotif.save();
@@ -48,12 +50,28 @@ export async function findAllNotification(req, res) {
 
 export async function findAllUserNotification(req, res) {
   try {
-    const notifications = await Notification.find({
-      notifRecipient: req.user.id,
-    })
-      .skip((req.params.page - 1) * 10)
-      .limit(10);
+    const limit = parseInt(req.query.limit) || 10;
+    const cursorID = req.query.cursorID || null;
 
+    if (!cursorID) {
+      const notifcations = await Notification.find({
+        recepient: req.user.id
+      })
+      .sort({createdAt: -1})
+      .limit(limit);
+
+      return res.status(200).json({
+        message: "Successfully obtained Notifications",
+        body: notifcations,
+      });
+    }
+
+    const notifications = await Notification.find({
+      recepient: req.user.id,
+      _id: {$lt: cursorID}
+    })
+    .sort({createdAt: -1})
+    .limit(limit);
     if (notifications.length == 0) {
       return res.status(200).json({
         message: "No notifications found",

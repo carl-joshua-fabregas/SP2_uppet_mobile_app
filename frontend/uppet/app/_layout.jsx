@@ -82,7 +82,7 @@ export default function RootLayout() {
     <UserProvider>
       <SocketProvider>
         <SafeAreaProvider>
-          <NavigationStack></NavigationStack>
+            <NavigationStack></NavigationStack>
         </SafeAreaProvider>
       </SocketProvider>
     </UserProvider>

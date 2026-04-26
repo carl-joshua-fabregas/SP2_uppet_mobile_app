@@ -78,6 +78,22 @@ export async function createAdopter(req, res) {
       process.env.JWT_SECRET,
       { expiresIn: "14d" },
     );
+    //New Adopter Notification
+    const notifcations = new Notification({
+      recepient: newAdopter._id,
+      sender: newAdopter._id,
+      relatedEntity: newAdopter._id,
+      entityModel: "Adopter",
+      message: "Successfully created new adopter profile",
+      notifType: "ADOPTER_NEW",
+    });
+    const saveNotif = await notifcations.save();
+    console.log("Notification Saved", saveNotif);
+    const io = req.app.get("io");
+
+    //Console log tell notifications of the user
+    io.to(newAdopter._id.toString()).emit("new_notification", saveNotif);
+
     return res.status(200).json({
       message: "Successfully added user",
       body: newAdopter,
@@ -191,6 +207,21 @@ export async function updateUser(req, res) {
       { $set: req.body },
       options,
     );
+
+    const notifcations = new Notification({
+      recepient: newUser._id,
+      sender: newUser._id,
+      relatedEntity: newUser._id,
+      entityModel: "Adopter",
+      message: "Successfully updated adopter profile",
+      notifType: "ADOPTER_UPDATED",
+    });
+
+    const saveNotif = await notifcations.save();
+    console.log("Notification Saved", saveNotif);
+    const io = req.app.get("io");
+    
+    io.to(newUser._id.toString()).emit("new_notification", saveNotif);
 
     return res.status(200).json({
       message: "Successfully updated",

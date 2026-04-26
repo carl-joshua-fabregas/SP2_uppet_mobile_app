@@ -48,10 +48,10 @@ export const UserProvider = ({ children }) => {
       }
       const resGoogle = await GoogleSignin.signIn();
 
-      if (resGoogle && resGoogle.data) {
-        console.log(resGoogle.data);
+      if (resGoogle && resGoogle.idToken) {
+        console.log(resGoogle);
 
-        const { idToken } = resGoogle.data;
+        const { idToken } = resGoogle;
 
         const res = await api.post("/api/auth/google", {
           token: {
@@ -99,10 +99,10 @@ export const UserProvider = ({ children }) => {
         if (savedToken) {
           const userInfo = await GoogleSignin.signInSilently();
           console.log("CHECKING IF SAVED TOKEN IS VALID...");
-          if (userInfo?.data?.idToken) {
+          if (userInfo?.idToken) {
             const res = await api.post("/api/auth/google", {
               token: {
-                idToken: userInfo.data.idToken,
+                idToken: userInfo.idToken,
               },
             });
             if (res.data.status === "old_user") {

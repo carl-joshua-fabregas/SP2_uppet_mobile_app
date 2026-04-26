@@ -6,37 +6,46 @@ import {
   StyleSheet,
   RefreshControl,
 } from "react-native";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef} from "react";
 import NotificationCard from "../../../component/notificationCard";
 import { api } from "../../../api/axios";
 import * as Themes from "../../../assets/themes/themes";
 
 export default function Notification() {
   const [notification, setNotification] = useState([]);
-  const [liveNotification, setLiveNotification] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
+  const [cursorID, setCursorID] = useState(null);
+  const isFetchingRef = useRef(false);
 
-  const fetchNotification = async (pageNum = 1, isRefresing = false) => {
-    console.log(`HEY THIS IS THE PAGE FOR NOTIFICATION ${page}`);
+  const fetchNotification = async (cursorID, isRefreshing = false) => {
+    console.log(`HEY THIS IS THE PAGE FOR NOTIFICATION PAGE`);
+    isFetchingRef.current = true;
     setLoading(true);
     try {
-      const res = await api.get("/api/notification/notification", {
+      const res = await api.get("/api/notification/notifications", {
         params: {
-          page: pageNum,
+          cursorID: cursorID,
         },
       });
       const newNotification = res.data?.body;
       setNotification((prev) => {
-        if (isRefresing) return newNotification;
+        if (isRefreshing) return newNotification;
         else return [...prev, ...newNotification];
       });
 
+      // Update cursor ID
+      if (newNotification?.length > 0) {
+        const lastNotification = newNotification[newNotification.length - 1];
+        setCursorID(lastNotification._id);
+      }
+
+      // Check if we've reached the end
       if (newNotification?.length < 10) {
         setHasMore(false);
       }
+
     } catch (err) {
       console.error("Error fetching pets:", err);
       console.error("Status:", err.response?.status); // Is it actually 404?
@@ -44,25 +53,25 @@ export default function Notification() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      isFetchingRef.current = false;
     }
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setPage(1);
     setHasMore(true);
-    await fetchNotification(1, true);
+    setCursorID(null);
+    await fetchNotification(null, true);
   }, []);
 
   const handleLoadMore = () => {
-    if (!loading && hasMore) {
-      fetchNotification(page + 1);
-      setPage((prev) => prev + 1);
+    if (!loading && hasMore && !isFetchingRef.current) {
+      fetchNotification(cursorID);
     }
   };
 
   useEffect(() => {
-    fetchNotification(page);
+    fetchNotification(null);
   }, []);
   return (
     <View style={{ flex: 1 }}>

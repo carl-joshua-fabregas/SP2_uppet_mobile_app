@@ -3,8 +3,8 @@ import cors from "cors";
 import "dotenv/config";
 import connectToDatabase from "./config/database.js";
 import { socketConfig } from "./config/socket.js";
-import petRouter from "./routes/PetRouter.js";
-import adopterRouter from "./routes/UserRouter.js";
+import petRouter from "./routes/petRouter.js";
+import adopterRouter from "./routes/userRouter.js";
 import authMiddleWare from "./middleware/authMiddleware.js";
 import authGoogle from "./routes/authRouter.js";
 import adoptionAppRouter from "./routes/adoptionAppRouter.js";
@@ -13,7 +13,7 @@ import socketMiddleware from "./middleware/socketMiddleware.js";
 import socketController from "./controller/SocketController.js";
 import messageRouter from "./routes/messageRouter.js";
 import chatThreadRouter from "./routes/chatThreadRouter.js";
-import ratingRouter from "./routes/ratingRouter.js"
+import ratingRouter from "./routes/ratingRouter.js";
 const app = express();
 const corsOption = {
   origin: "*",

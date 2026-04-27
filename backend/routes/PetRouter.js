@@ -12,7 +12,7 @@ import {
   findByID,
   updatePet,
   deleteAll,
-  deleteByID,
+  deletePetByID,
   deletePetPhoto,
 } from "../controller/PetController.js";
 
@@ -38,7 +38,7 @@ router.patch("/:id/photo", uploadPetPhoto);
 //Delete Requests
 
 router.delete("/", deleteAll);
-router.delete("/:id", deleteByID);
+router.delete("/:id", deletePetByID);
 router.delete("/:id/photo/:photoId", deletePetPhoto);
 
 export default router;

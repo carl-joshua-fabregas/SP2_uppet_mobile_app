@@ -232,7 +232,11 @@ export default function CreateProfile() {
             };
           }),
         );
-        finalPetArray.photos = uploadedPhotos;
+        finalPetArray.photos = pet.photos.map((photo) => {
+          return uploadedPhotos.find((up) => up.key === photo.key)
+            ? uploadedPhotos.find((up) => up.key === photo.key)
+            : photo;
+        });
         // const finalPetPhotoRes = await api.patch(`api/pet/${pet._id}/photo`, {
         //   photos: uploadedPhotos,
         // });

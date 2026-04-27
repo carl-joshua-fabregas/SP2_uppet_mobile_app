@@ -17,6 +17,7 @@ export default function ViewPetProfile() {
   const navigation = useNavigation();
   const [status, setStatus] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [loading, setLoading] = useState(false);
   const pet = route.params.pet;
   console.log("View Profile The pet data transferred is", pet);
 
@@ -85,8 +86,39 @@ export default function ViewPetProfile() {
     navigation.navigate("createPetProfile", { editPetData: pet });
   };
 
-  const handleDeletPetProfile = () => {
+  const handleDeletPetProfile = async () => {
     console.log("Handle Delete Profile Clicked");
+    try {
+      setLoading(true);
+      const deletePhotos = await Promise.all(
+        pet.photos.map(async (photo) => {
+          console.log("Deleting Photo with ID: ", photo._id);
+
+          const presignDeleteUrl = await api.post(`/api/pet/presignDeleteURL`, {
+            key: photo.key,
+          });
+          console.log(
+            "Presign URL for Deleting Photo: ",
+            presignDeleteUrl.data,
+          );
+
+          const { url, key } = presignDeleteUrl.data.body;
+
+          const awsDelete = await fetch(url, {
+            method: "DELETE",
+          });
+          console.log("Status of aws deletion", awsDelete.status);
+        }),
+      );
+      const res = await api.delete(`/api/pet/${pet._id}`, {});
+      console.log("Pet deleted successfully", res.status);
+    } catch (err) {
+      console.log("Error in deleting Pet");
+      console.log(err);
+    } finally {
+      setLoading(false);
+      navigation.goBack();
+    }
   };
 
   const buttons = [];

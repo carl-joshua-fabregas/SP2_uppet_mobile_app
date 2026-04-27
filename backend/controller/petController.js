@@ -258,7 +258,7 @@ export async function findMyPets(req, res) {
   }
 }
 
-export async function deleteByID(req, res) {
+export async function deletePetByID(req, res) {
   try {
     const pet = await Pet.findById(req.params.id);
 

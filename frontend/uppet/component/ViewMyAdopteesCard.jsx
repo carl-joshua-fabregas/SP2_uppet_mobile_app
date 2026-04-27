@@ -5,9 +5,9 @@ import * as Themes from "../assets/themes/themes";
 
 export default function ViewAdopteesCard({ pet }) {
   const navigation = useNavigation();
-  const isAvailable = pet.adoptedStatus;
-  const statusTextColor = isAvailable ? "#D97706" : Themes.COLORS.badgeText;
-  const statusBg = isAvailable ? "#FFF4E0" : Themes.COLORS.badge;
+  const isAdopted = pet.adoptedStatus;
+  const statusTextColor = isAdopted ? Themes.COLORS.badgeText : "#D97706";
+  const statusBg = isAdopted ? Themes.COLORS.badge : "#FFF4E0";
   const photo = pet.photos.find((p) => p.isProfile);
 
   console.log("THIS IS AN ID", pet._id);
@@ -39,7 +39,7 @@ export default function ViewAdopteesCard({ pet }) {
           {/* Status Badge */}
           <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
             <Text style={[styles.statusText, { color: statusTextColor }]}>
-              {isAvailable ? "Listed" : "Adopted"}
+              {isAdopted ? "Adopted" : "Listed"}
             </Text>
           </View>
         </View>
@@ -57,7 +57,10 @@ export default function ViewAdopteesCard({ pet }) {
             />
             <Text style={styles.statsText}>
               {" "}
-              Pending Applications: {pet.pendingCount} / {pet.applicationCount}
+              Pending Applications:{" "}
+              {pet.pendingCount > 0
+                ? `${pet.pendingCount} / ${pet.applicationCount}`
+                : "None"}
             </Text>
           </View>
 

@@ -10,7 +10,6 @@ export const SocketProvider = ({ children }) => {
   const { user, token } = useUser();
 
   useEffect(() => {
-    console.log("---------------In Socket Context--------------");
     if (!token || !user) {
       if (socket) {
         console.log("Disconnecting socket");
@@ -30,7 +29,6 @@ export const SocketProvider = ({ children }) => {
       console.log("SOCKET ERROR IN FRONTEND", err.message);
     });
     setSocket(newSocket);
-    console.log("SUCCESSFUL IN CONNECTING ", newSocket);
     return () => {
       newSocket.disconnect();
     };

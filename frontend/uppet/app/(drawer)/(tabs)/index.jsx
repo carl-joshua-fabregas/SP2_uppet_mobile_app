@@ -8,16 +8,21 @@ import {
   Dimensions,
   RefreshControl,
 } from "react-native";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigation } from "@react-navigation/native";
 import PetCardHome from "../../../component/PetCardHome";
 import PetModal from "../../../component/PetModal";
 import * as Themes from "../../../assets/themes/themes";
 import { api } from "../../../api/axios";
 export default function Index() {
+  const isFetchingRef = useRef(false);
+  const [cursor, setCursor] = useState(null);
+  const initialLimit = Math.ceil(
+    Dimensions.get("window").height / Themes.TYPOGRAPHY.heading.fontSize,
+  );
+
   const router = useNavigation();
   const [pets, setPets] = useState([]);
-  const [livePets, setLivePets] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -28,11 +33,17 @@ export default function Index() {
     ? pets.find((pet) => pet._id === selectedPet._id)
     : null;
 
-  const fetchPets = async (pageNum, isRefreshing = false) => {
+  const fetchPets = async (lastPet, isRefreshing = false) => {
+    isFetchingRef.current = true;
     setLoading(true);
     try {
+      const limit = pets.length > 0 ? initialLimit : 10;
       const res = await api.get("/api/pet/avail", {
-        params: { page: pageNum },
+        params: {
+          lastPetID: lastPet ? lastPet._id : null,
+          limit: limit,
+          lastPetUpdate: lastPet ? lastPet.updatedAt : null,
+        },
       });
       const newPets = res.data.body;
 
@@ -43,6 +54,9 @@ export default function Index() {
         if (isRefreshing) return newPets;
         else return [...prev, ...newPets];
       });
+      if (newPets.length > 0) {
+        setCursor(newPets[newPets.length - 1]);
+      }
       console.log("FINISHED FETHCING PETS");
     } catch (err) {
       console.error("Error fetching pets:", err);
@@ -51,6 +65,7 @@ export default function Index() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      isFetchingRef.current = false;
     }
   };
 
@@ -58,17 +73,16 @@ export default function Index() {
     setRefreshing(true);
     setPage(1);
     setHasMore(true);
-    await fetchPets(1, true);
+    await fetchPets(null, true);
   }, []);
 
   useEffect(() => {
-    fetchPets(page);
+    fetchPets(null);
   }, []);
 
   const handleLoadMore = () => {
-    if (!loading && hasMore) {
-      fetchPets(page + 1);
-      setPage((prev) => prev + 1);
+    if (!loading && hasMore && !isFetchingRef.current) {
+      fetchPets(cursor);
     }
   };
   return (

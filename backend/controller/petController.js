@@ -158,11 +158,29 @@ export async function findByFilter(req, res) {
 
 export async function findAllAvailPets(req, res) {
   try {
-    console.log("Finding available pets");
-    const page = parseInt(req.query.page) || 1;
-    const avail = await Pet.find({ adoptedStatus: { $ne: true } })
-      .skip((page - 1) * 10)
-      .limit(10);
+    const { limit, lastPetID, lastPetUpdate } = req.query;
+    if (!lastPetID) {
+      console.log("I am here");
+      const avail = await Pet.find({ adoptedStatus: { $ne: true } })
+        .sort({ updatedAt: -1 })
+        .limit(limit);
+      return res.status(200).json({
+        message: "Successfully found available pets",
+        body: avail,
+      });
+    }
+    const avail = await Pet.find({
+      adoptedStatus: { $ne: true },
+      $or: [
+        {
+          updatedAt: { $lt: lastPetUpdate },
+        },
+        {
+          updatedAt: lastPetUpdate,
+          _id: { $lt: lastPetID },
+        },
+      ],
+    }).sort({ updatedAt: -1, createdAt: -1 });
     console.log("Found pets:", avail.length);
 
     if (avail.length === 0) {
@@ -359,10 +377,11 @@ export async function presignUploadURL(req, res) {
 
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
     console.log("PRESIGNED URL GENERATED:", url);
-
+    const finalUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${key}`;
+    console.log("FINAL URL GENERATED:", finalUrl);
     return res.status(200).json({
       message: "Successfully obtained presigned URL",
-      body: { url: url, key: key },
+      body: { url: url, key: key, finalUrl: finalUrl },
     });
   } catch (err) {
     console.log("ERROR IN GENERATING PRESIGNED URL:", err);

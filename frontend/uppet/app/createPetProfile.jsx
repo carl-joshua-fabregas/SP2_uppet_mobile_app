@@ -213,7 +213,7 @@ export default function CreateProfile() {
               fileSize: photo.size,
             });
 
-            const { url, key } = preSignRes.data.body;
+            const { url, key, finalUrl } = preSignRes.data.body;
             const fetchImage = await fetch(photo.url);
             const blob = await fetchImage.blob();
 
@@ -225,15 +225,17 @@ export default function CreateProfile() {
 
             return {
               key: key,
+              url: finalUrl,
               caption: photo.caption,
               isProfile: photo.isProfile,
               timeStamp: Date.now(),
             };
           }),
         );
-        const finalPetPhotoRes = await api.patch(`api/pet/${pet._id}/photo`, {
-          photos: uploadedPhotos,
-        });
+        finalPetArray.photos = uploadedPhotos;
+        // const finalPetPhotoRes = await api.patch(`api/pet/${pet._id}/photo`, {
+        //   photos: uploadedPhotos,
+        // });
         // finalPetPhotosArray = finalPetPhotosArray.map((photo) => {
         //   const uploadedFinal = uploadedPhotos.find(
         //     (up) => up.key === photo.key,
@@ -248,12 +250,13 @@ export default function CreateProfile() {
         //   finalPetPhotosArray,
         //   uploadedPhotos,
         // );
-        finalPetArray = finalPetPhotoRes.data.body;
+        // finalPetArray = finalPetPhotoRes.data.body;
       }
       console.log("FINAL PHOTOS ARRAY", finalPetArray);
       const finalPetFormRes = await api.patch(`/api/pet/${pet._id}`, {
         ...finalPetArray,
       });
+      console.log("Final pet form Res", finalPetFormRes.data.body);
     } catch (err) {
       console.log("Error in save edit", err.message);
     } finally {
@@ -282,7 +285,7 @@ export default function CreateProfile() {
             fileSize: photo.size,
           });
 
-          const { url, key } = preSignRes.data.body;
+          const { url, key, finalUrl } = preSignRes.data.body;
           const fetchImage = await fetch(photo.url);
           const blob = await fetchImage.blob();
 
@@ -293,6 +296,7 @@ export default function CreateProfile() {
           });
 
           return {
+            url: finalUrl,
             key: key,
             caption: photo.caption,
             isProfile: photo.isProfile,
@@ -300,9 +304,9 @@ export default function CreateProfile() {
           };
         }),
       );
-      console.log("DONE NA SANA");
-      console.log(uploadedPhotos);
-      await api.patch(`api/pet/${petID}/photo`, {
+
+      await api.patch(`api/pet/${petID}`, {
+        ...pet,
         photos: uploadedPhotos,
       });
       setUploading(false);

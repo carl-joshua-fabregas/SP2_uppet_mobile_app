@@ -65,7 +65,7 @@ export const UserProvider = ({ children }) => {
           const adopterData = {
             googleId: res.data.googleData.googleId,
           };
-          console.log("THE USER IS NEW");
+          console.log("THE USER IS NEW", res.data);
           setUser(adopterData);
           setNewUser(true);
         } else {

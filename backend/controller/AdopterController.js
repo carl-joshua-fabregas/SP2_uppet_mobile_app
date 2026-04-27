@@ -144,8 +144,9 @@ export async function findUserByID(req, res) {
     console.log("FIND BY USER ID");
     console.log(user);
     if (!user) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "Not found",
+        body: [],
       });
     }
 
@@ -197,8 +198,9 @@ export async function updateUser(req, res) {
 
     const user = await Adopter.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "Not Found",
+        body: [],
       });
     }
 
@@ -220,7 +222,7 @@ export async function updateUser(req, res) {
     const saveNotif = await notifcations.save();
     console.log("Notification Saved", saveNotif);
     const io = req.app.get("io");
-    
+
     io.to(newUser._id.toString()).emit("new_notification", saveNotif);
 
     return res.status(200).json({
@@ -237,6 +239,7 @@ export async function updateUser(req, res) {
   }
 }
 
+//Adming Privilege
 export async function deleteAllUser(req, res) {
   try {
     if (req.user.role.toString() !== "admin") {
@@ -345,6 +348,7 @@ export async function uploadAdopterPhoto(req, res) {
     });
   }
 }
+
 export async function presignUploadURL(req, res) {
   console.log("IN THE UPLOAD PRESIGN URL");
   try {
@@ -369,10 +373,10 @@ export async function presignUploadURL(req, res) {
 
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
     // console.log("PRESIGNED URL GENERATED:", url);
-
+    const finalUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${key}`;
     return res.status(200).json({
       message: "Successfully obtained presigned URL",
-      body: { url: url, key: key },
+      body: { url: url, key: key, finalUrl: finalUrl },
     });
   } catch (err) {
     console.log("ERROR IN GENERATING PRESIGNED URL:", err);

@@ -144,19 +144,19 @@ export default function createAdopterProfile() {
 
     const isFormUnchanged =
       JSON.stringify(oldUserForm) === JSON.stringify(newUserForm);
-    const updatePhoto = newUserPhoto?.key === oldUserPhoto?.key;
+    const updatePhoto = newUserPhoto?.key !== oldUserPhoto?.key;
 
     console.log("=================Saving Editing of Adopter");
-    console.log("OG ====== ", adopterForm, "NEW ================", user);
 
-    if (isFormUnchanged && updatePhoto) {
+    if (isFormUnchanged && !updatePhoto) {
       console.log("No changes detected. Skipping API calls.");
       return;
     }
     try {
       setUploading(true);
-      let finalUploadKey = user.profilePhoto?.key;
+      let finalPhotoDetails = user.profilePhoto;
       if (updatePhoto) {
+        console.log("THERE WAS A NEED TO UPDATE");
         const presignDeleteUrl = await api.post(`/api/user/presignDeleteURL`, {
           key: user.profilePhoto.key,
         });
@@ -167,7 +167,6 @@ export default function createAdopterProfile() {
         const awsDelRes = await fetch(deleteUrl, {
           method: "DELETE",
         });
-        console.log("Deleting Photo", awsDelRes.ok);
 
         const presignUploadUrl = await api.post(`/api/user/presignUploadUrl`, {
           fileName: adopterForm.profilePhoto.name,
@@ -175,40 +174,33 @@ export default function createAdopterProfile() {
           fileSize: adopterForm.profilePhoto.size,
         });
         console.log("PROCEEDING TO UPLOAD");
-        const uploadUrl = presignUploadUrl.data.body.url;
-        finalUploadKey = presignUploadUrl.data.body.key;
-        // const { url, key } = presignUploadUrl.data.body;
+        //You get the uploadURL First lol I forgot thats how this works
+        const { url, key, finalUrl } = presignUploadUrl.data.body;
         const fetchImage = await fetch(adopterForm.profilePhoto.url);
         const blob = await fetchImage.blob();
 
-        await fetch(uploadUrl, {
+        await fetch(url, {
           method: "PUT",
           body: blob,
           headers: {
             "Content-Type": adopterForm.profilePhoto.type,
           },
         });
+        finalPhotoDetails = {
+          key,
+          url: finalUrl,
+          timeStamp: Date.now(),
+        };
 
         console.log("SUCCESSFULLY UPLOADED NEW PHOTOS");
       }
       const adopterUpdateRes = await api.patch(`/api/user/update`, {
         ...adopterForm,
-        profilePhoto: null,
+        profilePhoto: finalPhotoDetails,
       });
-      let finalUserData = adopterUpdateRes.data.body;
-
-      if (updatePhoto) {
-        const finalAdopterFormRes = await api.patch(`/api/user/photo`, {
-          key: finalUploadKey,
-          timeStamp: Date.now(),
-        });
-        finalUserData = finalAdopterFormRes.data.body;
-      }
+      const finalUserData = adopterUpdateRes.data.body;
 
       console.log("DID PROCEED TO UPDATE MAKING FINAL CHANGES");
-
-      console.log("=============EDITED FORM IS============");
-      console.log(finalUserData);
       setUser(finalUserData);
     } catch (error) {
       console.log("Error in saveEdit");
@@ -237,7 +229,7 @@ export default function createAdopterProfile() {
 
       console.log("Presigned URL obtained ");
 
-      const { url, key } = presignUrl.data.body;
+      const { url, key, finalUrl } = presignUrl.data.body;
       const fetchImage = await fetch(adopterForm.profilePhoto.url);
       const blob = await fetchImage.blob();
 
@@ -247,9 +239,14 @@ export default function createAdopterProfile() {
         contentType: adopterForm.profilePhoto.fileType,
       });
 
-      const finalAdopterFormRes = await api.patch(`/api/user/photo`, {
+      const finalPhotoDetails = {
         key: key,
+        url: finalUrl,
         timeStamp: Date.now(),
+      };
+      const finalAdopterFormRes = await api.patch(`/api/user/update`, {
+        ...adopterForm,
+        profilePhoto: finalPhotoDetails,
       });
       console.log(
         "-------------------THE FINAL FORM IS ,",

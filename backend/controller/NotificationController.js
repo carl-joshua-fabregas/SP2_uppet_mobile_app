@@ -8,7 +8,7 @@ export async function createNotification(req, res) {
       body: body,
       notifType,
       relatedEntiy,
-      entityModel
+      entityModel,
     });
 
     const status = await newNotif.save();
@@ -55,15 +55,15 @@ export async function findAllUserNotification(req, res) {
 
     if (!cursorID) {
       const notifications = await Notification.find({
-        recepient: req.user.id
+        recepient: req.user.id,
       })
-      .sort({createdAt: -1})
-      .limit(limit);
-      if(notifications.length == 0){
+        .sort({ createdAt: -1 })
+        .limit(limit);
+      if (notifications.length == 0) {
         return res.status(200).json({
           message: "There are no notifications",
-          body: []
-        })
+          body: [],
+        });
       }
       return res.status(200).json({
         message: "Successfully obtained Notifications",
@@ -73,10 +73,10 @@ export async function findAllUserNotification(req, res) {
 
     const notifications = await Notification.find({
       recepient: req.user.id,
-      _id: {$lt: cursorID}
+      _id: { $lt: cursorID },
     })
-    .sort({createdAt: -1})
-    .limit(limit);
+      .sort({ createdAt: -1 })
+      .limit(limit);
     if (notifications.length == 0) {
       return res.status(200).json({
         message: "No notifications found",

@@ -37,7 +37,7 @@ export default function Index() {
     isFetchingRef.current = true;
     setLoading(true);
     try {
-      const limit = pets.length > 0 ? initialLimit : 10;
+      const limit = pets.length > 0 ? 10 : initialLimit;
       const res = await api.get("/api/pet/avail", {
         params: {
           lastPetID: lastPet ? lastPet._id : null,

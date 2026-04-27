@@ -1,16 +1,16 @@
 import Rating from "../models/Rating.js";
 
-export async function createRating (req, res) {
+export async function createRating(req, res) {
   try {
     const { ratedUser, score, body } = req.body;
     const existingReview = await Rating.find({
       ratedUser: ratedUser,
-      reviewer: req.user.id
-    })
-    if(existingReview.length > 0){
+      reviewer: req.user.id,
+    });
+    if (existingReview.length > 0) {
       return res.status(200).json({
         message: "You have already rated this user",
-        body: []
+        body: [],
       });
     }
     const rating = new Rating({
@@ -33,9 +33,9 @@ export async function createRating (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findAllRating (req, res) {
+export async function findAllRating(req, res) {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({
@@ -58,19 +58,48 @@ export async function findAllRating (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findRatingsOfUser (req, res) {
+export async function findRatingByUserToUser(req, res) {
+  try {
+    const { ratedID } = req.params;
+    const rating = await Rating.findOne({
+      ratedUser: ratedID,
+      reviewer: req.user.id,
+    });
+    if (!rating) {
+      return res.status(200).json({
+        message: "Rating does not exist",
+        body: [],
+      });
+    }
+    return res.status(200).json({
+      message: "Rating Found",
+      body: rating,
+    });
+  } catch (err) {
+    console.log("Error in finding the user rating");
+    return res.status(500).json({
+      message: "Server Error",
+      body: err,
+    });
+  }
+}
+// Does not include user made ratints because we will do 2 queries
+export async function findRatingsOfUser(req, res) {
   try {
     const limit = req.query.limit;
     const lastRatingID = req.query.lastRatingID;
+    const ratedID = req.params.ratedID;
     if (!lastRatingID) {
-      const notification = await Rating.find({
-        ratedUser: req.user.id,
+      const rating = await Rating.find({
+        ratedUser: ratedID,
+        reviewer: { $ne: req.user.id },
       })
         .sort({ updatedAt: -1 })
         .limit(limit);
-      if (notification.length == 0) {
+      console.log("This is the rating", rating);
+      if (rating.length == 0) {
         return res.status(200).json({
           message: "Nothing Found",
           body: [],
@@ -78,17 +107,26 @@ export async function findRatingsOfUser (req, res) {
       }
       return res.status(200).json({
         message: "Successfully found all ratings",
-        body: notification,
+        body: rating,
       });
     }
-    const notification = await Rating.find({
-      ratedUser: req.user.id,
-      _id: { $lt: lastRatingID },
+    const rating = await Rating.find({
+      ratedUser: ratedID,
+      reviewer: { $ne: req.user.id },
+      $or: [
+        {
+          updatedAt: { $lt: lastRatingID },
+        },
+        {
+          updatedAt: lastRatingID,
+          _id: { $lt: lastRatingID },
+        },
+      ],
     })
-      .sort({ updatedAt: -1 })
+      .sort({ updatedAt: -1, createdAt: -1 })
       .limit(limit);
 
-    if (notification.length == 0) {
+    if (rating.length == 0) {
       return res.status(200).json({
         message: "Nothing Found",
         body: [],
@@ -96,7 +134,7 @@ export async function findRatingsOfUser (req, res) {
     }
     return res.status(200).json({
       message: "Successfully found all ratings",
-      body: notification,
+      body: rating,
     });
   } catch (err) {
     return res.status(500).json({
@@ -104,9 +142,9 @@ export async function findRatingsOfUser (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function findAllRatedUser (req, res) {
+export async function findAllRatedUser(req, res) {
   try {
     const ratedUser = await Rating.find({ reviewer: req.user.id });
 
@@ -126,9 +164,9 @@ export async function findAllRatedUser (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function updateRating (req, res) {
+export async function updateRating(req, res) {
   try {
     const options = {
       new: true,
@@ -146,13 +184,13 @@ export async function updateRating (req, res) {
     ) {
       return res.status(403).json({
         message: "Forbidden",
-        body: []
+        body: [],
       });
     }
     const newRating = await Rating.findByIdAndUpdate(
       req.params.ratedID,
       { $set: req.body },
-      options
+      options,
     );
 
     return res.status(200).json({
@@ -165,9 +203,9 @@ export async function updateRating (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteAllRating (req, res) {
+export async function deleteAllRating(req, res) {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({
@@ -186,9 +224,9 @@ export async function deleteAllRating (req, res) {
       body: err.message,
     });
   }
-};
+}
 
-export async function deleteRating (req, res) {
+export async function deleteRating(req, res) {
   try {
     const rating = await Rating.findById(req.params.id);
 
@@ -216,4 +254,4 @@ export async function deleteRating (req, res) {
       body: err.message,
     });
   }
-};
+}

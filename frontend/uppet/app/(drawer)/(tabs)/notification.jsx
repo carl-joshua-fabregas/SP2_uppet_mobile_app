@@ -4,14 +4,18 @@ import {
   FlatList,
   ActivityIndicator,
   StyleSheet,
+  Dimensions,
   RefreshControl,
 } from "react-native";
-import { useState, useEffect, useCallback, useRef} from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import NotificationCard from "../../../component/notificationCard";
 import { api } from "../../../api/axios";
 import * as Themes from "../../../assets/themes/themes";
 
 export default function Notification() {
+  const initialLimit = Math.ceil(
+    Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
+  );
   const [notification, setNotification] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -24,9 +28,11 @@ export default function Notification() {
     isFetchingRef.current = true;
     setLoading(true);
     try {
+      const limit = notification.length > 0 ? initialLimit : 10;
       const res = await api.get("/api/notification/notifications", {
         params: {
           cursorID: cursorID,
+          limit: limit,
         },
       });
       const newNotification = res.data?.body;
@@ -45,7 +51,6 @@ export default function Notification() {
       if (newNotification?.length < 10) {
         setHasMore(false);
       }
-
     } catch (err) {
       console.error("Error fetching pets:", err);
       console.error("Status:", err.response?.status); // Is it actually 404?

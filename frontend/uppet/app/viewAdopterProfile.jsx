@@ -1,71 +1,136 @@
-import { View, ScrollView, TouchableOpacity, Text, StyleSheet } from "react-native";
-import { useState, useEffect } from "react";
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
+import { useState, useEffect, useRef } from "react";
 import { useRoute } from "@react-navigation/native";
 import ProfileCard from "../component/AdopterProfileCard";
 import { api } from "../api/axios";
 import * as Themes from "../assets/themes/themes";
 import CreateRatingModal from "../component/createRatingModal";
 import { useUser } from "../context/UserContext";
+
 export default function ViewAdopterProfile() {
   const router = useRoute();
+  const initialLimit = Math.ceil(
+    Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
+  );
 
   const [adopter, setAdopter] = useState({});
+  const [adopterRating, setAdopterRating] = useState([]);
+  const [myRating, setMyRating] = useState({});
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  const isFetching = useRef(false);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); //Not sure if I should Include this
+  const [cursorID, setCursorID] = useState(null);
+
   console.log("THIS IS ADOPTER PROFILE");
   console.log(router.params.id);
-  
+
   const handleRatingButtonClick = () => {
-    setRatingModalVisible(true)
+    setRatingModalVisible(true);
     console.log("Write a review clicked");
-  }
+  };
+
   const handleRatingPost = async (score, body) => {
-    if(uploading) return;
-      setUploading(true)
+    if (uploading) return;
+    setUploading(true);
     try {
       const res = await api.post(`/api/rating/${adopter._id}`, {
-      score: score, 
-      body: body,
-      ratedUser: adopter._id,
-    })
-    if(res.data.body){
-      console.log("success in rating")
-    }
+        score: score,
+        body: body,
+        ratedUser: adopter._id,
+      });
+      if (res.data.body) {
+        console.log("success in rating");
+      }
     } catch (err) {
       console.log(err);
-    } finally{
+    } finally {
       setUploading(false);
     }
-  }
-  
+  };
+
   const handleAccept = () => {
     console.log("Accept applicant clicked");
-  }
+  };
 
   const handleReject = () => {
     console.log("Reject applicant clicked");
-  }
+  };
 
   const handleMessage = () => {
     console.log("Message applicant clicked");
-  }
+  };
 
-  const getProfile = async () => {
+  const fetchProfile = async () => {
     try {
       const res = await api.get(`/api/user/${router.params.id}`, {});
       const userData = res.data.body;
-
       setAdopter(userData);
-      console.log("I LOADED");
+      console.log("Successfully obtained Adoper Profile");
     } catch (err) {
+      console.log("Error in getting Profile");
       console.log(err);
     }
   };
 
+  const fetchRating = async (lastRatingID, isRefreshing = false) => {
+    isFetching.current = true;
+    setLoading(true);
+    try {
+      if (!myRating) {
+        const myRatingRes = await api.get(
+          `/api/rating/myRating/${router.params.id}`,
+        );
+        console.log("myRatingRes", myRatingRes.data.message);
+        setMyRating(myRatingRes.data.body);
+      }
+      const limit = adopterRating.length > 0 ? 10 : initialLimit;
+      const otherRatingRes = await api.get(
+        `/api/rating/otherRatings/${router.params.id}`,
+        {
+          params: {
+            limit: limit,
+            lastRatingID: lastRatingID,
+          },
+        },
+      );
+      const otherRating = otherRatingRes.data.body;
+      if (otherRating.length < limit) {
+        setHasMore(false);
+      }
+      console.log(otherRatingRes.data.message);
+      setAdopterRating((prev) => [...prev, ...otherRating]);
+      if (otherRating.length > 0) {
+        setCursorID(otherRating[otherRating.length - 1]._id);
+      }
+    } catch (err) {
+      console.log("Error in fetching Rating");
+    } finally {
+      isFetching.current = false;
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    getProfile();
+    fetchProfile();
+    fetchRating(null);
   }, []);
 
+  const handleLoadMoreRating = async () => {
+    if (!loading && hasMore && !isFetching) {
+      fetchRating(cursorID);
+    }
+  };
   const buttons = [
     {
       title: "Write a Review",
@@ -92,7 +157,14 @@ export default function ViewAdopterProfile() {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <ProfileCard adopter={adopter} />
-      <CreateRatingModal visible={ratingModalVisible} setRatingModalVisible={setRatingModalVisible} handleRatingPost={handleRatingPost} onClose={() => setRatingModalVisible(false)} ratedAdopter = {adopter} uploading={uploading}></CreateRatingModal>
+      <CreateRatingModal
+        visible={ratingModalVisible}
+        setRatingModalVisible={setRatingModalVisible}
+        handleRatingPost={handleRatingPost}
+        onClose={() => setRatingModalVisible(false)}
+        ratedAdopter={adopter}
+        uploading={uploading}
+      ></CreateRatingModal>
       <View style={styles.buttonSection}>
         {buttons.map((btn, index) => {
           const containerStyle =

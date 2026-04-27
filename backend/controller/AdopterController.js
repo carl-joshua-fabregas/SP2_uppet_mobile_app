@@ -263,7 +263,7 @@ export async function deleteAllUser(req, res) {
 
 export async function deleteUser(req, res) {
   try {
-    const user = await Adopter.findById(req.params.id);
+    const user = await Adopter.findById(req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -280,15 +280,17 @@ export async function deleteUser(req, res) {
       });
     }
 
-    await AdoptionApplication.deleteMany({ applicant: req.params.id });
-    await Notification.deleteMany({ notifRecipient: req.params.id });
-    await Pet.deleteMany({ ownerId: req.params.id });
-    await Message.deleteMany({ sender: req.params.id });
-    await ChatThread.deleteMany({ members: req.params.id });
-    await Rating.deleteMany({ reviewer: req.params.id });
-    await Rating.deleteMany({ ratedUser: req.params.id });
+    await AdoptionApplication.deleteMany({ applicant: req.user.id });
+    await Notification.deleteMany({ notifRecipient: req.user.id });
+    await Pet.deleteMany({ ownerId: req.user.id });
+    await Message.deleteMany({ sender: req.user.id });
+    await ChatThread.deleteMany({ members: req.user.id });
+    await Rating.deleteMany({ reviewer: req.user.id });
+    await Notification.deleteMany({
+      $or: [{ recepient: req.user.id }, { sender: req.user.id }],
+    });
 
-    await Adopter.findByIdAndDelete(req.params.id);
+    await Adopter.findByIdAndDelete(req.user.id);
 
     return res.status(200).json({
       message: "Successfully deleted user",

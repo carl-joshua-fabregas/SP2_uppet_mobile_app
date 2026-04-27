@@ -29,7 +29,7 @@ router.patch("/update", updateUser);
 router.patch("/photo", uploadAdopterPhoto);
 
 //Delete Requests
-router.delete("/:id", deleteUser);
+router.delete("/delete", deleteUser);
 router.delete("/all", deleteAllUser);
 
 export default router;

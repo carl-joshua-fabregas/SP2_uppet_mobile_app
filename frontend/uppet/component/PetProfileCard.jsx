@@ -11,9 +11,10 @@ import { useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
 
 export default function PetProfileCardViewMore({ pet }) {
-  const profilePhoto = pet.photos && pet.photos.length > 0 
-    ? pet.photos.find((photo) => photo.isProfile) 
-    : null;
+  const profilePhoto =
+    pet.photos && pet.photos.length > 0
+      ? pet.photos.find((photo) => photo.isProfile)
+      : null;
   const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const form = {
@@ -102,79 +103,107 @@ export default function PetProfileCardViewMore({ pet }) {
           <View style={styles.gallerySection}>
             <View style={styles.galleryHeader}>
               <Text style={styles.sectionTitle}>Photos</Text>
-              {form.photos.length > 3 && (
-                <TouchableOpacity onPress={() => setIsGalleryExpanded((prev) => !prev)}>
-                  <Text style={styles.galleryToggleButton}>
-                    {isGalleryExpanded ? "Show Less" : "View More..."}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                onPress={() => setIsGalleryExpanded((prev) => !prev)}
+              >
+                <Text style={styles.galleryToggleButton}>
+                  {isGalleryExpanded ? "Show Less" : "View More..."}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             {!isGalleryExpanded ? (
-              <View key={`carousel-${isGalleryExpanded}`} style={[styles.carouselContainer, { width: "100%" }] }>
-                <Image 
+              <View
+                key={`carousel-${isGalleryExpanded}`}
+                style={[styles.carouselContainer, { width: "100%" }]}
+              >
+                <Image
                   key={`carousel-${currentPhotoIndex}-${isGalleryExpanded}`}
-                  source={{ uri: form.photos[currentPhotoIndex]?.url }} 
-                  style={styles.carouselImage} 
+                  source={{ uri: form.photos[currentPhotoIndex]?.url }}
+                  style={styles.carouselImage}
                 />
                 {form.photos.length > 1 && (
-                  <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-                    <TouchableOpacity 
-                      style={styles.carouselPrevButton} 
-                      onPress={() => setCurrentPhotoIndex(prev => prev === 0 ? form.photos.length - 1 : prev - 1)}
+                  <View
+                    style={StyleSheet.absoluteFill}
+                    pointerEvents="box-none"
+                  >
+                    <TouchableOpacity
+                      style={styles.carouselPrevButton}
+                      onPress={() =>
+                        setCurrentPhotoIndex((prev) =>
+                          prev === 0 ? form.photos.length - 1 : prev - 1,
+                        )
+                      }
                     >
                       <Text style={styles.carouselArrow}>‹</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={styles.carouselNextButton} 
-                      onPress={() => setCurrentPhotoIndex(prev => prev === form.photos.length - 1 ? 0 : prev + 1)}
+                    <TouchableOpacity
+                      style={styles.carouselNextButton}
+                      onPress={() =>
+                        setCurrentPhotoIndex((prev) =>
+                          prev === form.photos.length - 1 ? 0 : prev + 1,
+                        )
+                      }
                     >
                       <Text style={styles.carouselArrow}>›</Text>
                     </TouchableOpacity>
                     <View style={styles.carouselDotsContainer}>
-                      {form.photos.map((_, index) => (
-                        <View 
-                          key={index} 
-                          style={[
-                            styles.carouselDot, 
-                            index === currentPhotoIndex && styles.carouselDotActive
-                          ]} 
-                        />
-                      ))}
+                      {form.photos.map((_, index) => {
+                        const isActive =
+                          form.photos.length <= 5
+                            ? index === currentPhotoIndex
+                            : currentPhotoIndex >= 4
+                              ? index === 4
+                              : index === currentPhotoIndex;
+
+                        return (
+                          <View
+                            key={index}
+                            style={[
+                              styles.carouselDot,
+                              isActive && styles.carouselDotActive,
+                            ]}
+                          />
+                        );
+                      })}
                     </View>
                   </View>
                 )}
               </View>
             ) : (
               <View style={styles.expandedGalleryContainer}>
-                <ScrollView 
-                  style={styles.expandedGalleryScroll} 
+                <ScrollView
+                  style={styles.expandedGalleryScroll}
                   nestedScrollEnabled={true}
                   showsVerticalScrollIndicator={true}
                 >
                   <View style={styles.photoCardsList}>
                     {form.photos.map((photo, index) => (
                       <View key={index} style={styles.photoCard}>
-                        <Image 
-                          source={{ uri: photo.url }} 
-                          style={styles.photoCardImage} 
+                        <Image
+                          source={{ uri: photo.url }}
+                          style={styles.photoCardImage}
                         />
                         <View style={styles.photoCardContent}>
-                          <Text style={styles.photoCardTitle}>🐾 About this photo</Text>
+                          <Text style={styles.photoCardTitle}>
+                            🐾 About this photo
+                          </Text>
                           <Text style={styles.photoCardCaption}>
-                            {photo.caption || "Just being cute! No caption provided yet."}
+                            {photo.caption ||
+                              "Just being cute! No caption provided yet."}
                           </Text>
                         </View>
                       </View>
                     ))}
                   </View>
                 </ScrollView>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.closeGalleryButton}
                   onPress={() => setIsGalleryExpanded(false)}
                 >
-                  <Text style={styles.closeGalleryButtonText}>Close Gallery</Text>
+                  <Text style={styles.closeGalleryButtonText}>
+                    Close Gallery
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}

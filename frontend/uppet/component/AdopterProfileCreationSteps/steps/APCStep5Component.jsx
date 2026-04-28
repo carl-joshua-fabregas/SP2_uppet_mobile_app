@@ -28,7 +28,7 @@ export default function APCStep5Component({ onFinish }) {
           onPress={() => onFinish(newUser)}
           style={styles.finishButton}
         >
-          <Text style={styles.finishButtonText}>View My Adoptees</Text>
+          <Text style={styles.finishButtonText}>Go to Homepage</Text>
         </TouchableOpacity>
       </View>
     </View>

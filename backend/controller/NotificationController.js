@@ -4,7 +4,7 @@ export async function createNotification(req, res) {
   try {
     const { notifRecipient, body, notifType, relatedEntiy } = req.body;
     const newNotif = new Notification({
-      notifRecipient: notifRecipient,
+      recipient: notifRecipient,
       body: body,
       notifType,
       relatedEntiy,
@@ -55,7 +55,7 @@ export async function findAllUserNotification(req, res) {
 
     if (!cursorID) {
       const notifications = await Notification.find({
-        recepient: req.user.id,
+        recipient: req.user.id,
       })
         .sort({ createdAt: -1 })
         .limit(limit);
@@ -72,7 +72,7 @@ export async function findAllUserNotification(req, res) {
     }
 
     const notifications = await Notification.find({
-      recepient: req.user.id,
+      recipient: req.user.id,
       _id: { $lt: cursorID },
     })
       .sort({ createdAt: -1 })
@@ -118,7 +118,7 @@ export async function deleteAllNotification(req, res) {
 export async function deleteAllUserNotification(req, res) {
   try {
     const userNotif = await Notification.deleteMany({
-      notifRecipient: req.user.id,
+      recipient: req.user.id,
     });
 
     return res.status(200).json({
@@ -137,7 +137,7 @@ export async function deleteUserNotification(req, res) {
     const user = await Notification.findById(req.params.id);
 
     if (
-      req.user.id.toString() !== user.notifRecipient.toString() &&
+      req.user.id.toString() !== user.recipient.toString() &&
       req.user.role.toString() !== "admin"
     ) {
       return res.status(403).json({

@@ -66,6 +66,7 @@ export default function APCStep3Component({
     height,
     keyboardType,
     icon,
+    editable = true,
   }) => (
     <View style={styles.field}>
       <View style={styles.infoRow}>
@@ -83,12 +84,14 @@ export default function APCStep3Component({
           styles.input,
           error && styles.inputError,
           multiline && { height, textAlignVertical: "top" },
+          !editable && styles.inputDisabled,
         ]}
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
         multiline={multiline}
         keyboardType={keyboardType}
+        editable={editable}
       />
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
@@ -127,12 +130,17 @@ export default function APCStep3Component({
 
         <FormInput
           label="Currently Owned Pets"
-          value={String(adopterData.currentOwnedPets ?? "")}
+          value={
+            adopterData.hadPets === "yes"
+              ? String(adopterData.currentOwnedPets ?? "0")
+              : "0"
+          }
           onChange={(v) => update("currentOwnedPets", v)}
           error={errors.currentOwnedPets}
           placeholder="0"
           keyboardType="numeric"
           icon="dog-side"
+          editable={adopterData.hadPets === "yes"}
         />
       </View>
 
@@ -278,5 +286,10 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+  },
+  inputDisabled: {
+    backgroundColor: "#F0F0F0", // Light gray background
+    borderColor: "#EAEAEA", // Keep the border subtle
+    color: "#A9A9A9", // Optional: gray out the text/value too
   },
 });

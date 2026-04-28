@@ -10,6 +10,9 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
+  Bucket$,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 const s3 = new S3Client({
@@ -80,7 +83,7 @@ export async function createAdopter(req, res) {
     );
     //New Adopter Notification
     const notifcations = new Notification({
-      recepient: newAdopter._id,
+      recipient: newAdopter._id,
       sender: newAdopter._id,
       relatedEntity: newAdopter._id,
       entityModel: "Adopter",
@@ -211,7 +214,7 @@ export async function updateUser(req, res) {
     );
 
     const notifcations = new Notification({
-      recepient: newUser._id,
+      recipient: newUser._id,
       sender: newUser._id,
       relatedEntity: newUser._id,
       entityModel: "Adopter",
@@ -271,27 +274,138 @@ export async function deleteUser(req, res) {
       });
     }
 
-    if (
-      req.user.id.toString() !== user._id.toString() &&
-      req.user.role !== "admin"
-    ) {
-      return res.status(403).json({
-        message: "Forbidden",
-      });
+    // if (
+    //   req.user.id.toString() !== user._id.toString() &&
+    //   req.user.role !== "admin"
+    // ) {
+    //   return res.status(403).json({
+    //     message: "Forbidden",
+    //   });
+    // }
+
+    const ownedPets = await Pet.find({ ownerId: req.user.id });
+    if (ownedPets && ownedPets.length > 0) {
+      const deletedPetPhotos = await Promise.all(
+        ownedPets.map(async (pet) => {
+          console.log(`Deleting AWS photo of ${pet.name}`);
+          let isTruncated = true;
+          let continuationToken = undefined;
+          let totalDeleted = 0;
+          const prefix = `pets/${pet._id}/`;
+          try {
+            while (isTruncated) {
+              console.log("ENTERED THE LOOP");
+              const listCommand = new ListObjectsV2Command({
+                Bucket: process.env.AWS_BUCKET_NAME,
+                Prefix: prefix,
+                ContinuationToken: continuationToken,
+                EncodingType: "url",
+              });
+              console.log("MADE THE LIST COMMAND", listCommand);
+              const listResponse = await s3.send(listCommand);
+              console.log("List Response is", listResponse);
+              if (
+                !listResponse.Contents ||
+                listResponse.Contents.length === 0
+              ) {
+                break;
+              }
+
+              const objectsToDelete = listResponse.Contents.map((file) => ({
+                Key: decodeURIComponent(file.Key),
+              }));
+              console.log(objectsToDelete);
+              const deleteCommand = new DeleteObjectsCommand({
+                Bucket: process.env.AWS_BUCKET_NAME,
+                Delete: {
+                  Objects: objectsToDelete,
+                  Quiet: true,
+                },
+              });
+
+              await s3.send(deleteCommand);
+
+              totalDeleted += objectsToDelete.length;
+              console.log(`Deleted batch total ${objectsToDelete.length}`);
+
+              isTruncated = listResponse.IsTruncated;
+              continuationToken = listResponse.NextContinuationToken;
+            }
+            console.log(
+              `Successfully deleted AWS files ${pet.name} ... ${totalDeleted}`,
+            );
+          } catch (err) {
+            console.log("Error on deletion", err.message, err);
+          }
+          return totalDeleted;
+        }),
+      );
+    }
+    // Deleting Messages in Aws
+    const sentMessages = await Message.findOne({
+      sender: req.user.id,
+      "media.url": { $exists: true, $ne: null },
+    });
+    //This mean that theres a message with atleast one media
+    if (sentMessages) {
+      let isTruncated = true;
+      let continuationToken = undefined;
+      let totalMessageDeleted = 0;
+      const prefix = `message/${req.user.id}/`;
+      while (isTruncated) {
+        const listCommand = new ListObjectsV2Command({
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+          EncodingType: "url",
+        });
+
+        const listResponse = await s3.send(listCommand);
+
+        if (!listResponse.Contents || listResponse.Contents.length === 0) {
+          break;
+        }
+
+        const objectsToDelete = listResponse.Contents.map((file) => ({
+          Key: decodeURIComponent(file.Key),
+        }));
+        console.log(objectsToDelete);
+        const deleteCommand = new DeleteObjectsCommand({
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Delete: {
+            Objects: objectsToDelete,
+            Quiet: true,
+          },
+        });
+
+        await s3.send(deleteCommand);
+        totalMessageDeleted += objectsToDelete.length;
+
+        console.log(`Deleted batch total ${objectsToDelete.length}`);
+        isTruncated = listResponse.IsTruncated;
+        continuationToken = listResponse.NextContinuationToken;
+      }
+      console.log(
+        `Successfully deleted AWS files for messages of ${req.user.id} ${totalMessageDeleted}`,
+      );
     }
 
-    await AdoptionApplication.deleteMany({ applicant: req.user.id });
-    await Notification.deleteMany({ notifRecipient: req.user.id });
-    await Pet.deleteMany({ ownerId: req.user.id });
-    await Message.deleteMany({ sender: req.user.id });
-    await ChatThread.deleteMany({ members: req.user.id });
-    await Rating.deleteMany({ reviewer: req.user.id });
-    await Notification.deleteMany({
-      $or: [{ recepient: req.user.id }, { sender: req.user.id }],
-    });
-
-    await Adopter.findByIdAndDelete(req.user.id);
-
+    const deletionTask = [
+      Message.deleteMany({ sender: req.user.id }),
+      ChatThread.deleteMany({ members: req.user.id }),
+      Rating.deleteMany({
+        $or: [{ reviewer: req.user.id }, { ratedUser: req.user.id }],
+      }),
+      Notification.deleteMany({
+        $or: [{ recipient: req.user.id }, { sender: req.user.id }],
+      }),
+      Pet.deleteMany({ ownerId: req.user.id }),
+      AdoptionApplication.deleteMany({ applicant: req.user.id }),
+      Adopter.findByIdAndDelete(req.user.id),
+    ];
+    const deletionStatus = await Promise.all(deletionTask);
+    const io = req.app.get("io");
+    io.emit("user_deleted", req.user.id);
     return res.status(200).json({
       message: "Successfully deleted user",
     });
@@ -305,6 +419,7 @@ export async function deleteUser(req, res) {
     });
   }
 }
+
 export async function uploadAdopterPhoto(req, res) {
   console.log("UPLOAD Adopter PHOTO CONTROLLER CALLED");
   try {

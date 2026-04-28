@@ -4,6 +4,7 @@ import {
   createRating,
   findRatingByUserToUser,
   findRatingsOfUser,
+  updateRating,
 } from "../controller/RatingController.js";
 // import { findAllUserNotification } from "../controller/NotificationController.js";
 
@@ -12,8 +13,6 @@ import {
 router.get("/myRating/:ratedID", findRatingByUserToUser);
 router.get("/otherRatings/:ratedID", findRatingsOfUser);
 router.post("/:ratedID", createRating);
-
-// router.patch("/:ratingID");
-// router.delete("/:ratingID")
+router.patch("/:ratingID", updateRating);
 
 export default router;

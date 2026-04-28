@@ -1,10 +1,29 @@
-import { Text, Image, View, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  Text,
+  Image,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 
-export default function ProfileCard({ adopter, isOwner, handleEditing }) {
-  console.log("PROFILE CARD CLICKED");
-  // Section Component for cleaner code
+export default function ProfileCard({
+  adopter,
+  isOwner,
+  adopterRating,
+  handleEditing,
+  myRating = null,
+  reviews = [],
+  reviewsExpanded = false,
+  hasMoreReviews = false,
+  onReviewPress = () => {},
+  onViewMoreReviews = () => {},
+  onReviewListEndReached = () => {},
+  onEditReviewPress = () => {},
+  showRatingsAndReviews = true,
+}) {
   const InfoSection = ({ icon, label, value }) => (
     <View style={styles.infoRow}>
       <View style={styles.iconContainer}>
@@ -21,16 +40,41 @@ export default function ProfileCard({ adopter, isOwner, handleEditing }) {
     </View>
   );
 
+  const renderStars = (ratingValue) =>
+    [1, 2, 3, 4, 5].map((star) => (
+      <MaterialCommunityIcons
+        key={star}
+        name={star <= ratingValue ? "star" : "star-outline"}
+        size={16}
+        color={Themes.COLORS.primary}
+        style={styles.reviewStar}
+      />
+    ));
+
+  const displayedReviews = reviewsExpanded
+    ? adopterRating
+    : adopterRating.slice(0, 3);
+  const topReview = myRating && myRating._id ? myRating : null;
+
+  const handleReviewListScroll = ({ nativeEvent }) => {
+    const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+    if (
+      layoutMeasurement.height + contentOffset.y >= contentSize.height - 20 &&
+      hasMoreReviews
+    ) {
+      onReviewListEndReached();
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* Header Section */}
       <View style={styles.header}>
         <Image
           source={
             adopter.profilePhoto
               ? { uri: adopter.profilePhoto.url }
               : require("../assets/images/doggoe.jpg")
-          } // Use adopter.profilePic if available
+          }
           style={styles.profileImage}
         />
         <Text style={styles.fullName}>
@@ -40,7 +84,6 @@ export default function ProfileCard({ adopter, isOwner, handleEditing }) {
         </Text>
         <Text style={styles.bioText}>{adopter.bio || "No bio added yet."}</Text>
 
-        {/* Edit Button - Only shows if isOwner is true */}
         {isOwner && (
           <TouchableOpacity style={styles.editButton} onPress={handleEditing}>
             <MaterialCommunityIcons
@@ -53,7 +96,6 @@ export default function ProfileCard({ adopter, isOwner, handleEditing }) {
         )}
       </View>
 
-      {/* Profile Details Content */}
       <View style={styles.content}>
         <Text style={styles.sectionTitle}>Personal Information</Text>
         <View style={styles.card}>
@@ -122,6 +164,103 @@ export default function ProfileCard({ adopter, isOwner, handleEditing }) {
             value={adopter.hobbies}
           />
         </View>
+
+        {showRatingsAndReviews && (
+          <>
+            <Text style={styles.sectionTitle}>Your Review</Text>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() =>
+                topReview ? onReviewPress(topReview) : onEditReviewPress()
+              }
+            >
+              <View style={[styles.card, styles.topReviewCard]}>
+                <View style={styles.reviewHeaderRow}>
+                  <Text style={styles.reviewLabel}>Your latest review</Text>
+                  <View style={styles.ratingDetailRow}>
+                    {renderStars(topReview?.score || 0)}
+                    <Text style={styles.reviewScoreText}>
+                      {topReview?.score
+                        ? `${topReview.score}.0`
+                        : "No rating yet"}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.reviewBodyText} numberOfLines={4}>
+                  {topReview?.body ||
+                    "Tap here to write a review for this adopter."}
+                </Text>
+                <Text style={styles.reviewActionText}>
+                  {topReview ? "Tap to view or edit" : "Write a review"}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <Text style={styles.sectionTitle}>Other Adopters’ Reviews</Text>
+            <View style={[styles.card, styles.reviewsSectionCard]}>
+              <View style={styles.reviewHeaderRow}>
+                {adopterRating.length > 0 && (
+                  <Text
+                    style={styles.reviewCountText}
+                  >{`${adopterRating.length} reviews`}</Text>
+                )}
+              </View>
+              {adopterRating.length === 0 ? (
+                <Text style={styles.emptyText}>
+                  No reviews yet for this adopter.
+                </Text>
+              ) : (
+                <ScrollView
+                  style={styles.reviewList}
+                  contentContainerStyle={styles.reviewListContent}
+                  nestedScrollEnabled
+                  onScroll={handleReviewListScroll}
+                  scrollEventThrottle={200}
+                >
+                  {displayedReviews.map((review, index) => (
+                    <TouchableOpacity
+                      key={review._id || index}
+                      style={styles.reviewRow}
+                      onPress={() => onReviewPress(review)}
+                    >
+                      <View style={styles.reviewRowHeader}>
+                        <Text style={styles.reviewAuthorText} numberOfLines={1}>
+                          {review.reviewer?.firstName ||
+                            review.reviewer?.name ||
+                            "Reviewer"}
+                        </Text>
+                        <View style={styles.ratingDetailRow}>
+                          {renderStars(review.score)}
+                          <Text
+                            style={styles.reviewScoreText}
+                          >{`${review.score}.0`}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.reviewBodyText} numberOfLines={3}>
+                        {review.body || "No text provided."}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+              {!reviewsExpanded && adopterRating.length > 3 && (
+                <TouchableOpacity
+                  style={styles.viewMoreButton}
+                  onPress={onViewMoreReviews}
+                >
+                  <Text style={styles.viewMoreButtonText}>
+                    View more reviews
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {reviewsExpanded && hasMoreReviews && (
+                <Text style={styles.loadMoreHint}>
+                  Scroll to load more reviews
+                </Text>
+              )}
+            </View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -154,13 +293,13 @@ const styles = StyleSheet.create({
   fullName: {
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
-    color: Themes.COLORS.text,
+    color: Themes.COLORS.textDark,
     textAlign: "center",
   },
   bioText: {
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
     fontSize: Themes.TYPOGRAPHY.body.fontSize,
-    color: Themes.COLORS.textFaded,
+    color: Themes.COLORS.textMuted,
     textAlign: "center",
     marginTop: Themes.SPACING.sm,
     paddingHorizontal: Themes.SPACING.md,
@@ -223,13 +362,115 @@ const styles = StyleSheet.create({
   },
   labelText: {
     fontSize: Themes.TYPOGRAPHY.label.fontSize,
-    color: Themes.COLORS.textFaded,
+    color: Themes.COLORS.textMuted,
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
   },
   valueText: {
     fontSize: Themes.TYPOGRAPHY.body.fontSize,
-    color: Themes.COLORS.text,
+    color: Themes.COLORS.textDark,
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     marginTop: 2,
+  },
+  topReviewCard: {
+    borderWidth: 1,
+    borderColor: Themes.COLORS.soft,
+    backgroundColor: Themes.COLORS.background,
+  },
+  reviewHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Themes.SPACING.sm,
+  },
+  ratingDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  reviewStar: {
+    marginRight: 2,
+  },
+  reviewLabel: {
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.textMuted,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+  },
+  reviewScoreText: {
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.textDark,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    marginLeft: Themes.SPACING.xs,
+  },
+  reviewBodyText: {
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.textDark,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    lineHeight: 20,
+    marginBottom: Themes.SPACING.sm,
+  },
+  reviewActionText: {
+    fontSize: Themes.TYPOGRAPHY.label.fontSize,
+    color: Themes.COLORS.primaryDark,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+  },
+  reviewsSectionCard: {
+    paddingBottom: Themes.SPACING.sm,
+  },
+  reviewSectionTitle: {
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+    color: Themes.COLORS.textDark,
+  },
+  reviewCountText: {
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.textMuted,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+  },
+  reviewList: {
+    maxHeight: 260,
+  },
+  reviewListContent: {
+    paddingBottom: Themes.SPACING.sm,
+  },
+  reviewRow: {
+    borderBottomWidth: 1,
+    borderBottomColor: Themes.COLORS.soft,
+    paddingVertical: Themes.SPACING.sm,
+  },
+  reviewRowHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Themes.SPACING.xs,
+  },
+  reviewAuthorText: {
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.textDark,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    flex: 1,
+    marginRight: Themes.SPACING.sm,
+  },
+  viewMoreButton: {
+    marginTop: Themes.SPACING.sm,
+    alignSelf: "center",
+    paddingHorizontal: Themes.SPACING.md,
+    paddingVertical: Themes.SPACING.sm,
+    borderRadius: Themes.RADIUS.md,
+    backgroundColor: Themes.COLORS.primary,
+  },
+  viewMoreButtonText: {
+    color: "#FFF",
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+  },
+  loadMoreHint: {
+    marginTop: Themes.SPACING.sm,
+    color: Themes.COLORS.textMuted,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    textAlign: "center",
+  },
+  emptyText: {
+    color: Themes.COLORS.textMuted,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    paddingVertical: Themes.SPACING.sm,
   },
 });

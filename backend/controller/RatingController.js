@@ -85,20 +85,21 @@ export async function findRatingByUserToUser(req, res) {
     });
   }
 }
-// Does not include user made ratints because we will do 2 queries
+// Does not include user made ratings because we will do 2 queries
 export async function findRatingsOfUser(req, res) {
   try {
-    const limit = req.query.limit;
+    const limit = Number(req.query.limit) || 10;
     const lastRatingID = req.query.lastRatingID;
     const ratedID = req.params.ratedID;
+
     if (!lastRatingID) {
       const rating = await Rating.find({
         ratedUser: ratedID,
         reviewer: { $ne: req.user.id },
       })
-        .sort({ updatedAt: -1 })
+        .sort({ updatedAt: -1, _id: -1 })
         .limit(limit);
-      console.log("This is the rating", rating);
+
       if (rating.length == 0) {
         return res.status(200).json({
           message: "Nothing Found",
@@ -110,20 +111,27 @@ export async function findRatingsOfUser(req, res) {
         body: rating,
       });
     }
+
+    const cursorRating = await Rating.findById(lastRatingID);
+    if (!cursorRating) {
+      return res.status(200).json({
+        message: "No cursor rating found",
+        body: [],
+      });
+    }
+
     const rating = await Rating.find({
       ratedUser: ratedID,
       reviewer: { $ne: req.user.id },
       $or: [
+        { updatedAt: { $lt: cursorRating.updatedAt } },
         {
-          updatedAt: { $lt: lastRatingID },
-        },
-        {
-          updatedAt: lastRatingID,
-          _id: { $lt: lastRatingID },
+          updatedAt: cursorRating.updatedAt,
+          _id: { $lt: cursorRating._id },
         },
       ],
     })
-      .sort({ updatedAt: -1, createdAt: -1 })
+      .sort({ updatedAt: -1, _id: -1 })
       .limit(limit);
 
     if (rating.length == 0) {
@@ -172,7 +180,7 @@ export async function updateRating(req, res) {
       new: true,
       runValidators: true,
     };
-    const rating = await Rating.findById(req.params.ratedID);
+    const rating = await Rating.findById(req.params.ratingID);
     if (!rating) {
       return res.status(404).json({
         message: "Rating not found",
@@ -188,7 +196,7 @@ export async function updateRating(req, res) {
       });
     }
     const newRating = await Rating.findByIdAndUpdate(
-      req.params.ratedID,
+      req.params.ratingID,
       { $set: req.body },
       options,
     );

@@ -10,6 +10,7 @@ export async function sendMessage(req, res) {
     };
     const { chatThreadOrigin, sender, receiver, body, media, isEdited } =
       req.body;
+    console.log("media is", media);
 
     const message = new Message({
       chatThreadOrigin: chatThreadOrigin,
@@ -33,7 +34,7 @@ export async function sendMessage(req, res) {
     ).populate("lastMessage");
 
     const io = req.app.get("io");
-    
+
     // The frontend joins rooms named by sorting the two user IDs
     const roomID = [sender, receiver].sort().join("_");
 
@@ -45,46 +46,55 @@ export async function sendMessage(req, res) {
       body: newMessage,
     });
   } catch (err) {
+    console.log("Error in sending message", err.message);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });
   }
 }
-export async function findMessagesFromUser(req, res){
-  try{
+export async function findMessagesFromUser(req, res) {
+  try {
     const limit = req.query.limit ? parseInt(req.query.limit) : 20;
-    if(!req.query.lastMessageId){
+    if (!req.query.lastMessageId) {
       const messages = await Message.find({
         chatThreadOrigin: req.params.chatThreadOrigin,
-      }).sort({ createdAt: -1 }).limit(limit)
+      })
+        .sort({ createdAt: -1 })
+        .limit(limit);
       return res.status(200).json({
-      message: "Here are the messages found",
-      body: messages
-    })
+        message: "Here are the messages found",
+        body: messages,
+      });
     }
     const messages = await Message.find({
       chatThreadOrigin: req.params.chatThreadOrigin,
-      _id: { $lt: new ObjectId(req.query.lastMessageId) }
-    }).sort({ _id: -1 }).limit(limit)
-    
-    if(messages.length === 0){
+      _id: { $lt: new ObjectId(req.query.lastMessageId) },
+    })
+      .sort({ _id: -1 })
+      .limit(limit);
+
+    if (messages.length === 0) {
       return res.status(200).json({
         message: "No Messages Found",
-        body: []
-      })
+        body: [],
+      });
     }
-    console.log("MESSAGES----------------", messages[0]._id, req.query.lastMessageId);
+    console.log(
+      "MESSAGES----------------",
+      messages[0]._id,
+      req.query.lastMessageId,
+    );
     console.log("MESSAGES2----------------", messages[messages.length - 1]._id);
     return res.status(200).json({
       message: "Here are the messages found",
-      body: messages
-    })
-  } catch (err){
-    console.log("Error in finding user to user messages", err.message)
+      body: messages,
+    });
+  } catch (err) {
+    console.log("Error in finding user to user messages", err.message);
     return res.status(500).json({
-      message: "Server Error"
-    })
+      message: "Server Error",
+    });
   }
 }
 export async function findMessageById(req, res) {

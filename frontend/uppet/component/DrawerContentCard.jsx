@@ -6,10 +6,9 @@ import {
 } from "@react-native-google-signin/google-signin";
 import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
-
+import * as Themes from "../assets/themes/themes.js";
 export default function ProfileDrawer(props) {
-  const [email, setEmail] = useState(" ");
-  const { logout } = useUser();
+  const { user, logout } = useUser();
   const router = useNavigation();
 
   const handleProfileClick = () => {
@@ -30,13 +29,15 @@ export default function ProfileDrawer(props) {
       <Pressable style={styles.profileContainer} onPress={handleProfileClick}>
         <Image
           source={{
-            uri: "https://lh3.googleusercontent.com/a/ACg8ocL0iPaGNeyu9wgGzyUvGbyEh-ooGF5FzvbNG9xnUwUd4TuB=s96-c",
+            uri: user.profilePhoto.url,
           }}
-          style={styles.profileImageContainer}
+          style={styles.profileImage}
         ></Image>
-        <Text>{email}</Text>
       </Pressable>
-      <View>
+      <Text style={styles.nameText}>
+        {user.firstName} {user.middleName} {user.lastName}
+      </Text>
+      <View style={{ paddingVertical: Themes.SPACING.md }}>
         <Button title="Sign Out" onPress={handleSignOut}></Button>
       </View>
     </View>
@@ -45,19 +46,29 @@ export default function ProfileDrawer(props) {
 
 const styles = StyleSheet.create({
   profileDrawerContainer: {
-    borderWidth: 2,
-    borderColor: "cyan",
     width: "100%",
     padding: 100,
   },
-  profileContainer: {
-    borderColor: "red",
-    borderWidth: 2,
-    width: "100%",
-    flexDirection: "row",
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: Themes.COLORS.primary,
+    marginBottom: Themes.SPACING.sm,
   },
-  profileImageContainer: {
-    height: 40,
-    width: 40,
+  fullName: {
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+    color: Themes.COLORS.text,
+    textAlign: "center",
+  },
+  nameText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.textFaded,
+    textAlign: "center",
+    marginTop: Themes.SPACING.sm,
+    paddingHorizontal: Themes.SPACING.md,
   },
 });

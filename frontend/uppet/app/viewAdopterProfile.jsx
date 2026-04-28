@@ -22,40 +22,54 @@ export default function ViewAdopterProfile() {
 
   const [adopter, setAdopter] = useState({});
   const [adopterRating, setAdopterRating] = useState([]);
-  const [myRating, setMyRating] = useState({});
+  const [myRating, setMyRating] = useState(null);
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
+  const [ratingModalMode, setRatingModalMode] = useState("create");
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const isFetching = useRef(false);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
-  const [refreshing, setRefreshing] = useState(false); //Not sure if I should Include this
   const [cursorID, setCursorID] = useState(null);
 
-  console.log("THIS IS ADOPTER PROFILE");
-  console.log(router.params.id);
+  const { user, newUser } = useUser();
+  const currentUserId = user?._id || user?.id;
+  const showRatingsAndReviews = !newUser;
 
   const handleRatingButtonClick = () => {
+    setRatingModalMode(myRating ? "edit" : "create");
+    setSelectedReview(myRating);
     setRatingModalVisible(true);
-    console.log("Write a review clicked");
   };
 
   const handleRatingPost = async (score, body) => {
     if (uploading) return;
     setUploading(true);
     try {
-      const res = await api.post(`/api/rating/${adopter._id}`, {
-        score: score,
-        body: body,
-        ratedUser: adopter._id,
-      });
-      if (res.data.body) {
+      const isEditMode = ratingModalMode === "edit" && selectedReview?._id;
+      const res = isEditMode
+        ? await api.patch(`/api/rating/${selectedReview._id}`, {
+            score,
+            body,
+          })
+        : await api.post(`/api/rating/${adopter._id}`, {
+            ratedUser: adopter._id,
+            score,
+            body,
+          });
+
+      if (res?.data?.body) {
         console.log("success in rating");
+        setMyRating(res.data.body);
+        setSelectedReview(res.data.body);
       }
     } catch (err) {
       console.log(err);
     } finally {
       setUploading(false);
+      setRatingModalVisible(false);
     }
   };
 
@@ -73,48 +87,53 @@ export default function ViewAdopterProfile() {
 
   const fetchProfile = async () => {
     try {
-      const res = await api.get(`/api/user/${router.params.id}`, {});
+      const res = await api.get(`/api/user/${router.params.id}`);
       const userData = res.data.body;
       setAdopter(userData);
-      console.log("Successfully obtained Adoper Profile");
+      console.log("Successfully obtained Adopter Profile");
     } catch (err) {
-      console.log("Error in getting Profile");
-      console.log(err);
+      console.log("Error in getting Profile", err);
     }
   };
 
-  const fetchRating = async (lastRatingID, isRefreshing = false) => {
+  const fetchMyRating = async () => {
+    try {
+      const myRatingRes = await api.get(
+        `/api/rating/myRating/${router.params.id}`,
+      );
+      const rating = myRatingRes.data.body;
+      setMyRating(rating && rating._id ? rating : null);
+    } catch (err) {
+      console.log("Error fetching my rating", err);
+    }
+  };
+
+  const fetchRating = async (lastRatingID = null) => {
     isFetching.current = true;
     setLoading(true);
     try {
-      if (!myRating) {
-        const myRatingRes = await api.get(
-          `/api/rating/myRating/${router.params.id}`,
-        );
-        console.log("myRatingRes", myRatingRes.data.message);
-        setMyRating(myRatingRes.data.body);
-      }
       const limit = adopterRating.length > 0 ? 10 : initialLimit;
       const otherRatingRes = await api.get(
         `/api/rating/otherRatings/${router.params.id}`,
         {
           params: {
-            limit: limit,
-            lastRatingID: lastRatingID,
+            limit,
+            lastRatingID,
           },
         },
       );
-      const otherRating = otherRatingRes.data.body;
-      if (otherRating.length < limit) {
-        setHasMore(false);
-      }
-      console.log(otherRatingRes.data.message);
+      const otherRating = Array.isArray(otherRatingRes.data.body)
+        ? otherRatingRes.data.body
+        : [];
+
       setAdopterRating((prev) => [...prev, ...otherRating]);
+      setHasMore(otherRating.length >= limit);
+
       if (otherRating.length > 0) {
         setCursorID(otherRating[otherRating.length - 1]._id);
       }
     } catch (err) {
-      console.log("Error in fetching Rating");
+      console.log("Error in fetching Rating", err);
     } finally {
       isFetching.current = false;
       setLoading(false);
@@ -123,20 +142,40 @@ export default function ViewAdopterProfile() {
 
   useEffect(() => {
     fetchProfile();
+    fetchMyRating();
     fetchRating(null);
-  }, []);
+  }, [router.params.id]);
 
   const handleLoadMoreRating = async () => {
-    if (!loading && hasMore && !isFetching) {
-      fetchRating(cursorID);
+    if (!loading && hasMore && !isFetching.current) {
+      await fetchRating(cursorID);
     }
   };
+
+  const handleViewReview = (review) => {
+    const isOwnReview =
+      review?.reviewer === currentUserId ||
+      review?.reviewer?._id === currentUserId;
+    setSelectedReview(review);
+    setRatingModalMode("view");
+    setRatingModalVisible(true);
+  };
+
+  const handleEditReviewFromModal = () => {
+    setRatingModalMode("edit");
+    setSelectedReview(myRating);
+  };
+
   const buttons = [
-    {
-      title: "Write a Review",
-      onPress: handleRatingButtonClick,
-      styleType: "neutral",
-    },
+    ...(showRatingsAndReviews
+      ? [
+          {
+            title: myRating ? "Edit Review" : "Write a Review",
+            onPress: handleRatingButtonClick,
+            styleType: "neutral",
+          },
+        ]
+      : []),
     {
       title: "Accept Application",
       onPress: handleAccept,
@@ -153,18 +192,55 @@ export default function ViewAdopterProfile() {
       styleType: "neutral",
     },
   ];
+  const isCloseToBottom = ({
+    layoutMeasurement,
+    contentOffset,
+    contentSize,
+  }) => {
+    const paddingToBottom = 20; // px from bottom to trigger
+    return (
+      layoutMeasurement.height + contentOffset.y >=
+      contentSize.height - paddingToBottom
+    );
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <ProfileCard adopter={adopter} />
+    <ScrollView
+      contentContainerStyle={styles.scrollContainer}
+      onScroll={({ nativeEvent }) => {
+        if (isCloseToBottom(nativeEvent)) {
+          fetchRating(cursorID);
+        }
+      }}
+    >
+      <ProfileCard
+        adopter={adopter}
+        myRating={myRating}
+        adopterRating={adopterRating}
+        reviews={adopterRating}
+        reviewsExpanded={reviewsExpanded}
+        hasMoreReviews={hasMore}
+        onReviewPress={handleViewReview}
+        onViewMoreReviews={() => setReviewsExpanded(true)}
+        onReviewListEndReached={handleLoadMoreRating}
+        onEditReviewPress={handleRatingButtonClick}
+        showRatingsAndReviews={showRatingsAndReviews}
+      />
       <CreateRatingModal
         visible={ratingModalVisible}
-        setRatingModalVisible={setRatingModalVisible}
         handleRatingPost={handleRatingPost}
         onClose={() => setRatingModalVisible(false)}
         ratedAdopter={adopter}
         uploading={uploading}
-      ></CreateRatingModal>
+        mode={ratingModalMode}
+        review={selectedReview}
+        onEditRequest={handleEditReviewFromModal}
+        isOwnReview={
+          selectedReview &&
+          (selectedReview.reviewer === currentUserId ||
+            selectedReview.reviewer?._id === currentUserId)
+        }
+      />
       <View style={styles.buttonSection}>
         {buttons.map((btn, index) => {
           const containerStyle =

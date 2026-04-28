@@ -1,13 +1,39 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, Image, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useUser } from '../context/UserContext';
-import * as Themes from '../assets/themes/themes';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  TextInput,
+  Image,
+  ActivityIndicator,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Themes from "../assets/themes/themes";
+import { useUser } from "../context/UserContext";
 
-export default function CreateRatingModal({ visible, onClose, ratedAdopter, handleRatingPost, uploading }) {
+export default function CreateRatingModal({
+  visible,
+  onClose,
+  ratedAdopter,
+  handleRatingPost,
+  uploading,
+  mode = "create",
+  review = null,
+  onEditRequest,
+  isOwnReview = false,
+}) {
   const { user } = useUser();
   const [rating, setRating] = useState(0);
   const [reviewBody, setReviewBody] = useState("");
+
+  useEffect(() => {
+    if (visible && (mode === "edit" || mode === "create")) {
+      setRating(review?.score ?? 0);
+      setReviewBody(review?.body ?? "");
+    }
+  }, [visible, mode, review]);
 
   const handleStarPress = (selectedRating) => {
     setRating(selectedRating);
@@ -17,11 +43,20 @@ export default function CreateRatingModal({ visible, onClose, ratedAdopter, hand
     if (handleRatingPost) {
       await handleRatingPost(rating, reviewBody);
     }
-    // Optional: reset state
     setRating(0);
     setReviewBody("");
-    onClose();
   };
+
+  const isViewMode = mode === "view";
+  const showEditButton = isViewMode && isOwnReview;
+  const title = isViewMode
+    ? `${review?.reviewer?.firstName || "Your"} review`
+    : mode === "edit"
+      ? "Edit Review"
+      : `Rate ${ratedAdopter?.firstName || "User"}`;
+  const subtitle = isViewMode
+    ? "Read the full review"
+    : "How was your experience with them?";
 
   return (
     <Modal
@@ -41,53 +76,105 @@ export default function CreateRatingModal({ visible, onClose, ratedAdopter, hand
               }
               style={styles.profileImage}
             />
-            <Text style={styles.title}>Rate {ratedAdopter?.firstName || 'User'}</Text>
-            <Text style={styles.subtitle}>How was your experience with them?</Text>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.subtitle}>{subtitle}</Text>
           </View>
-          
-          <View style={styles.contentContainer}>
-            {/* Star Rating UI */}
-            <View style={styles.starsContainer}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => handleStarPress(star)}>
+
+          {isViewMode ? (
+            <View style={styles.contentContainer}>
+              <View style={styles.starSummaryContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
                   <Ionicons
-                    name={star <= rating ? "star" : "star-outline"}
-                    size={40}
+                    key={star}
+                    name={
+                      star <= (review?.score ?? 0) ? "star" : "star-outline"
+                    }
+                    size={36}
                     color={Themes.COLORS.primary}
                     style={styles.starIcon}
                   />
-                </TouchableOpacity>
-              ))}
+                ))}
+              </View>
+              <Text style={styles.reviewText}>
+                {review?.body || "No review text available."}
+              </Text>
+              <Text style={styles.metaText}>
+                {review?.reviewer?.firstName
+                  ? `Reviewed by ${review.reviewer.firstName}`
+                  : "Anonymous reviewer"}
+              </Text>
+              {review?.createdAt && (
+                <Text style={styles.metaText}>
+                  {new Date(review.createdAt).toLocaleDateString()}
+                </Text>
+              )}
             </View>
+          ) : (
+            <View style={styles.contentContainer}>
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => handleStarPress(star)}
+                  >
+                    <Ionicons
+                      name={star <= rating ? "star" : "star-outline"}
+                      size={40}
+                      color={Themes.COLORS.primary}
+                      style={styles.starIcon}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Write your review here..."
+                placeholderTextColor={Themes.COLORS.textDark + "80"}
+                multiline
+                numberOfLines={4}
+                value={reviewBody}
+                onChangeText={setReviewBody}
+              />
+            </View>
+          )}
 
-            {/* Review Text Input */}
-            <TextInput
-              style={styles.textInput}
-              placeholder="Write your review here..."
-              placeholderTextColor={Themes.COLORS.textDark + '80'}
-              multiline
-              numberOfLines={4}
-              value={reviewBody}
-              onChangeText={setReviewBody}
-            />
-          </View>
-          
           <View style={styles.actionButtonsContainer}>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>
+                {isViewMode ? "Close" : "Cancel"}
+              </Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.submitButton, (rating === 0 || uploading) && styles.submitButtonDisabled]} 
-              onPress={onSubmit}
-              disabled={rating === 0 || uploading}
-            >
-              {uploading ? (
-                <ActivityIndicator color={Themes.COLORS.card} size="small" />
-              ) : (
-                <Text style={styles.submitButtonText}>Submit</Text>
-              )}
-            </TouchableOpacity>
+
+            {showEditButton ? (
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={onEditRequest}
+              >
+                <Text style={styles.submitButtonText}>Edit Review</Text>
+              </TouchableOpacity>
+            ) : (
+              !isViewMode && (
+                <TouchableOpacity
+                  style={[
+                    styles.submitButton,
+                    (rating === 0 || uploading) && styles.submitButtonDisabled,
+                  ]}
+                  onPress={onSubmit}
+                  disabled={rating === 0 || uploading}
+                >
+                  {uploading ? (
+                    <ActivityIndicator
+                      color={Themes.COLORS.card}
+                      size="small"
+                    />
+                  ) : (
+                    <Text style={styles.submitButtonText}>
+                      {mode === "edit" ? "Update" : "Submit"}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )
+            )}
           </View>
         </View>
       </View>
@@ -98,24 +185,24 @@ export default function CreateRatingModal({ visible, onClose, ratedAdopter, hand
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     padding: Themes.SPACING.md,
   },
   cardContainer: {
-    width: '100%',
+    width: "100%",
     backgroundColor: Themes.COLORS.card,
     borderRadius: Themes.RADIUS.md,
     padding: Themes.SPACING.lg,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
   headerContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: Themes.SPACING.md,
   },
   profileImage: {
@@ -129,23 +216,29 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Themes.TYPOGRAPHY.heading.fontSize,
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
-    color: Themes.TYPOGRAPHY.heading.color,
+    color: Themes.COLORS.textDark,
     marginBottom: 4,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: Themes.TYPOGRAPHY.body.fontSize,
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    color: Themes.COLORS.textDark,
-    opacity: 0.7,
-    textAlign: 'center',
+    color: Themes.COLORS.textMuted,
+    opacity: 0.8,
+    textAlign: "center",
   },
   contentContainer: {
     marginBottom: Themes.SPACING.lg,
   },
   starsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: Themes.SPACING.lg,
+    gap: Themes.SPACING.sm,
+  },
+  starSummaryContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
     marginBottom: Themes.SPACING.lg,
     gap: Themes.SPACING.sm,
   },
@@ -160,13 +253,27 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
     color: Themes.COLORS.textDark,
     minHeight: 100,
-    textAlignVertical: 'top', // Needed for multiline in Android
+    textAlignVertical: "top",
     borderWidth: 1,
     borderColor: Themes.COLORS.soft,
   },
+  reviewText: {
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.textDark,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    lineHeight: 20,
+    marginBottom: Themes.SPACING.sm,
+    textAlign: "center",
+  },
+  metaText: {
+    fontSize: Themes.TYPOGRAPHY.label.fontSize,
+    color: Themes.COLORS.textMuted,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    textAlign: "center",
+  },
   actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: Themes.SPACING.md,
   },
   cancelButton: {
@@ -177,8 +284,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     borderWidth: 1,
     borderColor: "#E0E0E0",
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   cancelButtonText: {
     fontSize: Themes.TYPOGRAPHY.body.fontSize,
@@ -191,8 +298,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Themes.SPACING.md,
     borderRadius: Themes.RADIUS.sm,
     backgroundColor: Themes.COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   submitButtonDisabled: {
     backgroundColor: Themes.COLORS.soft,

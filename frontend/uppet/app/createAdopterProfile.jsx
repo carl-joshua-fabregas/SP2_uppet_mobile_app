@@ -116,7 +116,7 @@ export default function createAdopterProfile() {
   const onFinish = (newUser) => {
     console.log("I AM FINISH UP, VAL OF NEW USER : ", newUser);
     if (!newUser) {
-      navigation.navigate("viewProfile");
+      navigation.replace("(drawer)");
     } else {
       setNewUser(false);
       navigation.goBack();

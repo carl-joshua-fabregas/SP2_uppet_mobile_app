@@ -148,7 +148,7 @@ export default function PetProfileCardViewMore({ pet }) {
                       <Text style={styles.carouselArrow}>›</Text>
                     </TouchableOpacity>
                     <View style={styles.carouselDotsContainer}>
-                      {form.photos.map((_, index) => {
+                      {form.photos.slice(0, 5).map((_, index) => {
                         const isActive =
                           form.photos.length <= 5
                             ? index === currentPhotoIndex

@@ -15,18 +15,18 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
-  Dimensions
+  Dimensions,
 } from "react-native";
 import * as Themes from "../assets/themes/themes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useHeaderHeight } from '@react-navigation/elements';
-
-
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 
 export default function messageScreen() {
-  const initialLimit = Math.ceil(Dimensions.get('window').height / Themes.TYPOGRAPHY.badgeText.fontSize);
+  const initialLimit = Math.ceil(
+    Dimensions.get("window").height / Themes.TYPOGRAPHY.badgeText.fontSize,
+  );
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const router = useRoute();
@@ -44,7 +44,7 @@ export default function messageScreen() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cursorID, setCursorID] = useState(null);
-  const [refreshing, setRefreshing] = useState(false)
+  const [refreshing, setRefreshing] = useState(false);
 
   const roomID = [user._id, receiverID].sort().join("_");
   // console.log("Receiver ID is ", receiverID);
@@ -71,7 +71,7 @@ export default function messageScreen() {
       socket.emit("messages_read", {
         chatThreadOrigin: chatThreadOrigin._id || chatThreadOrigin,
         receiverId: user._id,
-        roomID
+        roomID,
       });
     }
 
@@ -89,33 +89,45 @@ export default function messageScreen() {
 
       // Emit delivered
       socket.emit("message_delivered", { messageID: newMessage._id, roomID });
-      
+
       // Since we are actively on the screen, we also read it immediately
       if (chatThreadOrigin) {
         socket.emit("messages_read", {
           chatThreadOrigin: chatThreadOrigin._id || chatThreadOrigin,
           receiverId: user._id,
-          roomID
+          roomID,
         });
       }
     });
 
-    socket.on("message_receipt", ({ messageID, chatThreadOrigin: updatedThreadOrigin, status }) => {
-      setMessages((prev) =>
-        prev.map((msg) => {
-          // If a specific message was delivered
-          if (messageID && msg._id === messageID) {
-            return { ...msg, status };
-          }
-          // If the whole thread was read
-          if (updatedThreadOrigin && msg.status !== "read" && msg.sender === user._id) {
-            return { ...msg, status };
-          }
-          return msg;
-        })
-      );
-      console.log("Message Receipt Received", messageID, updatedThreadOrigin, status);
-    });
+    socket.on(
+      "message_receipt",
+      ({ messageID, chatThreadOrigin: updatedThreadOrigin, status }) => {
+        setMessages((prev) =>
+          prev.map((msg) => {
+            // If a specific message was delivered
+            if (messageID && msg._id === messageID) {
+              return { ...msg, status };
+            }
+            // If the whole thread was read
+            if (
+              updatedThreadOrigin &&
+              msg.status !== "read" &&
+              msg.sender === user._id
+            ) {
+              return { ...msg, status };
+            }
+            return msg;
+          }),
+        );
+        console.log(
+          "Message Receipt Received",
+          messageID,
+          updatedThreadOrigin,
+          status,
+        );
+      },
+    );
 
     return () => {
       socket.emit("leave_chat", roomID);
@@ -124,52 +136,52 @@ export default function messageScreen() {
     };
   }, [socket]);
 
-  useEffect(() =>{
-    if(!chatThreadOrigin) return
-    const initialMount = async () =>{
+  useEffect(() => {
+    if (!chatThreadOrigin) return;
+    const initialMount = async () => {
       await fetchMessages(null, false);
-    }
-    initialMount()
-  }, [])
-  
+    };
+    initialMount();
+  }, []);
+
   const fetchMessages = async (lastMessageId, isRefreshing = false) => {
     isFetchingRef.current = true;
     setLoading(true);
-    try{
+    try {
       const limit = messages.length > 0 ? 15 : initialLimit;
       const res = await api.get(`/api/message/${chatThreadOrigin._id}`, {
         params: { lastMessageId: lastMessageId, limit: limit },
-      })
+      });
       const moreMessages = res.data.body || [];
       setMessages((prev) => {
-        if(isRefreshing) return moreMessages
-        return [...prev, ...moreMessages]
-      })
-      if(moreMessages.length < limit){
-        setHasMore(false)
+        if (isRefreshing) return moreMessages;
+        return [...prev, ...moreMessages];
+      });
+      if (moreMessages.length < limit) {
+        setHasMore(false);
       }
-      if(moreMessages.length > 0){
-        setCursorID(moreMessages[moreMessages.length - 1]._id)
+      if (moreMessages.length > 0) {
+        setCursorID(moreMessages[moreMessages.length - 1]._id);
       }
-    }catch (err) {
+    } catch (err) {
       console.log("Error Fetching Previous Messages", err.message);
-    } finally{
-      setLoading(false)
-      setRefreshing(false)
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
       isFetchingRef.current = false;
     }
-  }
+  };
 
   const handleLoadMore = async () => {
     if (!loading && hasMore && !isFetchingRef.current) {
-      await fetchMessages(cursorID)
+      await fetchMessages(cursorID);
     }
-    return
+    return;
   };
- const onRefresh = useCallback(async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setHasMore(true);
-    setCursorID(null)
+    setCursorID(null);
     await fetchMessages(null, true);
   }, []);
 
@@ -192,15 +204,51 @@ export default function messageScreen() {
         ]}
       >
         <Text style={styles.messageText}> {item.body}</Text>
-        <View style={{ flexDirection: "row", justifyContent: "flex-end", alignItems: "center" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "flex-end",
+            alignItems: "center",
+          }}
+        >
           <Text style={styles.timestamp}>{item.updatedAt}</Text>
           {isSender && (
             <View style={{ marginLeft: 5 }}>
-              {item.status === "pending" && <MaterialCommunityIcons name="clock-outline" size={14} color="#8E8E93" />}
-              {item.status === "sent" && <MaterialCommunityIcons name="check" size={16} color="#8E8E93" />}
-              {item.status === "delivered" && <MaterialCommunityIcons name="check-all" size={16} color="#8E8E93" />}
-              {item.status === "read" && <MaterialCommunityIcons name="check-all" size={16} color="#34B7F1" />}
-              {item.status === "failed" && <MaterialCommunityIcons name="alert-circle-outline" size={16} color="red" />}
+              {item.status === "pending" && (
+                <MaterialCommunityIcons
+                  name="clock-outline"
+                  size={14}
+                  color="#8E8E93"
+                />
+              )}
+              {item.status === "sent" && (
+                <MaterialCommunityIcons
+                  name="check"
+                  size={16}
+                  color="#8E8E93"
+                />
+              )}
+              {item.status === "delivered" && (
+                <MaterialCommunityIcons
+                  name="check-all"
+                  size={16}
+                  color="#8E8E93"
+                />
+              )}
+              {item.status === "read" && (
+                <MaterialCommunityIcons
+                  name="check-all"
+                  size={16}
+                  color="#34B7F1"
+                />
+              )}
+              {item.status === "failed" && (
+                <MaterialCommunityIcons
+                  name="alert-circle-outline"
+                  size={16}
+                  color="red"
+                />
+              )}
             </View>
           )}
         </View>
@@ -240,23 +288,23 @@ export default function messageScreen() {
       receiverID: receiverID,
     };
 
-    
-
     try {
       setMessages((prev) => [tempMessage, ...prev]);
+      console.log("message media is", msgMedia);
       const messageRes = await api.post(`/api/message/send`, {
         chatThreadOrigin: dbChatThread._id || dbChatThread,
         receiver: receiverID,
         sender: user._id,
         body: textInput,
+        media: msgMedia,
       });
 
       setMessages((prev) =>
         prev.map((msg) =>
           msg._id === tempMessage._id
             ? { ...messageRes.data.body, status: "sent" }
-            : msg
-        )
+            : msg,
+        ),
       );
     } catch (err) {
       console.log("ERROR IN SENDING MESSAGE", err.message);
@@ -264,8 +312,8 @@ export default function messageScreen() {
         prev.map((msg) =>
           msg._id === tempMessage._id
             ? { ...tempMessage, status: "failed" }
-            : msg
-        )
+            : msg,
+        ),
       );
     } finally {
       setTextInput("");
@@ -277,7 +325,7 @@ export default function messageScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={headerHeight}
-      >
+    >
       <FlatList
         style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
@@ -294,7 +342,9 @@ export default function messageScreen() {
           <Text style={styles.emptyText}>Start a conversation</Text>
         }
         ListFooterComponent={
-          loading && !refreshing ? <ActivityIndicator size="large" color="black" /> : null
+          loading && !refreshing ? (
+            <ActivityIndicator size="large" color="black" />
+          ) : null
         }
         refreshControl={
           <RefreshControl
@@ -304,8 +354,16 @@ export default function messageScreen() {
         }
         inverted
       ></FlatList>
-      
-      <View style={[styles.footerContainer,{ paddingBottom: Platform.OS === 'ios' ? insets.bottom : Themes.SPACING.sm }]}>
+
+      <View
+        style={[
+          styles.footerContainer,
+          {
+            paddingBottom:
+              Platform.OS === "ios" ? insets.bottom : Themes.SPACING.sm,
+          },
+        ]}
+      >
         <TouchableOpacity onPress={mediaSelection} style={styles.iconButton}>
           <MaterialCommunityIcons name="image" size={28} color="#8E8E93" />
         </TouchableOpacity>
@@ -317,12 +375,17 @@ export default function messageScreen() {
           placeholder="Message..."
           multiline
         />
-        <TouchableOpacity 
-          onPress={handleSend} 
-          style={[styles.sendButton, !textInput.trim() && { opacity: 0.5 }]} 
+        <TouchableOpacity
+          onPress={handleSend}
+          style={[styles.sendButton, !textInput.trim() && { opacity: 0.5 }]}
           disabled={!textInput.trim()}
         >
-          <MaterialCommunityIcons name="send" size={20} color="white" style={{ marginLeft: 2 }} />
+          <MaterialCommunityIcons
+            name="send"
+            size={20}
+            color="white"
+            style={{ marginLeft: 2 }}
+          />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -359,13 +422,13 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 0,
   },
   footerContainer: {
-  flexDirection: "row",
-  paddingHorizontal: Themes.SPACING.md,
-  paddingTop: Themes.SPACING.sm,        // ← top only
-  alignItems: "center",
-  backgroundColor: Themes.COLORS.background,
-  borderTopWidth: 1,
-  borderTopColor: "#E5E5EA",
+    flexDirection: "row",
+    paddingHorizontal: Themes.SPACING.md,
+    paddingTop: Themes.SPACING.sm, // ← top only
+    alignItems: "center",
+    backgroundColor: Themes.COLORS.background,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5EA",
   },
   inputTextArea: {
     borderRadius: 20,
@@ -374,7 +437,7 @@ const styles = StyleSheet.create({
     borderColor: "#E5E5EA",
     backgroundColor: "#F2F2F7",
     paddingHorizontal: Themes.SPACING.md,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+    paddingVertical: Platform.OS === "ios" ? 10 : 8,
     marginHorizontal: Themes.SPACING.sm,
     fontSize: 16,
     maxHeight: 100,
@@ -387,8 +450,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginLeft: Themes.SPACING.xs,
   },
   emptyText: {
@@ -407,4 +470,3 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end", // Keeps the time tucked in the corner
   },
 });
-

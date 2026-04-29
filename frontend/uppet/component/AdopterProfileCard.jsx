@@ -14,7 +14,7 @@ import RatingCard from "./ratingCard";
 export default function ProfileCard({
   adopter,
   isOwner,
-  adopterRating,
+  adopterRating = [],
   handleEditing,
   myRating = null,
   reviews = [],
@@ -56,9 +56,13 @@ export default function ProfileCard({
     ));
 
   //Showing the initial load of review bieng displated
-  const displayedReviews = reviewsExpanded
-    ? adopterRating
-    : adopterRating.slice(0, 3);
+  const displayedReviews = adopterRating
+    ? adopterRating.length > 3
+      ? reviewsExpanded
+        ? adopterRating
+        : adopterRating.slice(0, 3)
+      : adopterRating
+    : [];
 
   return (
     <View style={styles.container}>

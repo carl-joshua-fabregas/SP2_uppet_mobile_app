@@ -11,20 +11,28 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 
-export default function ViewRatingModal({ visible, onClose, review = {} }) {
+// Removed the default = {} here, we will handle it safely below
+export default function ViewRatingModal({ visible, onClose, review }) {
   const [expanded, setExpanded] = useState(false);
 
-  const reviewer = review?.reviewer || {};
-  const name = review.isAnoymouse
-    ? `${reviewer.firstName}${reviewer.lastName ? ` ${reviewer.lastName}` : ""}`
-    : "Anonymous";
-  const score = typeof review.score === "number" ? review.score : 0;
+  // 1. Safe fallback: If review is null or undefined, default to an empty object
+  const safeReview = review || {};
+  const reviewer = safeReview.reviewer || {};
+
+  // 2 & 3. Fixed spelling (isAnonymous) and swapped the logic so Anonymous hides the name
+  const name = safeReview.isAnonymous
+    ? "Anonymous"
+    : `${reviewer.firstName || "Unknown"}${reviewer.lastName ? ` ${reviewer.lastName}` : ""}`;
+
+  const score = typeof safeReview.score === "number" ? safeReview.score : 0;
+
   const avatarSource = reviewer.profilePhoto?.url
     ? { uri: reviewer.profilePhoto.url }
     : require("../assets/images/doggoe.jpg");
+
   const isExpandable =
-    !!review.body &&
-    (review.body.split("\n").length > 4 || review.body.length > 240);
+    !!safeReview.body &&
+    (safeReview.body.split("\n").length > 4 || safeReview.body.length > 240);
 
   return (
     <Modal
@@ -78,7 +86,7 @@ export default function ViewRatingModal({ visible, onClose, review = {} }) {
               style={styles.bodyText}
               numberOfLines={expanded ? undefined : 4}
             >
-              {review.body || "No review details available."}
+              {safeReview.body || "No review details available."}
             </Text>
             {isExpandable ? (
               <Text style={styles.expandText}>
@@ -163,18 +171,15 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY.subsubheading.fontFamily,
     color: Themes.COLORS.textDark,
   },
-
-  // NEW: Flex container for the right side of the header
   topRightControls: {
     flexDirection: "row",
     alignItems: "flex-start",
   },
-
   quoteContainer: {
     justifyContent: "center",
     alignItems: "flex-end",
     paddingLeft: Themes.SPACING.sm,
-    marginRight: Themes.SPACING.sm, // Added spacing so the quote doesn't touch the X
+    marginRight: Themes.SPACING.sm,
   },
   quoteIcon: {
     fontSize: 56,
@@ -190,12 +195,18 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
     color: Themes.COLORS.textMuted,
     lineHeight: 20,
-    marginTop: Themes.SPACING.sm, // Added a small margin to push the text below the header cleanly
+    marginTop: Themes.SPACING.sm,
+  },
+  expandText: {
+    marginTop: 8,
+    color: Themes.COLORS.primary,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    fontWeight: "600",
   },
   closeButton: {
     width: 34,
     height: 34,
-    borderRadius: 17, // Made this perfectly round relative to width/height
+    borderRadius: 17,
     backgroundColor: Themes.COLORS.soft,
     justifyContent: "center",
     alignItems: "center",

@@ -67,7 +67,7 @@ export default function ViewAdopterProfile() {
     }
   };
 
-  const handleRatingSubmit = async (score, body) => {
+  const handleRatingSubmit = async (score, body, isAnonymous) => {
     if (uploading) return;
     setUploading(true);
     try {
@@ -77,11 +77,13 @@ export default function ViewAdopterProfile() {
         ? await api.patch(`/api/rating/${selectedReview._id}`, {
             score,
             body,
+            isAnonymous,
           })
         : await api.post(`/api/rating/${adopter._id}`, {
             ratedUser: adopter._id,
             score,
             body,
+            isAnonymous,
           });
 
       if (res?.data?.body) {
@@ -90,7 +92,7 @@ export default function ViewAdopterProfile() {
         setSelectedReview(res.data.body);
       }
     } catch (err) {
-      console.log(err);
+      console.log(err, err.message);
     } finally {
       setUploading(false);
       setCreateModalVisible(false);

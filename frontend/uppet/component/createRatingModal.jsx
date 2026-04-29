@@ -38,6 +38,7 @@ export default function CreateRatingModal({
       setReviewBody(review?.body ?? "");
       setIsAnonymous(review?.isAnonymous ?? false); // <-- Reset or set from existing review
       setShowMenu(false);
+      setEditButtonPressed(!review);
     }
   }, [visible, review]);
 

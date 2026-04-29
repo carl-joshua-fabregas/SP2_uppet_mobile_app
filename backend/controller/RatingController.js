@@ -2,7 +2,7 @@ import Rating from "../models/Rating.js";
 
 export async function createRating(req, res) {
   try {
-    const { ratedUser, score, body } = req.body;
+    const { ratedUser, score, body, isAnonymous } = req.body;
     const existingReview = await Rating.find({
       ratedUser: ratedUser,
       reviewer: req.user.id,
@@ -18,6 +18,7 @@ export async function createRating(req, res) {
       score: score,
       reviewer: req.user.id,
       body: body,
+      isAnonymous: isAnonymous,
     });
 
     const newRating = await rating.save();
@@ -28,6 +29,7 @@ export async function createRating(req, res) {
       body: newRating,
     });
   } catch (err) {
+    console.log(err.message);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,

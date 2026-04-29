@@ -12,6 +12,8 @@ import ProfileCard from "../component/AdopterProfileCard";
 import { api } from "../api/axios";
 import * as Themes from "../assets/themes/themes";
 import CreateRatingModal from "../component/createRatingModal";
+import ViewRatingModal from "../component/viewRatingModal";
+import RatingCard from "../component/ratingCard";
 import { useUser } from "../context/UserContext";
 
 export default function ViewAdopterProfile() {
@@ -22,10 +24,15 @@ export default function ViewAdopterProfile() {
 
   const [adopter, setAdopter] = useState({});
   const [adopterRating, setAdopterRating] = useState([]);
+
   const [myRating, setMyRating] = useState(null);
+  const [createMode, setCreateMode] = useState(true);
+
+  //Made for the modal viewing
+  const [selectedReview, setSelectedReview] = useState({});
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
-  const [ratingModalMode, setRatingModalMode] = useState("create");
-  const [selectedReview, setSelectedReview] = useState(null);
+
+  const [createModalVisible, setCreateModalVisible] = useState(false);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -35,20 +42,37 @@ export default function ViewAdopterProfile() {
   const [cursorID, setCursorID] = useState(null);
 
   const { user, newUser } = useUser();
-  const currentUserId = user?._id || user?.id;
+  const currentUserId = user?._id;
   const showRatingsAndReviews = !newUser;
 
-  const handleRatingButtonClick = () => {
-    setRatingModalMode(myRating ? "edit" : "create");
+  const handleMyRatingClick = () => {
+    setCreateMode(myRating ? true : false);
     setSelectedReview(myRating);
     setRatingModalVisible(true);
   };
+  const handleRatingDelete = async (ratingID) => {
+    try {
+      const res = await api.delete(`/api/rating/delete`, {
+        params: {
+          ratingID: ratingID,
+        },
+      });
+      console.log("Successfully deleted");
+    } catch (err) {
+      console.log("Was not successful in the deletion");
+    } finally {
+      setCreateModalVisible(false);
+      setSelectedReview({});
+      setMyRating(null);
+    }
+  };
 
-  const handleRatingPost = async (score, body) => {
+  const handleRatingSubmit = async (score, body) => {
     if (uploading) return;
     setUploading(true);
     try {
-      const isEditMode = ratingModalMode === "edit" && selectedReview?._id;
+      const isEditMode = myRating ? true : false;
+      console.log(isEditMode);
       const res = isEditMode
         ? await api.patch(`/api/rating/${selectedReview._id}`, {
             score,
@@ -69,7 +93,7 @@ export default function ViewAdopterProfile() {
       console.log(err);
     } finally {
       setUploading(false);
-      setRatingModalVisible(false);
+      setCreateModalVisible(false);
     }
   };
 
@@ -152,30 +176,31 @@ export default function ViewAdopterProfile() {
     }
   };
 
-  const handleViewReview = (review) => {
-    const isOwnReview =
-      review?.reviewer === currentUserId ||
-      review?.reviewer?._id === currentUserId;
-    setSelectedReview(review);
-    setRatingModalMode("view");
-    setRatingModalVisible(true);
-  };
+  // const handleViewReview = (review) => {
+  //   const isOwnReview =
+  //     review?.reviewer === currentUserId ||
+  //     review?.reviewer?._id === currentUserId;
+  //   setSelectedReview(review);
+  //   setCreateMode("view");
+  //   setRatingModalVisible(true);
+  // };
 
   const handleEditReviewFromModal = () => {
-    setRatingModalMode("edit");
+    setCreateMode(false);
     setSelectedReview(myRating);
   };
 
+  const handleViewReview = (review) => {
+    setSelectedReview(review);
+    setRatingModalVisible(true);
+  };
+
+  const handleCreateReview = (myReview) => {
+    setSelectedReview(myReview);
+    setCreateModalVisible(true);
+  };
+
   const buttons = [
-    ...(showRatingsAndReviews
-      ? [
-          {
-            title: myRating ? "Edit Review" : "Write a Review",
-            onPress: handleRatingButtonClick,
-            styleType: "neutral",
-          },
-        ]
-      : []),
     {
       title: "Accept Application",
       onPress: handleAccept,
@@ -205,70 +230,72 @@ export default function ViewAdopterProfile() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.scrollContainer}
-      onScroll={({ nativeEvent }) => {
-        if (isCloseToBottom(nativeEvent)) {
-          fetchRating(cursorID);
-        }
-      }}
-    >
-      <ProfileCard
-        adopter={adopter}
-        myRating={myRating}
-        adopterRating={adopterRating}
-        reviews={adopterRating}
-        reviewsExpanded={reviewsExpanded}
-        hasMoreReviews={hasMore}
-        onReviewPress={handleViewReview}
-        onViewMoreReviews={() => setReviewsExpanded(true)}
-        onReviewListEndReached={handleLoadMoreRating}
-        onEditReviewPress={handleRatingButtonClick}
-        showRatingsAndReviews={showRatingsAndReviews}
-      />
-      <CreateRatingModal
+    <View style={{ flex: 1 }}>
+      <ViewRatingModal
         visible={ratingModalVisible}
-        handleRatingPost={handleRatingPost}
-        onClose={() => setRatingModalVisible(false)}
-        ratedAdopter={adopter}
-        uploading={uploading}
-        mode={ratingModalMode}
+        onClose={() => setRatingModalVisible((prev) => !prev)}
         review={selectedReview}
-        onEditRequest={handleEditReviewFromModal}
-        isOwnReview={
-          selectedReview &&
-          (selectedReview.reviewer === currentUserId ||
-            selectedReview.reviewer?._id === currentUserId)
-        }
-      />
-      <View style={styles.buttonSection}>
-        {buttons.map((btn, index) => {
-          const containerStyle =
-            btn.styleType === "warning"
-              ? styles.warningButtonContainer
-              : btn.styleType === "neutral"
-                ? styles.neutralButtonContainer
-                : styles.calmButtonContainer;
+      ></ViewRatingModal>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        onScroll={({ nativeEvent }) => {
+          if (isCloseToBottom(nativeEvent)) {
+            fetchRating(cursorID);
+          }
+        }}
+      >
+        <ProfileCard
+          adopter={adopter}
+          myRating={myRating}
+          adopterRating={adopterRating}
+          reviews={adopterRating}
+          reviewsExpanded={reviewsExpanded}
+          onReviewPress={handleViewReview}
+          showRatingsAndReviews={showRatingsAndReviews}
+          hasMoreReviews={hasMore}
+          onViewMoreReviews={() => setReviewsExpanded(true)}
+          onCreateRatingPress={handleCreateReview}
+        />
 
-          const textStyle =
-            btn.styleType === "warning"
-              ? styles.warningButtonText
-              : btn.styleType === "neutral"
-                ? styles.neutralButtonText
-                : styles.calmButtonText;
+        <CreateRatingModal
+          visible={createModalVisible}
+          handleRatingSubmit={handleRatingSubmit}
+          onClose={() => setCreateModalVisible((prev) => !prev)}
+          ratedAdopter={adopter}
+          uploading={uploading}
+          review={myRating}
+          onEditRequest={handleEditReviewFromModal}
+          handleRatingDelete={handleRatingDelete}
+        />
+        <View style={styles.buttonSection}>
+          {buttons.map((btn, index) => {
+            const containerStyle =
+              btn.styleType === "warning"
+                ? styles.warningButtonContainer
+                : btn.styleType === "neutral"
+                  ? styles.neutralButtonContainer
+                  : styles.calmButtonContainer;
 
-          return (
-            <TouchableOpacity
-              key={index}
-              style={containerStyle}
-              onPress={btn.onPress}
-            >
-              <Text style={textStyle}>{btn.title}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </ScrollView>
+            const textStyle =
+              btn.styleType === "warning"
+                ? styles.warningButtonText
+                : btn.styleType === "neutral"
+                  ? styles.neutralButtonText
+                  : styles.calmButtonText;
+
+            return (
+              <TouchableOpacity
+                key={index}
+                style={containerStyle}
+                onPress={btn.onPress}
+              >
+                <Text style={textStyle}>{btn.title}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 

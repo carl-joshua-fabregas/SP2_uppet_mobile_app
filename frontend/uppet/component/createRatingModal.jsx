@@ -8,6 +8,7 @@ import {
   TextInput,
   Image,
   ActivityIndicator,
+  Switch, // <-- Added Switch import
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
@@ -17,46 +18,54 @@ export default function CreateRatingModal({
   visible,
   onClose,
   ratedAdopter,
-  handleRatingPost,
+  handleRatingSubmit,
+  handleRatingDelete,
   uploading,
-  mode = "create",
   review = null,
-  onEditRequest,
-  isOwnReview = false,
 }) {
   const { user } = useUser();
   const [rating, setRating] = useState(0);
   const [reviewBody, setReviewBody] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false); // <-- Added state for anonymous toggle
+  const [editButtonPressed, setEditButtonPressed] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const isOwnReview = user?.id === review?.reviewer?._id;
 
   useEffect(() => {
-    if (visible && (mode === "edit" || mode === "create")) {
+    if (visible) {
       setRating(review?.score ?? 0);
       setReviewBody(review?.body ?? "");
+      setIsAnonymous(review?.isAnonymous ?? false); // <-- Reset or set from existing review
+      setShowMenu(false);
     }
-  }, [visible, mode, review]);
+  }, [visible, review]);
 
   const handleStarPress = (selectedRating) => {
     setRating(selectedRating);
   };
 
   const onSubmit = async () => {
-    if (handleRatingPost) {
-      await handleRatingPost(rating, reviewBody);
+    if (handleRatingSubmit) {
+      // <-- Pass isAnonymous to the submit handler
+      await handleRatingSubmit(rating, reviewBody, isAnonymous);
     }
     setRating(0);
     setReviewBody("");
+    setIsAnonymous(false);
   };
 
-  const isViewMode = mode === "view";
-  const showEditButton = isViewMode && isOwnReview;
-  const title = isViewMode
-    ? `${review?.reviewer?.firstName || "Your"} review`
-    : mode === "edit"
-      ? "Edit Review"
-      : `Rate ${ratedAdopter?.firstName || "User"}`;
-  const subtitle = isViewMode
-    ? "Read the full review"
-    : "How was your experience with them?";
+  const onDelete = async () => {
+    setShowMenu(false);
+    if (handleRatingDelete) {
+      await handleRatingDelete(review?._id);
+    }
+  };
+
+  const title = review ? `Edit Review` : `Rate ${ratedAdopter?.firstName}`;
+  const subtitle = !editButtonPressed
+    ? `Read the full review`
+    : "How was your experience with them";
 
   return (
     <Modal
@@ -65,8 +74,41 @@ export default function CreateRatingModal({
       transparent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.cardContainer}>
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowMenu(false)}
+      >
+        <TouchableOpacity activeOpacity={1} style={styles.cardContainer}>
+          {/* --- THREE DOTS MENU --- */}
+          {isOwnReview && review && (
+            <View style={styles.menuContainer}>
+              <TouchableOpacity
+                style={styles.menuIcon}
+                onPress={() => setShowMenu(!showMenu)}
+              >
+                <Ionicons
+                  name="ellipsis-vertical"
+                  size={24}
+                  color={Themes.COLORS.textDark}
+                />
+              </TouchableOpacity>
+
+              {showMenu && (
+                <View style={styles.dropdownMenu}>
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={onDelete}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="red" />
+                    <Text style={styles.deleteButtonText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
+          {/* ----------------------- */}
+
           <View style={styles.headerContainer}>
             <Image
               source={
@@ -80,7 +122,21 @@ export default function CreateRatingModal({
             <Text style={styles.subtitle}>{subtitle}</Text>
           </View>
 
-          {isViewMode ? (
+          {/* --- ANONYMOUS TOGGLE --- */}
+          {editButtonPressed && (
+            <View style={styles.anonymousContainer}>
+              <Text style={styles.anonymousText}>Post Anonymously</Text>
+              <Switch
+                value={isAnonymous}
+                onValueChange={setIsAnonymous}
+                trackColor={{ false: "#d3d3d3", true: Themes.COLORS.primary }}
+                thumbColor={"#ffffff"}
+              />
+            </View>
+          )}
+          {/* ----------------------- */}
+
+          {!editButtonPressed ? (
             <View style={styles.contentContainer}>
               <View style={styles.starSummaryContainer}>
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -99,9 +155,11 @@ export default function CreateRatingModal({
                 {review?.body || "No review text available."}
               </Text>
               <Text style={styles.metaText}>
-                {review?.reviewer?.firstName
-                  ? `Reviewed by ${review.reviewer.firstName}`
-                  : "Anonymous reviewer"}
+                {review?.isAnonymous
+                  ? "Anonymous reviewer"
+                  : review?.reviewer?.firstName
+                    ? `Reviewed by ${review.reviewer.firstName}`
+                    : "Anonymous reviewer"}
               </Text>
               {review?.createdAt && (
                 <Text style={styles.metaText}>
@@ -141,43 +199,38 @@ export default function CreateRatingModal({
           <View style={styles.actionButtonsContainer}>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
               <Text style={styles.cancelButtonText}>
-                {isViewMode ? "Close" : "Cancel"}
+                {!editButtonPressed ? "Close" : "Cancel"}
               </Text>
             </TouchableOpacity>
 
-            {showEditButton ? (
+            {!editButtonPressed ? (
               <TouchableOpacity
                 style={styles.submitButton}
-                onPress={onEditRequest}
+                onPress={() => setEditButtonPressed(true)}
               >
                 <Text style={styles.submitButtonText}>Edit Review</Text>
               </TouchableOpacity>
             ) : (
-              !isViewMode && (
-                <TouchableOpacity
-                  style={[
-                    styles.submitButton,
-                    (rating === 0 || uploading) && styles.submitButtonDisabled,
-                  ]}
-                  onPress={onSubmit}
-                  disabled={rating === 0 || uploading}
-                >
-                  {uploading ? (
-                    <ActivityIndicator
-                      color={Themes.COLORS.card}
-                      size="small"
-                    />
-                  ) : (
-                    <Text style={styles.submitButtonText}>
-                      {mode === "edit" ? "Update" : "Submit"}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              )
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  (rating === 0 || uploading) && styles.submitButtonDisabled,
+                ]}
+                onPress={onSubmit}
+                disabled={rating === 0 || uploading}
+              >
+                {uploading ? (
+                  <ActivityIndicator color={Themes.COLORS.card} size="small" />
+                ) : (
+                  <Text style={styles.submitButtonText}>
+                    {review ? "Update" : "Submit"}
+                  </Text>
+                )}
+              </TouchableOpacity>
             )}
           </View>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 }
@@ -200,6 +253,47 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    position: "relative",
+  },
+  menuContainer: {
+    position: "absolute",
+    top: Themes.SPACING.md,
+    right: Themes.SPACING.md,
+    zIndex: 10,
+  },
+  menuIcon: {
+    padding: 4,
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: 35,
+    right: 0,
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: Themes.RADIUS.sm,
+    padding: Themes.SPACING.sm,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3.84,
+    elevation: 5,
+    minWidth: 100,
+  },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1.5,
+    borderColor: "red",
+    borderRadius: Themes.RADIUS.sm,
+    backgroundColor: "rgba(255, 0, 0, 0.05)",
+  },
+  deleteButtonText: {
+    color: "red",
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
   },
   headerContainer: {
     alignItems: "center",
@@ -227,6 +321,20 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     textAlign: "center",
   },
+  /* --- Added Anonymous Styles --- */
+  anonymousContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Themes.SPACING.md,
+    gap: Themes.SPACING.sm,
+  },
+  anonymousText: {
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    color: Themes.COLORS.textDark,
+  },
+  /* ------------------------------ */
   contentContainer: {
     marginBottom: Themes.SPACING.lg,
   },

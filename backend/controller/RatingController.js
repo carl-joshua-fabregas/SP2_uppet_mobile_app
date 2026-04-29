@@ -236,7 +236,7 @@ export async function deleteAllRating(req, res) {
 
 export async function deleteRating(req, res) {
   try {
-    const rating = await Rating.findById(req.params.id);
+    const rating = await Rating.findById(req.query.ratingID);
 
     if (!rating) {
       return res.status(404).json({
@@ -252,7 +252,7 @@ export async function deleteRating(req, res) {
         message: "Forbidden",
       });
     }
-    await Rating.findByIdAndDelete(req.params.id);
+    await Rating.findByIdAndDelete(req.query.ratingID);
     return res.status(200).json({
       message: "Successfully deleted rating",
     });

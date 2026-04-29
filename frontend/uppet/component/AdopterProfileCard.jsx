@@ -8,6 +8,8 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
+import ViewRatingModal from "./viewRatingModal";
+import RatingCard from "./ratingCard";
 
 export default function ProfileCard({
   adopter,
@@ -18,10 +20,11 @@ export default function ProfileCard({
   reviews = [],
   reviewsExpanded = false,
   hasMoreReviews = false,
-  onReviewPress = () => {},
-  onViewMoreReviews = () => {},
-  onReviewListEndReached = () => {},
-  onEditReviewPress = () => {},
+  onReviewPress,
+  onViewMoreReviews,
+  onCreateRatingPress,
+  // onReviewListEndReached = () => {},
+  // onEditReviewPress = () => {},
   showRatingsAndReviews = true,
 }) {
   const InfoSection = ({ icon, label, value }) => (
@@ -40,6 +43,7 @@ export default function ProfileCard({
     </View>
   );
 
+  // Rendering this for the your review Part
   const renderStars = (ratingValue) =>
     [1, 2, 3, 4, 5].map((star) => (
       <MaterialCommunityIcons
@@ -51,20 +55,10 @@ export default function ProfileCard({
       />
     ));
 
+  //Showing the initial load of review bieng displated
   const displayedReviews = reviewsExpanded
     ? adopterRating
     : adopterRating.slice(0, 3);
-  const topReview = myRating && myRating._id ? myRating : null;
-
-  const handleReviewListScroll = ({ nativeEvent }) => {
-    const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-    if (
-      layoutMeasurement.height + contentOffset.y >= contentSize.height - 20 &&
-      hasMoreReviews
-    ) {
-      onReviewListEndReached();
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -82,6 +76,15 @@ export default function ProfileCard({
           {adopter.middleName ? adopter.middleName + " " : ""}
           {adopter.lastName}
         </Text>
+        <View style={styles.badgeContainer}>
+          <Text style={styles.badgeText}> {adopter.avarageRating}</Text>
+          <MaterialCommunityIcons
+            name="star"
+            size={14}
+            color={Themes.COLORS.primaryDark}
+          ></MaterialCommunityIcons>
+          <Text style={styles.badgeText}> Rating</Text>
+        </View>
         <Text style={styles.bioText}>{adopter.bio || "No bio added yet."}</Text>
 
         {isOwner && (
@@ -170,88 +173,64 @@ export default function ProfileCard({
             <Text style={styles.sectionTitle}>Your Review</Text>
             <TouchableOpacity
               activeOpacity={0.9}
-              onPress={() =>
-                topReview ? onReviewPress(topReview) : onEditReviewPress()
-              }
+              onPress={() => onCreateRatingPress(myRating)}
             >
               <View style={[styles.card, styles.topReviewCard]}>
                 <View style={styles.reviewHeaderRow}>
                   <Text style={styles.reviewLabel}>Your latest review</Text>
                   <View style={styles.ratingDetailRow}>
-                    {renderStars(topReview?.score || 0)}
+                    {renderStars(myRating?.score || 0)}
                     <Text style={styles.reviewScoreText}>
-                      {topReview?.score
-                        ? `${topReview.score}.0`
+                      {myRating?.score
+                        ? `${myRating.score}.0`
                         : "No rating yet"}
                     </Text>
                   </View>
                 </View>
                 <Text style={styles.reviewBodyText} numberOfLines={4}>
-                  {topReview?.body ||
+                  {myRating?.body ||
                     "Tap here to write a review for this adopter."}
                 </Text>
                 <Text style={styles.reviewActionText}>
-                  {topReview ? "Tap to view or edit" : "Write a review"}
+                  {myRating ? "Tap to view or edit" : "Write a review"}
                 </Text>
               </View>
             </TouchableOpacity>
 
             <Text style={styles.sectionTitle}>Other Adopters’ Reviews</Text>
             <View style={[styles.card, styles.reviewsSectionCard]}>
+              {/* --- UPDATED HEADER ROW --- */}
               <View style={styles.reviewHeaderRow}>
-                {adopterRating.length > 0 && (
-                  <Text
-                    style={styles.reviewCountText}
-                  >{`${adopterRating.length} reviews`}</Text>
+                {adopter.totalRating > 0 && (
+                  <Text style={styles.reviewCountText}>
+                    {`${adopter.totalRating} ${adopter.totalRating > 1 ? "reviews" : "review"}`}
+                  </Text>
+                )}
+
+                {adopterRating.length > 3 && (
+                  <TouchableOpacity onPress={onViewMoreReviews}>
+                    <Text style={styles.toggleText}>
+                      {reviewsExpanded ? "View Less" : "See More"}
+                    </Text>
+                  </TouchableOpacity>
                 )}
               </View>
+              {/* --------------------------- */}
+
               {adopterRating.length === 0 ? (
                 <Text style={styles.emptyText}>
                   No reviews yet for this adopter.
                 </Text>
               ) : (
-                <ScrollView
-                  style={styles.reviewList}
-                  contentContainerStyle={styles.reviewListContent}
-                  nestedScrollEnabled
-                  onScroll={handleReviewListScroll}
-                  scrollEventThrottle={200}
-                >
+                <View style={styles.reviewList}>
                   {displayedReviews.map((review, index) => (
-                    <TouchableOpacity
+                    <RatingCard
                       key={review._id || index}
-                      style={styles.reviewRow}
+                      review={review}
                       onPress={() => onReviewPress(review)}
-                    >
-                      <View style={styles.reviewRowHeader}>
-                        <Text style={styles.reviewAuthorText} numberOfLines={1}>
-                          {review.reviewer?.firstName ||
-                            review.reviewer?.name ||
-                            "Reviewer"}
-                        </Text>
-                        <View style={styles.ratingDetailRow}>
-                          {renderStars(review.score)}
-                          <Text
-                            style={styles.reviewScoreText}
-                          >{`${review.score}.0`}</Text>
-                        </View>
-                      </View>
-                      <Text style={styles.reviewBodyText} numberOfLines={3}>
-                        {review.body || "No text provided."}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   ))}
-                </ScrollView>
-              )}
-              {!reviewsExpanded && adopterRating.length > 3 && (
-                <TouchableOpacity
-                  style={styles.viewMoreButton}
-                  onPress={onViewMoreReviews}
-                >
-                  <Text style={styles.viewMoreButtonText}>
-                    View more reviews
-                  </Text>
-                </TouchableOpacity>
+                </View>
               )}
               {reviewsExpanded && hasMoreReviews && (
                 <Text style={styles.loadMoreHint}>
@@ -425,6 +404,12 @@ const styles = StyleSheet.create({
     color: Themes.COLORS.textMuted,
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
   },
+  toggleText: {
+    // <-- NEW STYLE ADDED
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
+    color: Themes.COLORS.primary,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+  },
   reviewList: {
     maxHeight: 260,
   },
@@ -472,5 +457,19 @@ const styles = StyleSheet.create({
     color: Themes.COLORS.textMuted,
     fontSize: Themes.TYPOGRAPHY.body.fontSize,
     paddingVertical: Themes.SPACING.sm,
+  },
+  badgeContainer: {
+    marginTop: Themes.SPACING.xs,
+    backgroundColor: Themes.COLORS.badge,
+    borderRadius: Themes.RADIUS.pill,
+    flexDirection: "row",
+    padding: Themes.SPACING.xs,
+  },
+  badgeText: {
+    ...Themes.TYPOGRAPHY.badgeText,
+  },
+  moreButton: {
+    alignItems: "flex-end",
+    marginLeft: Themes.SPACING.md,
   },
 });

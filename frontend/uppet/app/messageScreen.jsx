@@ -2,7 +2,9 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useSocket } from "../context/SocketContext";
 import { useRoute } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
-
+import * as ImagePicker from "expo-image-picker";
+import ImageView from "react-native-image-viewing";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { api } from "../api/axios";
 import {
   View,
@@ -16,6 +18,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   Dimensions,
+  Image,
 } from "react-native";
 import * as Themes from "../assets/themes/themes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -27,8 +30,10 @@ export default function messageScreen() {
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.badgeText.fontSize,
   );
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showImageViewer, setShowImageViewer] = useState(false);
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
+  const headerHeight = useHeaderHeight() || 0;
   const router = useRoute();
   const isFetchingRef = useRef(false);
   const { user } = useUser();
@@ -47,6 +52,7 @@ export default function messageScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const roomID = [user._id, receiverID].sort().join("_");
+
   // console.log("Receiver ID is ", receiverID);
   // console.log("Chat Thread Origin in Message Screen", chatThreadOrigin);
   // const { chatThreadOrigin, receiver } = router.params;
@@ -185,33 +191,138 @@ export default function messageScreen() {
     await fetchMessages(null, true);
   }, []);
 
-  const mediaSelection = () => {
-    console.log("Puttin Empty media for handling later");
+  const handleMediaPicker = async () => {
+    try {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== ImagePicker.PermissionStatus.GRANTED) {
+        console.log("Permission Denied");
+        return;
+      }
+
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images", "videos"],
+        quality: 1,
+        allowsMultipleSelection: true,
+      });
+
+      if (!result.canceled) {
+        const selectedMedia = result.assets.map((asset, index) => {
+          return {
+            key: asset.fileName + asset.fileSize,
+            url: asset.uri,
+            type: asset.type,
+            index: index,
+            fileSize: asset.fileSize,
+            fileName: asset.fileName,
+          };
+        });
+
+        console.log(selectedMedia);
+        const uploadedMedia = await Promise.all(
+          selectedMedia.map(async (media) => {
+            const presignedURL = await api.post(
+              `/api/message/presignUploadURL`,
+              {
+                fileSize: media.fileSize,
+                fileType: media.type,
+                fileName: media.fileName,
+              },
+            );
+
+            const { url, key, finalUrl } = presignedURL.data.body;
+
+            const fetchMedia = await fetch(media.url);
+            const blob = await fetchMedia.blob();
+
+            await fetch(url, {
+              method: "PUT",
+              body: blob,
+              contentType: media.type,
+            });
+            const uploadetails = {
+              key: key,
+              url: finalUrl,
+              type: media.type,
+            };
+            const body = textInput ? textInput : " ";
+            handleSend(body, uploadetails);
+            return true;
+          }),
+        );
+
+        console.log("here are the images", result.assets);
+      } else {
+        console.log("The user has cancelled the image library");
+      }
+    } catch (err) {
+      console.error("Error picking media:", err);
+    }
   };
 
-  const onPress = () => {
-    console.log("Message Bubble HAS BEEN PRESSED");
+  const onPress = (item) => {
+    const itemMedia = item.media?.type === "image";
+    if (itemMedia) {
+      setSelectedImage(item.media);
+      setShowImageViewer(true);
+    }
   };
-
+  const VideoMessageBubble = ({ videoUrl }) => {
+    const player = useVideoPlayer(videoUrl, (player) => {
+      player.loop = false;
+      player.pause();
+    });
+    return (
+      <VideoView
+        player={player}
+        style={styles.videoBubble}
+        allowsFullscreen // Gives the user a native full-screen button
+        allowsPictureInPicture
+        nativeControls={true}
+      ></VideoView>
+    );
+  };
   const renderMessages = ({ item }) => {
     const isSender = item.sender === user._id;
+    const itemMedia = item.media?.type === "image";
+    const itemVideo = item.media?.type === "video";
+
     return (
       <TouchableOpacity
-        onPress={onPress}
+        onPress={() => onPress(item)}
         style={[
           styles.messageBubble,
           isSender ? styles.senderMessage : styles.receiverMessage,
         ]}
       >
-        <Text style={styles.messageText}> {item.body}</Text>
+        {/* Conditionally render Image or Text body */}
+        {itemMedia ? (
+          // TODO: Add your Image component here
+          <Image
+            key={item.media.key}
+            source={{ uri: item.media.url }}
+            style={{ height: 200, width: 200 }}
+            resizeMode="cover"
+          ></Image>
+        ) : (
+          <Text style={styles.messageText}>{item.body}</Text>
+        )}
+        {itemVideo && (
+          <VideoMessageBubble videoUrl={item.media.url}></VideoMessageBubble>
+        )}
+
+        {/* Timestamp and Read Receipts (Renders for both text and media) */}
         <View
           style={{
             flexDirection: "row",
             justifyContent: "flex-end",
             alignItems: "center",
+            marginTop: 4, // Added a small margin for spacing
           }}
         >
           <Text style={styles.timestamp}>{item.updatedAt}</Text>
+
           {isSender && (
             <View style={{ marginLeft: 5 }}>
               {item.status === "pending" && (
@@ -260,7 +371,7 @@ export default function messageScreen() {
     setTextInput(text);
   };
 
-  const handleSend = async () => {
+  const handleSend = async (body, media) => {
     let dbChatThread = chatThreadOrigin;
 
     if (!chatThreadOrigin) {
@@ -278,8 +389,8 @@ export default function messageScreen() {
 
     const tempMessage = {
       _id: `temp-${Date.now()}`,
-      body: textInput,
-      media: msgMedia,
+      body: body,
+      media: media,
       sender: user._id,
       timestamp: new Date().toISOString(),
       status: "pending",
@@ -290,13 +401,13 @@ export default function messageScreen() {
 
     try {
       setMessages((prev) => [tempMessage, ...prev]);
-      console.log("message media is", msgMedia);
+      console.log("message media is", media);
       const messageRes = await api.post(`/api/message/send`, {
         chatThreadOrigin: dbChatThread._id || dbChatThread,
         receiver: receiverID,
         sender: user._id,
-        body: textInput,
-        media: msgMedia,
+        body: body,
+        media: media,
       });
 
       setMessages((prev) =>
@@ -364,7 +475,7 @@ export default function messageScreen() {
           },
         ]}
       >
-        <TouchableOpacity onPress={mediaSelection} style={styles.iconButton}>
+        <TouchableOpacity onPress={handleMediaPicker} style={styles.iconButton}>
           <MaterialCommunityIcons name="image" size={28} color="#8E8E93" />
         </TouchableOpacity>
         <TextInput
@@ -388,6 +499,29 @@ export default function messageScreen() {
           />
         </TouchableOpacity>
       </View>
+      <ImageView
+        images={selectedImage ? [{ uri: selectedImage.url }] : []}
+        visible={showImageViewer}
+        onRequestClose={() => setShowImageViewer(false)}
+        swipeToCloseEnabled={true}
+        doubleTapToZoomEnabled={true}
+        // ✅ Add it directly inline like this:
+        HeaderComponent={() => (
+          <View
+            style={[
+              styles.viewerHeaderContainer,
+              { marginTop: insets.top || 40 },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.customCloseButton}
+              onPress={() => setShowImageViewer(false)}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -408,8 +542,8 @@ const styles = StyleSheet.create({
   },
   messageText: {
     color: Themes.COLORS.textDark,
-    fontFamily: Themes.TYPOGRAPHY.body,
-    fontSize: Themes.TYPOGRAPHY.fontSize,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
   },
   senderMessage: {
     backgroundColor: Themes.COLORS.primary,
@@ -468,5 +602,24 @@ const styles = StyleSheet.create({
     color: "#8E8E93",
     marginTop: 4,
     alignSelf: "flex-end", // Keeps the time tucked in the corner
+  },
+  viewerHeaderContainer: {
+    width: "100%",
+    position: "absolute",
+    zIndex: 1,
+    // top: 40, <-- REMOVE THIS LINE
+  },
+  customCloseButton: {
+    alignSelf: "flex-end",
+    marginRight: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 10,
+    borderRadius: 20,
+  },
+  videoBubble: {
+    width: 200,
+    height: 200,
+    borderRadius: 8,
+    backgroundColor: "#000", // Black background while it loads
   },
 });

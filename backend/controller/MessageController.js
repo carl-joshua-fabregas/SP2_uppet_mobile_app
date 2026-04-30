@@ -1,7 +1,93 @@
 import ChatThread from "../models/ChatThread.js";
 import Message from "../models/Messages.js";
 import { ObjectId } from "mongodb";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+console.log("AWS REGION:", process.env.AWS_REGION);
+console.log("AWS ACCESS KEY ID:", process.env.AWS_ACCESS_KEY_ID);
+console.log("AWS SECRET ACCESS KEY:", process.env.AWS_SECRET_ACCESS_KEY);
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
+export async function presignUploadURL(req, res) {
+  try {
+    const key = `message/${req.user.id}/${req.body.fileSize}_${req.body.fileName}`;
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+      ContentType: req.body.fileType,
+      // Metadata:{
+      //   uri: req.body.uri || "",
+      //   name: req.body.name || ""
+      // }
+    });
+    console.log(
+      process.env.AWS_BUCKET_NAME,
+      process.env.AWS_REGION,
+      process.env.AWS_ACCESS_KEY_ID,
+      process.env.AWS_SECRET_ACCESS_KEY,
+    );
+    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
+    console.log("WITH COMMAND:", command);
+
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    console.log("PRESIGNED URL GENERATED:", url);
+    const finalUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${key}`;
+    console.log("FINAL URL GENERATED:", finalUrl);
+    return res.status(200).json({
+      message: "Successfully obtained presigned URL",
+      body: { url: url, key: key, finalUrl: finalUrl },
+    });
+  } catch (err) {
+    console.log("ERROR IN GENERATING PRESIGNED URL:", err);
+    return res.status(505).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+}
+
+export async function presignDeleteURL(req, res) {
+  try {
+    console.log("GENERATING presignDeleteURL");
+    const key = req.body.key;
+    const command = new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+    });
+    console.log(
+      process.env.AWS_BUCKET_NAME,
+      process.env.AWS_REGION,
+      process.env.AWS_ACCESS_KEY_ID,
+      process.env.AWS_SECRET_ACCESS_KEY,
+    );
+    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
+    console.log("WITH COMMAND:", command);
+
+    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    console.log("PRESIGNED URL GENERATED:", url);
+
+    return res.status(200).json({
+      message: "Successfully obtained presigned URL",
+      body: { url: url, key: key },
+    });
+  } catch (err) {
+    console.log("ERROR IN GENERATING PRESIGNED URL:", err);
+    return res.status(505).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+}
 export async function sendMessage(req, res) {
   try {
     const options = {

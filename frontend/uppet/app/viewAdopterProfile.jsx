@@ -21,6 +21,68 @@ export default function ViewAdopterProfile() {
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
   );
+  const screenHeight = Dimensions.get("window").height;
+
+  const [showStickyButton, setShowStickyButton] = useState(false);
+  const [ratingSectionLayout, setRatingSectionLayout] = useState({
+    y: 0,
+    height: 0,
+  });
+  // New state to track the Y position of the bottom buttons and the overlap calculation
+  const [buttonSectionY, setButtonSectionY] = useState(0);
+  const [overlapDelta, setOverlapDelta] = useState(0);
+
+  const handleRatingLayout = (event) => {
+    const { y, height } = event.nativeEvent.layout;
+    setRatingSectionLayout({ y, height });
+  };
+
+  const handleReviewScroll = (event) => {
+    const currentOffset = event.nativeEvent.contentOffset.y;
+    const viewportHeight = event.nativeEvent.layoutMeasurement.height;
+    //We try to retrieve when the user is 20percent at the bottom of the rating section
+    const dynamicThreshold =
+      ratingSectionLayout.y - screenHeight + ratingSectionLayout.height * 0.2;
+
+    if (currentOffset >= dynamicThreshold && reviewsExpanded) {
+      handleLoadMoreRating();
+    }
+
+    if (ratingSectionLayout.height > 0 && reviewsExpanded) {
+      // NEW: Only show the button if the rating section is taller than the screen
+      const hasScreenWorthOfScrolling =
+        ratingSectionLayout.height > screenHeight;
+
+      if (hasScreenWorthOfScrolling) {
+        const stickyThreshold = ratingSectionLayout.y;
+
+        if (currentOffset > stickyThreshold) {
+          if (!showStickyButton) setShowStickyButton(true);
+        } else {
+          if (showStickyButton) setShowStickyButton(false);
+        }
+      } else {
+        // Force hide if the section is too short
+        if (showStickyButton) setShowStickyButton(false);
+      }
+    }
+
+    if (buttonSectionY > 0 && reviewsExpanded) {
+      const viewportBottom = currentOffset + viewportHeight;
+      const calculatedDelta =
+        viewportBottom > buttonSectionY ? viewportBottom - buttonSectionY : 0;
+
+      // OPTIMIZATION 2: Throttle the state update.
+      // Only re-render if the button needs to move by more than 3 pixels,
+      // OR if it needs to snap cleanly back to 0.
+      if (
+        Math.abs(overlapDelta - calculatedDelta) > 3 ||
+        (calculatedDelta === 0 && overlapDelta !== 0)
+      ) {
+        setOverlapDelta(calculatedDelta);
+      }
+    }
+  };
 
   const [adopter, setAdopter] = useState({});
   const [adopterRating, setAdopterRating] = useState([]);
@@ -50,6 +112,7 @@ export default function ViewAdopterProfile() {
     setSelectedReview(myRating);
     setRatingModalVisible(true);
   };
+
   const handleRatingDelete = async (ratingID) => {
     try {
       const res = await api.delete(`/api/rating/delete`, {
@@ -240,11 +303,8 @@ export default function ViewAdopterProfile() {
       ></ViewRatingModal>
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
-        onScroll={({ nativeEvent }) => {
-          if (isCloseToBottom(nativeEvent)) {
-            fetchRating(cursorID);
-          }
-        }}
+        onScroll={(e) => handleReviewScroll(e)}
+        scrollEventThrottle={16}
       >
         <ProfileCard
           adopter={adopter}
@@ -257,6 +317,7 @@ export default function ViewAdopterProfile() {
           hasMoreReviews={hasMore}
           onViewMoreReviews={() => setReviewsExpanded(true)}
           onCreateRatingPress={handleCreateReview}
+          handleRatingLayout={handleRatingLayout}
         />
 
         <CreateRatingModal
@@ -269,7 +330,10 @@ export default function ViewAdopterProfile() {
           onEditRequest={handleEditReviewFromModal}
           handleRatingDelete={handleRatingDelete}
         />
-        <View style={styles.buttonSection}>
+        <View
+          style={styles.buttonSection}
+          onLayout={(e) => setButtonSectionY(e.nativeEvent.layout.y)}
+        >
           {buttons.map((btn, index) => {
             const containerStyle =
               btn.styleType === "warning"
@@ -297,6 +361,25 @@ export default function ViewAdopterProfile() {
           })}
         </View>
       </ScrollView>
+      {/* STICKY BUTTON COMPONENT */}
+      {showStickyButton && (
+        <View
+          style={[
+            styles.stickyWrapper,
+            { bottom: (Themes.SPACING?.lg || 24) + overlapDelta },
+          ]}
+          pointerEvents="box-none"
+        >
+          <TouchableOpacity
+            style={styles.stickyButton}
+            onPress={() => {
+              setReviewsExpanded(false);
+            }}
+          >
+            <Text style={styles.stickyButtonText}>Quick Action</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -367,6 +450,31 @@ const styles = StyleSheet.create({
     fontSize: Themes.TYPOGRAPHY?.subheading?.fontSize || 16,
     fontFamily: Themes.TYPOGRAPHY?.subheading?.fontFamily,
     fontWeight: "600",
+    textAlign: "center",
+  },
+  stickyWrapper: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center", // Centers the button horizontally
+    zIndex: 999,
+  },
+  stickyButton: {
+    backgroundColor: Themes.COLORS.primary || "#007BFF",
+    paddingVertical: Themes.SPACING?.md || 14,
+    paddingHorizontal: Themes.SPACING?.lg || 32, // Widened slightly for better aesthetics
+    borderRadius: 30,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  stickyButtonText: {
+    color: "#fff",
+    fontSize: Themes.TYPOGRAPHY?.body?.fontSize || 14,
+    fontFamily: Themes.TYPOGRAPHY?.body?.fontFamily,
+    fontWeight: "bold",
     textAlign: "center",
   },
 });

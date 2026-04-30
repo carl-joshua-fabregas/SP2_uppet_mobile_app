@@ -26,6 +26,7 @@ export default function ProfileCard({
   // onReviewListEndReached = () => {},
   // onEditReviewPress = () => {},
   showRatingsAndReviews = true,
+  handleRatingLayout = { handleRatingLayout },
 }) {
   const InfoSection = ({ icon, label, value }) => (
     <View style={styles.infoRow}>
@@ -226,7 +227,10 @@ export default function ProfileCard({
                   No reviews yet for this adopter.
                 </Text>
               ) : (
-                <View style={styles.reviewList}>
+                <View
+                  style={styles.reviewList}
+                  onLayout={(e) => handleRatingLayout(e)}
+                >
                   {displayedReviews.map((review, index) => (
                     <RatingCard
                       key={review._id || index}

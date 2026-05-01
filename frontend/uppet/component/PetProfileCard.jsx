@@ -3,13 +3,17 @@ import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 
-export default function PetProfileCardViewMore({ pet }) {
+export default function PetProfileCardViewMore({
+  pet,
+  isGalleryExpanded,
+  setIsGalleryExpanded,
+  handleGalleryLayout,
+}) {
   const profilePhoto =
     pet.photos && pet.photos.length > 0
       ? pet.photos.find((photo) => photo.isProfile)
       : null;
 
-  const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   const form = {
@@ -225,6 +229,7 @@ export default function PetProfileCardViewMore({ pet }) {
                     styles.carouselContainer,
                     { marginHorizontal: Themes.SPACING.md },
                   ]}
+                  key={`carousel- ${isGalleryExpanded}`}
                 >
                   <Image
                     source={{ uri: form.photos[currentPhotoIndex]?.url }}
@@ -279,7 +284,11 @@ export default function PetProfileCardViewMore({ pet }) {
                 </View>
               ) : (
                 // --- EXPANDED VERTICAL FEED ---
-                <View style={styles.expandedGalleryContainer}>
+                <View
+                  onLayout={(e) => handleGalleryLayout(e)}
+                  style={styles.expandedGalleryContainer}
+                  key={`gallery-${isGalleryExpanded}`}
+                >
                   {form.photos.map((photo, index) => (
                     <View key={index} style={styles.photoFeedItem}>
                       <Image
@@ -304,21 +313,6 @@ export default function PetProfileCardViewMore({ pet }) {
                       </View>
                     </View>
                   ))}
-
-                  {/* Massive Action Button at the Bottom */}
-                  <TouchableOpacity
-                    style={styles.closeGalleryButton}
-                    onPress={() => setIsGalleryExpanded(false)}
-                  >
-                    <MaterialCommunityIcons
-                      name="chevron-up"
-                      size={24}
-                      color="#fff"
-                    />
-                    <Text style={styles.closeGalleryButtonText}>
-                      Collapse Gallery
-                    </Text>
-                  </TouchableOpacity>
                 </View>
               )}
             </View>
@@ -549,26 +543,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Themes.COLORS.textDark,
     lineHeight: 20,
-  },
-  closeGalleryButton: {
-    backgroundColor: Themes.COLORS.primary,
-    marginHorizontal: Themes.SPACING.md,
-    marginVertical: Themes.SPACING.lg,
-    paddingVertical: Themes.SPACING.md,
-    borderRadius: Themes.RADIUS.md,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  closeGalleryButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
   },
 });

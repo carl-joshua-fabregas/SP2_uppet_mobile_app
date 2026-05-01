@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  Dimensions,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
@@ -23,9 +24,16 @@ export default function ViewPetProfile() {
   const [adoptionApp, setAdoptionApp] = useState({});
   const [loading, setLoading] = useState(false);
   const pet = route.params.pet;
-  console.log("View Profile The pet data transferred is", pet);
-  console.log("IS Owner? ", isOwner, route?.params?.pet?.ownerId, user._id);
 
+  const screenHeight = Dimensions.get("window").height;
+  const [gallerySectionLayout, setGallerySectionLayout] = useState({
+    y: 0,
+    height: 0,
+  });
+  const [showStickyButton, setShowStickyButton] = useState(false);
+  const [buttonSectionY, setButtonSectionY] = useState(0);
+  const [overlapDelta, setOverlapDelta] = useState(0);
+  const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
   const getstatus = async () => {
     try {
       const res = await api.get(`/api/adoptionApp/${pet._id}/applied`, {});
@@ -38,7 +46,40 @@ export default function ViewPetProfile() {
       console.error(err);
     }
   };
+  const handleGalleryLayout = (event) => {
+    const { y, height } = event.nativeEvent.layout;
+    setGallerySectionLayout({ y, height });
+  };
 
+  const handleGalleryScroll = (event) => {
+    const currentOffset = event.nativeEvent.contentOffset.y;
+    const hasScreenWorthOfSCrolling =
+      gallerySectionLayout.height > screenHeight;
+    const viewportHeight = event.nativeEvent.layoutMeasurement.height;
+
+    if (hasScreenWorthOfSCrolling && isGalleryExpanded) {
+      const stickyThreshold = gallerySectionLayout.y;
+      if (currentOffset > stickyThreshold) {
+        if (!showStickyButton) setShowStickyButton(true);
+      } else {
+        if (showStickyButton) setShowStickyButton(false);
+      }
+    } else {
+      if (showStickyButton) setShowStickyButton(false);
+    }
+
+    if (buttonSectionY > 0 && isGalleryExpanded) {
+      const viewportBottom = currentOffset + viewportHeight;
+      const calculatedDelta =
+        viewportBottom > buttonSectionY ? viewportBottom - buttonSectionY : 0;
+      if (
+        Math.abs(overlapDelta - calculatedDelta) > 3 ||
+        (calculatedDelta === 0 && overlapDelta !== 0)
+      ) {
+        setOverlapDelta(calculatedDelta);
+      }
+    }
+  };
   useEffect(() => {
     if (pet._id) {
       getstatus();
@@ -194,39 +235,71 @@ export default function ViewPetProfile() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      <PetProfileCardViewMore pet={route.params.pet} />
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        onScroll={(e) => handleGalleryScroll(e)}
+        scrollEventThrottle={16}
+      >
+        <PetProfileCardViewMore
+          pet={route.params.pet}
+          isGalleryExpanded={isGalleryExpanded}
+          setIsGalleryExpanded={setIsGalleryExpanded}
+          handleGalleryLayout={handleGalleryLayout}
+        />
 
-      {/* FIX: Actually rendering the buttons to the screen */}
-      <View style={styles.buttonSection}>
-        {buttons.map((btn, index) => {
-          // Assign styles dynamically based on the styleType defined above
-          const containerStyle =
-            btn.styleType === "warning"
-              ? styles.warningButtonContainer
-              : btn.styleType === "neutral"
-                ? styles.neutralButtonContainer
-                : styles.calmButtonContainer;
+        {/* FIX: Actually rendering the buttons to the screen */}
+        <View
+          style={styles.buttonSection}
+          onLayout={(e) => setButtonSectionY(e.nativeEvent.layout.y)}
+        >
+          {buttons.map((btn, index) => {
+            // Assign styles dynamically based on the styleType defined above
+            const containerStyle =
+              btn.styleType === "warning"
+                ? styles.warningButtonContainer
+                : btn.styleType === "neutral"
+                  ? styles.neutralButtonContainer
+                  : styles.calmButtonContainer;
 
-          const textStyle =
-            btn.styleType === "warning"
-              ? styles.warningButtonText
-              : btn.styleType === "neutral"
-                ? styles.neutralButtonText
-                : styles.calmButtonText;
+            const textStyle =
+              btn.styleType === "warning"
+                ? styles.warningButtonText
+                : btn.styleType === "neutral"
+                  ? styles.neutralButtonText
+                  : styles.calmButtonText;
 
-          return (
-            <TouchableOpacity
-              key={index}
-              style={containerStyle}
-              onPress={btn.onPress}
-            >
-              <Text style={textStyle}>{btn.title}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </ScrollView>
+            return (
+              <TouchableOpacity
+                key={index}
+                style={containerStyle}
+                onPress={btn.onPress}
+              >
+                <Text style={textStyle}>{btn.title}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
+      {showStickyButton && (
+        <View
+          style={[
+            styles.stickyWrapper,
+            { bottom: (Themes.SPACING?.lg || 24) + overlapDelta },
+          ]}
+          pointerEvents="box-none"
+        >
+          <TouchableOpacity
+            style={styles.stickyButton}
+            onPress={() => {
+              setIsGalleryExpanded(false);
+            }}
+          >
+            <Text style={styles.stickyButtonText}>Close Gallery</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -304,6 +377,31 @@ const styles = StyleSheet.create({
     fontSize: Themes.TYPOGRAPHY?.subheading?.fontSize || 16,
     fontFamily: Themes.TYPOGRAPHY?.subheading?.fontFamily,
     fontWeight: "600",
+    textAlign: "center",
+  },
+  stickyWrapper: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center", // Centers the button horizontally
+    zIndex: 999,
+  },
+  stickyButton: {
+    backgroundColor: Themes.COLORS.primary || "#007BFF",
+    paddingVertical: Themes.SPACING?.md || 14,
+    paddingHorizontal: Themes.SPACING?.lg || 32, // Widened slightly for better aesthetics
+    borderRadius: 30,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  stickyButtonText: {
+    color: "#fff",
+    fontSize: Themes.TYPOGRAPHY?.body?.fontSize || 14,
+    fontFamily: Themes.TYPOGRAPHY?.body?.fontFamily,
+    fontWeight: "bold",
     textAlign: "center",
   },
 });

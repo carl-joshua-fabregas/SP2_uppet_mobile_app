@@ -11,23 +11,29 @@ import PetProfileCardViewMore from "../component/PetProfileCard";
 import { useEffect, useState } from "react";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
-
+import { useUser } from "../context/UserContext";
 export default function ViewPetProfile() {
+  const { user } = useUser();
   const route = useRoute();
   const navigation = useNavigation();
   const [status, setStatus] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
+  const [isOwner, setIsOwner] = useState(
+    route?.params?.pet?.ownerId === user._id,
+  );
+  const [adoptionApp, setAdoptionApp] = useState({});
   const [loading, setLoading] = useState(false);
   const pet = route.params.pet;
   console.log("View Profile The pet data transferred is", pet);
+  console.log("IS Owner? ", isOwner, route?.params?.pet?.ownerId, user._id);
 
   const getstatus = async () => {
     try {
       const res = await api.get(`/api/adoptionApp/${pet._id}/applied`, {});
-      console.log("In view pet profile...", res.data);
-      setStatus(res.data.status);
-      setIsOwner(res.data.isOwner);
-      console.log(res.data.status, res.data.isOwner);
+      console.log("This is the adoption App", res.data);
+      if (res.data.body) {
+        setStatus(res.data.body.status);
+        setAdoptionApp(res.data.body);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -60,7 +66,12 @@ export default function ViewPetProfile() {
       console.log("ERROR in handling Message", err.message);
     }
   };
-
+  const handleViewOwnerProfile = () => {
+    console.log("View Owner Profile Clicked");
+    navigation.navigate("viewAdopterProfile", {
+      id: adoptionApp.applicant,
+    });
+  };
   const handleApply = async () => {
     await api.post(`/api/adoptionApp/applied`, {
       petToAdopt: pet._id,
@@ -122,7 +133,6 @@ export default function ViewPetProfile() {
   };
 
   const buttons = [];
-
   if (isOwner) {
     buttons.push({
       title: "View Applicants",
@@ -140,30 +150,47 @@ export default function ViewPetProfile() {
       styleType: "warning",
     });
   } else {
-    if (status === "Pending") {
-      buttons.push({
-        title: "Cancel Application",
-        onPress: handleCancel,
-        styleType: "warning",
-      });
-    } else if (status === "Rejected") {
-      buttons.push({
-        title: "Apply Again",
-        onPress: handleApply,
-        styleType: "calm",
-      });
+    buttons.push({
+      title: "View Owner Profile",
+      onPress: handleViewOwnerProfile,
+      styleType: "calm",
+    });
+    buttons.push({
+      title: "Message Owner",
+      onPress: handleMessage,
+      styleType: "neutral",
+    });
+
+    const isApplicant = adoptionApp && adoptionApp.applicant === user._id;
+
+    if (isApplicant) {
+      if (adoptionApp.status === "Approved") {
+        buttons.push({
+          title: "Approved", // Changed to past tense for clarity
+          disabled: true,
+          styleType: "disabled",
+        });
+      } else if (adoptionApp.status === "Pending") {
+        buttons.push({
+          title: "Cancel Application",
+          onPress: handleCancel,
+          styleType: "warning",
+        });
+      } else if (adoptionApp.status === "Rejected") {
+        buttons.push({
+          title: "Apply Again",
+          onPress: handleApply,
+          styleType: "calm",
+        });
+      }
     } else {
+      // User HAS NOT applied yet
       buttons.push({
         title: "Apply",
         onPress: handleApply,
         styleType: "calm",
       });
     }
-    buttons.push({
-      title: "Message Owner",
-      onPress: handleMessage,
-      styleType: "neutral",
-    });
   }
 
   return (

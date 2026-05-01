@@ -148,13 +148,14 @@ export default function messageScreen() {
       await fetchMessages(null, false);
     };
     initialMount();
-  }, []);
+  }, [chatThreadOrigin]);
 
   const fetchMessages = async (lastMessageId, isRefreshing = false) => {
     isFetchingRef.current = true;
     setLoading(true);
     try {
       const limit = messages.length > 0 ? 15 : initialLimit;
+      console.log("CHAT THREAD ORIGIN IS", chatThreadOrigin);
       const res = await api.get(`/api/message/${chatThreadOrigin._id}`, {
         params: { lastMessageId: lastMessageId, limit: limit },
       });

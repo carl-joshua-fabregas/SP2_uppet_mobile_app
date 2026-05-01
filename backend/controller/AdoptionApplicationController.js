@@ -156,16 +156,16 @@ export async function findPetUserApplication(req, res) {
       applicant: req.user.id,
       petToAdopt: req.params.id,
     });
-    const pet = await Pet.findById(req.params.id);
-    console.log("FINDING PET USER ID APPLICATION END");
+    // const pet = await Pet.findById(req.params.id);
+    // console.log("FINDING PET USER ID APPLICATION END");
 
-    const isOwner =
-      pet.ownerId.toString() === req.user.id.toString() ? true : false;
-    const status = app ? app.status : false;
-
+    // const isOwner =
+    //   pet.ownerId.toString() === req.user.id.toString() ? true : false;
+    // const status = app ? app.status : false;
+    
     return res.status(200).json({
-      status: status,
-      isOwner: isOwner,
+      message: "Successful adoption app inquiry",
+      body: app,
     });
   } catch (err) {
     return res.status(500).json({

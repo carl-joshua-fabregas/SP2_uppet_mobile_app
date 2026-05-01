@@ -69,7 +69,7 @@ export default function ViewPetProfile() {
   const handleViewOwnerProfile = () => {
     console.log("View Owner Profile Clicked");
     navigation.navigate("viewAdopterProfile", {
-      id: adoptionApp.applicant,
+      id: pet.ownerId,
     });
   };
   const handleApply = async () => {

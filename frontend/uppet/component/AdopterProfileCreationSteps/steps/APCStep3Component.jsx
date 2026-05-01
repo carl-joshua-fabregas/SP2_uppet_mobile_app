@@ -40,10 +40,13 @@ export default function APCStep3Component({
     }
   };
 
-  const SelectionChip = ({ label, value, field }) => (
+  const SelectionChip = ({ label, value, field, onPress }) => (
     <TouchableOpacity
       style={[styles.chip, adopterData[field] === value && styles.chipActive]}
-      onPress={() => update(field, value)}
+      onPress={() => {
+        update(field, value);
+        onPress?.();
+      }}
     >
       <Text
         numberOfLines={1} // 👈 Allows wrapping to 2 lines first
@@ -121,7 +124,12 @@ export default function APCStep3Component({
           </View>
           <View style={styles.chipRow}>
             <SelectionChip label="Yes, I have" value="yes" field="hadPets" />
-            <SelectionChip label="No, first time" value="no" field="hadPets" />
+            <SelectionChip
+              label="No, first time"
+              value="no"
+              field="hadPets"
+              onPress={() => update("currentOwnedPets", 0)}
+            />
           </View>
           {errors.hadPets && (
             <Text style={styles.errorText}>{errors.hadPets}</Text>

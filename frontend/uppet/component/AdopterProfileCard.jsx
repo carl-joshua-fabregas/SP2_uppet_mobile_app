@@ -175,32 +175,36 @@ export default function ProfileCard({
 
         {showRatingsAndReviews && (
           <>
-            <Text style={styles.sectionTitle}>Your Review</Text>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() => onCreateRatingPress(myRating)}
-            >
-              <View style={[styles.card, styles.topReviewCard]}>
-                <View style={styles.reviewHeaderRow}>
-                  <Text style={styles.reviewLabel}>Your latest review</Text>
-                  <View style={styles.ratingDetailRow}>
-                    {renderStars(myRating?.score || 0)}
-                    <Text style={styles.reviewScoreText}>
-                      {myRating?.score
-                        ? `${myRating.score}.0`
-                        : "No rating yet"}
+            {!isOwner && (
+              <>
+                <Text style={styles.sectionTitle}>Your Review</Text>
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={() => onCreateRatingPress(myRating)}
+                >
+                  <View style={[styles.card, styles.topReviewCard]}>
+                    <View style={styles.reviewHeaderRow}>
+                      <Text style={styles.reviewLabel}>Your latest review</Text>
+                      <View style={styles.ratingDetailRow}>
+                        {renderStars(myRating?.score || 0)}
+                        <Text style={styles.reviewScoreText}>
+                          {myRating?.score
+                            ? `${myRating.score}.0`
+                            : "No rating yet"}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.reviewBodyText} numberOfLines={4}>
+                      {myRating?.body ||
+                        "Tap here to write a review for this adopter."}
+                    </Text>
+                    <Text style={styles.reviewActionText}>
+                      {myRating ? "Tap to view or edit" : "Write a review"}
                     </Text>
                   </View>
-                </View>
-                <Text style={styles.reviewBodyText} numberOfLines={4}>
-                  {myRating?.body ||
-                    "Tap here to write a review for this adopter."}
-                </Text>
-                <Text style={styles.reviewActionText}>
-                  {myRating ? "Tap to view or edit" : "Write a review"}
-                </Text>
-              </View>
-            </TouchableOpacity>
+                </TouchableOpacity>
+              </>
+            )}
 
             <Text style={styles.sectionTitle}>Other Adopters’ Reviews</Text>
             <View style={[styles.card, styles.reviewsSectionCard]}>

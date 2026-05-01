@@ -5,11 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
+  Animated, // <-- Add this
 } from "react-native";
+import { useEffect, useState, useRef } from "react"; // <-- Add useRef
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
 import PetProfileCardViewMore from "../component/PetProfileCard";
-import { useEffect, useState } from "react";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useUser } from "../context/UserContext";
@@ -24,16 +25,17 @@ export default function ViewPetProfile() {
   const [adoptionApp, setAdoptionApp] = useState({});
   const [loading, setLoading] = useState(false);
   const pet = route.params.pet;
-
-  const screenHeight = Dimensions.get("window").height;
   const [gallerySectionLayout, setGallerySectionLayout] = useState({
     y: 0,
     height: 0,
   });
+  const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const [showStickyButton, setShowStickyButton] = useState(false);
-  const [buttonSectionY, setButtonSectionY] = useState(0);
-  const [overlapDelta, setOverlapDelta] = useState(0);
+  const [placeholderY, setPlaceholderY] = useState(0);
   const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
+  const overlapAnim = useRef(new Animated.Value(0)).current;
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const getstatus = async () => {
     try {
       const res = await api.get(`/api/adoptionApp/${pet._id}/applied`, {});
@@ -54,11 +56,11 @@ export default function ViewPetProfile() {
   const handleGalleryScroll = (event) => {
     const currentOffset = event.nativeEvent.contentOffset.y;
     const hasScreenWorthOfSCrolling =
-      gallerySectionLayout.height > screenHeight;
+      gallerySectionLayout.height > scrollViewHeight;
     const viewportHeight = event.nativeEvent.layoutMeasurement.height;
 
     if (hasScreenWorthOfSCrolling && isGalleryExpanded) {
-      const stickyThreshold = gallerySectionLayout.y;
+      const stickyThreshold = gallerySectionLayout.y + scrollViewHeight;
       if (currentOffset > stickyThreshold) {
         if (!showStickyButton) setShowStickyButton(true);
       } else {
@@ -67,18 +69,6 @@ export default function ViewPetProfile() {
     } else {
       if (showStickyButton) setShowStickyButton(false);
     }
-
-    if (buttonSectionY > 0 && isGalleryExpanded) {
-      const viewportBottom = currentOffset + viewportHeight;
-      const calculatedDelta =
-        viewportBottom > buttonSectionY ? viewportBottom - buttonSectionY : 0;
-      if (
-        Math.abs(overlapDelta - calculatedDelta) > 3 ||
-        (calculatedDelta === 0 && overlapDelta !== 0)
-      ) {
-        setOverlapDelta(calculatedDelta);
-      }
-    }
   };
   useEffect(() => {
     if (pet._id) {
@@ -86,6 +76,13 @@ export default function ViewPetProfile() {
     }
   }, [pet._id]);
 
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: showStickyButton ? 1 : 0,
+      duration: 250, // 250ms fade
+      useNativeDriver: true, // Crucial for performance
+    }).start();
+  }, [showStickyButton]);
   //   const handleViewGallery = () => {
   //     console.log("HandleViewClicked");
   //   };
@@ -233,13 +230,37 @@ export default function ViewPetProfile() {
       });
     }
   }
+  const placeholderHeight = 70; // Matches your placeholder's style height
+  const bottomOffset = 24; // Matches the stickyWrapper's 'bottom: 24'
 
+  // We only calculate this once both the placeholder and the scroll view have been measured
+  const collisionPoint =
+    placeholderY > 0 && scrollViewHeight > 0
+      ? placeholderY + placeholderHeight - scrollViewHeight + bottomOffset
+      : 999999;
+
+  const pushThreshold = Math.max(1, collisionPoint);
+
+  // 3. For every 1 pixel you scroll past the threshold, push the button UP 1 pixel.
+  const overlapTranslateY = scrollY.interpolate({
+    inputRange: [0, pushThreshold, pushThreshold + 1],
+    outputRange: [0, 0, -1],
+    extrapolateLeft: "clamp",
+    extrapolateRight: "extend",
+  });
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={styles.scrollContainer}
-        onScroll={(e) => handleGalleryScroll(e)}
+        onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)} // <--- ADD THIS LINE
         scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          {
+            useNativeDriver: true,
+            listener: handleGalleryScroll,
+          },
+        )}
       >
         <PetProfileCardViewMore
           pet={route.params.pet}
@@ -247,12 +268,18 @@ export default function ViewPetProfile() {
           setIsGalleryExpanded={setIsGalleryExpanded}
           handleGalleryLayout={handleGalleryLayout}
         />
+        {/* THE PLACEHOLDER: Only shows when gallery is expanded. 
+            Give it the approximate height of your sticky button + padding (e.g., 70px) */}
+        {isGalleryExpanded && (
+          <View
+            key={`placeholder-${isGalleryExpanded}`}
+            onLayout={(e) => setPlaceholderY(e.nativeEvent.layout.y)}
+            style={{ height: 70, width: "100%" }}
+          />
+        )}
 
         {/* FIX: Actually rendering the buttons to the screen */}
-        <View
-          style={styles.buttonSection}
-          onLayout={(e) => setButtonSectionY(e.nativeEvent.layout.y)}
-        >
+        <View style={styles.buttonSection}>
           {buttons.map((btn, index) => {
             // Assign styles dynamically based on the styleType defined above
             const containerStyle =
@@ -280,25 +307,35 @@ export default function ViewPetProfile() {
             );
           })}
         </View>
-      </ScrollView>
-      {showStickyButton && (
-        <View
-          style={[
-            styles.stickyWrapper,
-            { bottom: (Themes.SPACING?.lg || 24) + overlapDelta },
-          ]}
-          pointerEvents="box-none"
+      </Animated.ScrollView>
+      {/* Notice we removed the {showStickyButton && ...} wrapper so the fade-out animation can play before disappearing visually */}
+      <Animated.View
+        style={[
+          styles.stickyWrapper,
+          {
+            bottom: Themes.SPACING?.lg || 24,
+            opacity: fadeAnim,
+            transform: [{ translateY: overlapTranslateY }], // <--- The magic push
+          },
+        ]}
+        pointerEvents={showStickyButton ? "box-none" : "none"}
+      >
+        <TouchableOpacity
+          style={styles.stickyButton}
+          onPress={() => {
+            // 1. Instantly snap the opacity to 0 (bypasses the 250ms timer)
+            fadeAnim.setValue(0);
+
+            // 2. Update the state immediately so the fade out doesn't try to play
+            setShowStickyButton(false);
+
+            // 3. Close the gallery as normal
+            setIsGalleryExpanded(false);
+          }}
         >
-          <TouchableOpacity
-            style={styles.stickyButton}
-            onPress={() => {
-              setIsGalleryExpanded(false);
-            }}
-          >
-            <Text style={styles.stickyButtonText}>Close Gallery</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+          <Text style={styles.stickyButtonText}>Close Gallery</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
@@ -310,7 +347,7 @@ const styles = StyleSheet.create({
     backgroundColor: Themes.COLORS.background,
   },
   buttonSection: {
-    marginTop: Themes.SPACING?.lg || 16,
+    marginTop: 16,
     paddingHorizontal: Themes.SPACING?.md || 16, // Added horizontal padding so buttons don't touch screen edges
     gap: Themes.SPACING?.md || 12,
     width: "100%",

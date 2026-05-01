@@ -191,7 +191,10 @@ export default function PetProfileCardViewMore({
 
         {/* 4. GALLERY SECTION (NOW WRAPPED IN A CARD) */}
         {form.photos && form.photos.length > 0 && (
-          <View style={styles.gallerySection}>
+          <View
+            style={styles.gallerySection}
+            onLayout={(e) => handleGalleryLayout(e)}
+          >
             <SectionHeader
               icon="image-multiple-outline"
               title="Photo Gallery"
@@ -285,7 +288,6 @@ export default function PetProfileCardViewMore({
               ) : (
                 // --- EXPANDED VERTICAL FEED ---
                 <View
-                  onLayout={(e) => handleGalleryLayout(e)}
                   style={styles.expandedGalleryContainer}
                   key={`gallery-${isGalleryExpanded}`}
                 >
@@ -384,7 +386,6 @@ const styles = StyleSheet.create({
   },
   contentPadding: {
     paddingHorizontal: Themes.SPACING.md,
-    paddingBottom: Themes.SPACING.xl,
   },
   sectionHeaderRow: {
     flexDirection: "row",

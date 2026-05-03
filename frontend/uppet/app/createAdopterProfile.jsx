@@ -330,7 +330,7 @@ export default function createAdopterProfile() {
   // const { type } = props.route.params || {}; // safe access
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={{ flex: 1 }}
       keyboardVerticalOffset={headerHeight}
     >

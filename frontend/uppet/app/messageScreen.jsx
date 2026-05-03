@@ -4,6 +4,7 @@ import { useRoute } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
 import * as ImagePicker from "expo-image-picker";
 import ImageView from "react-native-image-viewing";
+import ViewMessageCard from "../component/viewMessageCard";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { api } from "../api/axios";
 import {
@@ -32,6 +33,9 @@ export default function messageScreen() {
   );
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageViewer, setShowImageViewer] = useState(false);
+
+  const [selectedMessageID, setSelectedMessageID] = useState(null);
+
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight() || 0;
   const router = useRoute();
@@ -50,23 +54,51 @@ export default function messageScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [cursorID, setCursorID] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedMessageOptions, setSelectedMessageOptions] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const roomID = [user._id, receiverID].sort().join("_");
+  const formatSectionTime = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const now = new Date();
 
-  // console.log("Receiver ID is ", receiverID);
-  // console.log("Chat Thread Origin in Message Screen", chatThreadOrigin);
-  // const { chatThreadOrigin, receiver } = router.params;
+    const isToday =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
 
-  // const messageData = {
-  //   roomID: roomID,
-  //   sender: user._id,
-  //   receiver: receiverID,
-  //   chatThreadOrigin: //idk about this essentially
-  //   body: text,
-  //   // media: //
-  // }
-  // socket.emit("send_message", messageData)
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday =
+      date.getDate() === yesterday.getDate() &&
+      date.getMonth() === yesterday.getMonth() &&
+      date.getFullYear() === yesterday.getFullYear();
 
+    const timeOptions = { hour: "numeric", minute: "2-digit" };
+    const timeString = date.toLocaleTimeString([], timeOptions);
+
+    if (isToday) return `Today, ${timeString}`;
+    if (isYesterday) return `Yesterday, ${timeString}`;
+
+    return `${date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })}, ${timeString}`;
+  };
+  const handleToggleMessageSelect = (id) => {
+    // If you click the same message, hide the timestamp. If a different one, show the new one.
+    setSelectedMessageID((prevID) => (prevID === id ? null : id));
+  };
+  const handlePressImage = (media) => {
+    setSelectedImage(media);
+    setShowImageViewer(true);
+  };
+  const handleOpenOptions = (message) => {
+    setSelectedMessageOptions(message);
+    setIsModalVisible(true);
+  };
   useEffect(() => {
     if (!socket) return;
 
@@ -269,102 +301,51 @@ export default function messageScreen() {
       setShowImageViewer(true);
     }
   };
-  const VideoMessageBubble = ({ videoUrl }) => {
-    const player = useVideoPlayer(videoUrl, (player) => {
-      player.loop = false;
-      player.pause();
-    });
-    return (
-      <VideoView
-        player={player}
-        style={styles.videoBubble}
-        allowsFullscreen // Gives the user a native full-screen button
-        allowsPictureInPicture
-        nativeControls={true}
-      ></VideoView>
-    );
-  };
-  const renderMessages = ({ item }) => {
+
+  const renderMessages = ({ item, index }) => {
     const isSender = item.sender === user._id;
-    const itemMedia = item.media?.type === "image";
-    const itemVideo = item.media?.type === "video";
+
+    // 1. Grab the message that was sent immediately before this one
+    const olderMessage = messages[index + 1];
+
+    let showTimeHeader = false;
+
+    // 2. If there is no older message, this is the very first message of the chat. Show header.
+    if (!olderMessage) {
+      showTimeHeader = true;
+    } else {
+      // 3. Calculate the time difference between this message and the older one
+      const currTime = new Date(item.updatedAt || item.timestamp).getTime();
+      const olderTime = new Date(
+        olderMessage.updatedAt || olderMessage.timestamp,
+      ).getTime();
+
+      // If the gap is greater than 1 hour (60 mins * 60 secs * 1000 ms), start a new group!
+      if (currTime - olderTime > 60 * 60 * 1000) {
+        showTimeHeader = true;
+      }
+    }
 
     return (
-      <TouchableOpacity
-        onPress={() => onPress(item)}
-        style={[
-          styles.messageBubble,
-          isSender ? styles.senderMessage : styles.receiverMessage,
-        ]}
-      >
-        {/* Conditionally render Image or Text body */}
-        {itemMedia ? (
-          // TODO: Add your Image component here
-          <Image
-            key={item.media.key}
-            source={{ uri: item.media.url }}
-            style={{ height: 200, width: 200 }}
-            resizeMode="cover"
-          ></Image>
-        ) : (
-          <Text style={styles.messageText}>{item.body}</Text>
-        )}
-        {itemVideo && (
-          <VideoMessageBubble videoUrl={item.media.url}></VideoMessageBubble>
+      <View>
+        {/* If this is the earliest message in the new group, render the header above it */}
+        {showTimeHeader && (
+          <View style={styles.timeHeaderContainer}>
+            <Text style={styles.timeHeaderText}>
+              {formatSectionTime(item.updatedAt || item.timestamp)}
+            </Text>
+          </View>
         )}
 
-        {/* Timestamp and Read Receipts (Renders for both text and media) */}
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            marginTop: 4, // Added a small margin for spacing
-          }}
-        >
-          <Text style={styles.timestamp}>{item.updatedAt}</Text>
-
-          {isSender && (
-            <View style={{ marginLeft: 5 }}>
-              {item.status === "pending" && (
-                <MaterialCommunityIcons
-                  name="clock-outline"
-                  size={14}
-                  color="#8E8E93"
-                />
-              )}
-              {item.status === "sent" && (
-                <MaterialCommunityIcons
-                  name="check"
-                  size={16}
-                  color="#8E8E93"
-                />
-              )}
-              {item.status === "delivered" && (
-                <MaterialCommunityIcons
-                  name="check-all"
-                  size={16}
-                  color="#8E8E93"
-                />
-              )}
-              {item.status === "read" && (
-                <MaterialCommunityIcons
-                  name="check-all"
-                  size={16}
-                  color="#34B7F1"
-                />
-              )}
-              {item.status === "failed" && (
-                <MaterialCommunityIcons
-                  name="alert-circle-outline"
-                  size={16}
-                  color="red"
-                />
-              )}
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
+        <ViewMessageCard
+          message={item}
+          isSender={isSender}
+          isSelected={selectedMessageID === item._id}
+          onToggleSelect={handleToggleMessageSelect}
+          onPressImage={handlePressImage}
+          onOpenOptions={handleOpenOptions} // Modal trigger from previous step
+        />
+      </View>
     );
   };
 
@@ -435,7 +416,7 @@ export default function messageScreen() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={headerHeight}
     >
       <FlatList
@@ -476,7 +457,10 @@ export default function messageScreen() {
           },
         ]}
       >
-        <TouchableOpacity onPress={handleMediaPicker} style={styles.iconButton}>
+        <TouchableOpacity
+          onPress={() => handleMediaPicker()}
+          style={styles.iconButton}
+        >
           <MaterialCommunityIcons name="image" size={28} color="#8E8E93" />
         </TouchableOpacity>
         <TextInput
@@ -488,7 +472,7 @@ export default function messageScreen() {
           multiline
         />
         <TouchableOpacity
-          onPress={handleSend}
+          onPress={() => handleSend(textInput, msgMedia)}
           style={[styles.sendButton, !textInput.trim() && { opacity: 0.5 }]}
           disabled={!textInput.trim()}
         >
@@ -530,6 +514,7 @@ export default function messageScreen() {
 const styles = StyleSheet.create({
   flatListContainer: {
     flex: 1,
+    backgroundColor: Themes.COLORS.background,
   },
   flatListContents: {
     flexGrow: 1,
@@ -622,5 +607,19 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 8,
     backgroundColor: "#000", // Black background while it loads
+  },
+  timeHeaderContainer: {
+    alignItems: "center",
+    marginVertical: Themes.SPACING.md,
+  },
+  timeHeaderText: {
+    fontFamily: Themes.TYPOGRAPHY.label.fontFamily,
+    fontSize: 12,
+    color: Themes.COLORS.textMuted,
+    backgroundColor: Themes.COLORS.badge, // Uses your subtle tint
+    paddingHorizontal: Themes.SPACING.md,
+    paddingVertical: 4,
+    borderRadius: Themes.RADIUS.pill,
+    overflow: "hidden", // Required for borderRadius to work on <Text> in iOS
   },
 });

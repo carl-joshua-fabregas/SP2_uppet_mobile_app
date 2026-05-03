@@ -7,7 +7,8 @@ import {
   uploadPetPhoto,
   findAll,
   findAllAvailPets,
-  findMyPets,
+  findMyPetsAvailable,
+  findMyPetsAdopted,
   findByFilter,
   findByID,
   updatePet,
@@ -25,7 +26,8 @@ router.post("/:id/photo", uploadPetPhoto);
 // GET Requests
 router.get("/all", findAll);
 router.get("/avail", findAllAvailPets);
-router.get("/myPets", findMyPets);
+router.get("/myPets/pending", findMyPetsAvailable);
+router.get("/myPets/adopted", findMyPetsAdopted);
 
 router.get("/", findByFilter);
 router.get("/:id", findByID);

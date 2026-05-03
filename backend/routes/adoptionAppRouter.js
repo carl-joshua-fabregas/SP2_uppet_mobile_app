@@ -2,7 +2,9 @@ import express from "express";
 const router = express.Router();
 import {
   findMyListAdoptApp,
-  findPetApplicants,
+  findPetPendingApplicants,
+  findPetApprovedApplicants,
+  findPetRejectedApplicants,
   findPetUserApplication,
   createAdoptApp,
   approveAdoption,
@@ -13,7 +15,9 @@ import {
 
 router.get("/myAdoptees", findMyListAdoptApp);
 
-router.get("/:id/applicants", findPetApplicants);
+router.get("/:id/rejected", findPetRejectedApplicants);
+router.get("/:id/approved", findPetApprovedApplicants);
+router.get("/:id/pending", findPetPendingApplicants);
 router.get("/:id/applied", findPetUserApplication);
 router.get("/:id", findAdoptAppByID);
 

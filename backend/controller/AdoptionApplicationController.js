@@ -123,14 +123,30 @@ export async function findMyListAdoptees(req, res) {
     });
   }
 }
-export async function findPetApplicants(req, res) {
+export async function findPetPendingApplicants(req, res) {
   try {
-    console.log("FINDING PET", req.params.id);
+    const { limit, lastId, lastAppUpdate } = req.query;
+    let paginationQuery = {};
+    if (lastId && lastAppUpdate) {
+      paginationQuery = {
+        $or: [
+          { updatedAt: { $lt: lastAppUpdate } },
+          { updatedAt: lastAppUpdate, _id: { $lt: lastId } },
+        ],
+      };
+    }
     const adoptAppList = await AdoptionApplication.find({
       petToAdopt: req.params.id,
+      status: "Pending",
+      ...paginationQuery,
     })
-      .populate("applicant", "firstName MiddleName lastName address")
-      .select("status timeStamp");
+      .populate(
+        "applicant",
+        "firstName middleName lastName address profilePhoto",
+      )
+      .limit(limit ? parseInt(limit) : 10)
+      .sort({ updatedAt: -1, _id: -1 });
+
     if (adoptAppList.length == 0) {
       return res.status(200).json({
         message: "No Applicants found",
@@ -148,7 +164,88 @@ export async function findPetApplicants(req, res) {
     });
   }
 }
+export async function findPetApprovedApplicants(req, res) {
+  try {
+    const { limit, lastId, lastAppUpdate } = req.query;
+    let paginationQuery = {};
+    if (lastId && lastAppUpdate) {
+      paginationQuery = {
+        $or: [
+          { updatedAt: { $lt: lastAppUpdate } },
+          { updatedAt: lastAppUpdate, _id: { $lt: lastId } },
+        ],
+      };
+    }
+    const adoptAppList = await AdoptionApplication.find({
+      petToAdopt: req.params.id,
+      status: "Approved",
+      ...paginationQuery,
+    })
+      .populate(
+        "applicant",
+        "firstName middleName lastName address profilePhoto",
+      )
+      .limit(limit ? parseInt(limit) : 10)
+      .sort({ updatedAt: -1, _id: -1 });
 
+    if (adoptAppList.length == 0) {
+      return res.status(200).json({
+        message: "No Applicants found",
+        body: [],
+      });
+    }
+    return res.status(200).json({
+      message: "Sucessfully obtained your list of adoption applications",
+      body: adoptAppList,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+}
+export async function findPetRejectedApplicants(req, res) {
+  try {
+    const { limit, lastId, lastAppUpdate } = req.query;
+    let paginationQuery = {};
+    if (lastId && lastAppUpdate) {
+      paginationQuery = {
+        $or: [
+          { updatedAt: { $lt: lastAppUpdate } },
+          { updatedAt: lastAppUpdate, _id: { $lt: lastId } },
+        ],
+      };
+    }
+    const adoptAppList = await AdoptionApplication.find({
+      petToAdopt: req.params.id,
+      status: "Rejected",
+      ...paginationQuery,
+    })
+      .populate(
+        "applicant",
+        "firstName middleName lastName address profilePhoto",
+      )
+      .limit(limit ? parseInt(limit) : 10)
+      .sort({ updatedAt: -1, _id: -1 });
+
+    if (adoptAppList.length == 0) {
+      return res.status(200).json({
+        message: "No Applicants found",
+        body: [],
+      });
+    }
+    return res.status(200).json({
+      message: "Sucessfully obtained your list of adoption applications",
+      body: adoptAppList,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+}
 export async function findPetUserApplication(req, res) {
   try {
     console.log("FINDING PET USER ID APPLICATION");
@@ -162,7 +259,7 @@ export async function findPetUserApplication(req, res) {
     // const isOwner =
     //   pet.ownerId.toString() === req.user.id.toString() ? true : false;
     // const status = app ? app.status : false;
-    
+
     return res.status(200).json({
       message: "Successful adoption app inquiry",
       body: app,
@@ -330,7 +427,10 @@ export async function approveAdoption(req, res) {
 
       const updatedList = await AdoptionApplication.find({
         petToAdopt: acceptedApplication.petToAdopt,
-      }).populate("applicant", " firstName middleName lastName address");
+      }).populate(
+        "applicant",
+        " firstName middleName lastName address, profilePic",
+      );
       if (updatedList.length === 0) {
         return res.status(500).json({
           message: "Error Retrieving Updated List",
@@ -393,7 +493,10 @@ export async function rejectApplicant(req, res) {
     );
     const updatedList = await AdoptionApplication.find({
       petToAdopt: rejectApplication.petToAdopt,
-    }).populate("applicant", " firstName address");
+    }).populate(
+      "applicant",
+      " firstName middleName lastName address profilePhoto",
+    );
     if (updatedList.length === 0) {
       return res.status(500).json({
         message: "Error Retrieving Updated List",

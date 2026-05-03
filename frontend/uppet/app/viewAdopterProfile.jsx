@@ -5,6 +5,7 @@ import {
   Text,
   StyleSheet,
   Dimensions,
+  Animated,
 } from "react-native";
 import { useState, useEffect, useRef } from "react";
 import { useRoute } from "@react-navigation/native";
@@ -21,7 +22,14 @@ export default function ViewAdopterProfile() {
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
   );
+
   const screenHeight = Dimensions.get("window").height;
+  const [scrollHeight, setScrollHeight] = useState(0);
+  const [placeholderHeight, setPlaceholderHeight] = useState(70);
+  const [placeholderY, setPlaceholderY] = useState(0);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const overlapAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const [showStickyButton, setShowStickyButton] = useState(false);
   const [ratingSectionLayout, setRatingSectionLayout] = useState({
@@ -39,10 +47,10 @@ export default function ViewAdopterProfile() {
 
   const handleReviewScroll = (event) => {
     const currentOffset = event.nativeEvent.contentOffset.y;
-    const viewportHeight = event.nativeEvent.layoutMeasurement.height;
     //We try to retrieve when the user is 20percent at the bottom of the rating section
     const dynamicThreshold =
-      ratingSectionLayout.y - screenHeight + ratingSectionLayout.height * 0.2;
+      ratingSectionLayout.y - scrollHeight + ratingSectionLayout.height * 0.2;
+    const hasScreenWorthOfScrolling = ratingSectionLayout.height > screenHeight;
 
     if (currentOffset >= dynamicThreshold && reviewsExpanded) {
       handleLoadMoreRating();
@@ -50,11 +58,9 @@ export default function ViewAdopterProfile() {
 
     if (ratingSectionLayout.height > 0 && reviewsExpanded) {
       // NEW: Only show the button if the rating section is taller than the screen
-      const hasScreenWorthOfScrolling =
-        ratingSectionLayout.height > screenHeight;
 
       if (hasScreenWorthOfScrolling) {
-        const stickyThreshold = ratingSectionLayout.y;
+        const stickyThreshold = ratingSectionLayout.y + scrollHeight;
 
         if (currentOffset > stickyThreshold) {
           if (!showStickyButton) setShowStickyButton(true);
@@ -64,22 +70,6 @@ export default function ViewAdopterProfile() {
       } else {
         // Force hide if the section is too short
         if (showStickyButton) setShowStickyButton(false);
-      }
-    }
-
-    if (buttonSectionY > 0 && reviewsExpanded) {
-      const viewportBottom = currentOffset + viewportHeight;
-      const calculatedDelta =
-        viewportBottom > buttonSectionY ? viewportBottom - buttonSectionY : 0;
-
-      // OPTIMIZATION 2: Throttle the state update.
-      // Only re-render if the button needs to move by more than 3 pixels,
-      // OR if it needs to snap cleanly back to 0.
-      if (
-        Math.abs(overlapDelta - calculatedDelta) > 3 ||
-        (calculatedDelta === 0 && overlapDelta !== 0)
-      ) {
-        setOverlapDelta(calculatedDelta);
       }
     }
   };
@@ -234,7 +224,13 @@ export default function ViewAdopterProfile() {
     fetchMyRating();
     fetchRating(null);
   }, [router.params.id]);
-
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: showStickyButton ? 1 : 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  }, [reviewsExpanded]);
   const handleLoadMoreRating = async () => {
     if (!loading && hasMore && !isFetching.current) {
       await fetchRating(cursorID);
@@ -293,7 +289,24 @@ export default function ViewAdopterProfile() {
       contentSize.height - paddingToBottom
     );
   };
+  const bottomOffSet = Themes.SPACING?.lg || 24;
 
+  const collissionPoint =
+    placeholderHeight > 0 && scrollHeight
+      ? placeholderY + placeholderHeight - scrollHeight + bottomOffSet
+      : 999999;
+
+  const pushThreshold = Math.max(
+    collissionPoint,
+    ratingSectionLayout.y + ratingSectionLayout.height,
+  );
+
+  const overlapTranslateY = scrollY.interpolate({
+    inputRange: [0, pushThreshold, pushThreshold + 1],
+    outputRange: [0, 0, -1],
+    extrapolateLeft: "clamp",
+    extrapolateRight: "extend",
+  });
   return (
     <View style={{ flex: 1 }}>
       <ViewRatingModal
@@ -330,6 +343,13 @@ export default function ViewAdopterProfile() {
           onEditRequest={handleEditReviewFromModal}
           handleRatingDelete={handleRatingDelete}
         />
+        {reviewsExpanded && (
+          <View
+            key={`placeholder-${reviewsExpanded}`} // Force re-layout when reviews are expanded
+            onLayout={(e) => setPlaceholderY(e.nativeEvent.layout.y)}
+            style={{ height: placeholderHeight, width: "100%" }}
+          />
+        )}
         <View
           style={styles.buttonSection}
           onLayout={(e) => setButtonSectionY(e.nativeEvent.layout.y)}
@@ -363,22 +383,33 @@ export default function ViewAdopterProfile() {
       </ScrollView>
       {/* STICKY BUTTON COMPONENT */}
       {showStickyButton && (
-        <View
+        <Animated.View
           style={[
             styles.stickyWrapper,
-            { bottom: (Themes.SPACING?.lg || 24) + overlapDelta },
+            {
+              bottom: Themes.SPACING?.lg || 24,
+              opacity: fadeAnim,
+              transform: [{ translateY: overlapTranslateY }], // <--- The magic push
+            },
           ]}
           pointerEvents="box-none"
         >
           <TouchableOpacity
             style={styles.stickyButton}
+            onLayout={(e) =>
+              setPlaceholderHeight(
+                e.nativeEvent.layout.height + Themes.SPACING?.xs || 8,
+              )
+            }
             onPress={() => {
+              fadeAnim.setValue(0);
+              setShowStickyButton(false);
               setReviewsExpanded(false);
             }}
           >
             <Text style={styles.stickyButtonText}>Quick Action</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       )}
     </View>
   );

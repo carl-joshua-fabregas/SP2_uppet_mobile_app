@@ -9,16 +9,10 @@ import {
 } from "react-native";
 import * as Themes from "../../../assets/themes/themes";
 import { launchImageLibrary } from "react-native-image-picker";
-import { Ionicons } from "@expo/vector-icons";
-
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
 
-export default function PCStep3Component({
-  petData,
-  setPetData,
-  errors,
-  renderFooter,
-}) {
+export default function PCStep3Component({ petData, setPetData, errors }) {
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
 
@@ -29,6 +23,7 @@ export default function PCStep3Component({
     }
     update("photos", filtered);
   };
+
   const renderImages = ({ item }) => {
     return (
       <View style={styles.photoCard}>
@@ -39,8 +34,8 @@ export default function PCStep3Component({
           <Ionicons
             name="trash-outline"
             size={28}
-            color={"rgba(255, 255, 255, 0.73)"}
-          ></Ionicons>
+            color={"rgba(255, 255, 255, 0.9)"}
+          />
         </TouchableOpacity>
         <Image source={{ uri: item.url }} style={styles.photoPreview} />
         <View style={styles.cardContent}>
@@ -64,8 +59,8 @@ export default function PCStep3Component({
               color={
                 item.isProfile ? Themes.COLORS.textDark : Themes.COLORS.primary
               }
-              size={13}
-            ></Ionicons>
+              size={14}
+            />
             <Text
               style={[styles.mainText, item.isProfile && styles.mainTextActive]}
             >
@@ -78,8 +73,6 @@ export default function PCStep3Component({
   };
 
   const handleAddPhoto = () => {
-    console.log("HANDLE ADD PHOTO CALLED");
-
     launchImageLibrary(
       {
         mediaType: "photo",
@@ -87,11 +80,7 @@ export default function PCStep3Component({
         selectionLimit: 0,
       },
       async (response) => {
-        if (response.didCancel) {
-          console.log("GOOD THING I LIKE MY FRIENDS CANCELLED");
-        } else if (response.errorCode) {
-          console.log("ERROR IN IMAGE PICKING", response.errorCode);
-        } else {
+        if (!response.didCancel && !response.errorCode) {
           const newPhotos = response.assets.map((asset, index) => ({
             url: asset.uri,
             name: asset.fileName,
@@ -101,9 +90,8 @@ export default function PCStep3Component({
             id: `pets/${petData._id ?? Date.now()}/${asset.fileSize}_${asset.fileName}`,
             key: `pets/${petData._id ?? Date.now()}/${asset.fileSize}_${asset.fileName}`,
             isProfile:
-              petData.photos.length === 0 && index === 0 ? true : false, // Set first photo as profile by default
+              petData.photos.length === 0 && index === 0 ? true : false,
           }));
-          // console.log("This are the new Photos ", newPhotos);
           update("photos", [...petData.photos, ...newPhotos]);
         }
       },
@@ -126,51 +114,67 @@ export default function PCStep3Component({
   };
 
   return (
-    <FlatList
-      style={styles.container}
-      data={petData.photos}
-      renderItem={renderImages}
-      keyExtractor={(item, index) => item._id || item.key}
-      contentContainerStyle={styles.scrollPadding}
-      showsVerticalScrollIndicator={false}
-      ListHeaderComponent={
-        <View>
-          <TouchableOpacity onPress={handleAddPhoto} style={styles.uploadArea}>
-            <Ionicons
-              name={"image-outline"}
-              color={Themes.COLORS.primary}
-              size={28}
-            ></Ionicons>
-            <Text style={styles.uploadTitle}>Add Pet Photos</Text>
-            <Text style={styles.uploadSub}>Show off their best angles!</Text>
-          </TouchableOpacity>
-          {errors.photos && (
-            <Text style={styles.errorText}>{errors.photos}</Text>
-          )}
+    <View style={styles.container}>
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="image-multiple"
+            size={20}
+            color={Themes.COLORS.primary}
+          />
+          <Text style={styles.sectionTitle}>Pet Photos</Text>
         </View>
-      }
-      ListFooterComponent={() => renderFooter()}
-    />
-    // <View style={styles.container}>
-    //   <TouchableOpacity onPress={handleAddPhoto} style={styles.nextButton}>
-    //     <Text style={styles.nextButtonText}>Add Photos</Text>
-    //   </TouchableOpacity>
-    //   {errors.photos && <Text style={styles.errorText}>{errors.photos}</Text>}
-    //   <FlatList
-    //     data={petData.photos}
-    //     renderItem={renderImages}
-    //     keyExtractor={(item) => item.id}
-    //   />
-    //   <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-    //     <Text style={styles.nextButtonText}>Next</Text>
-    //   </TouchableOpacity>
-    // </View>
+
+        <TouchableOpacity onPress={handleAddPhoto} style={styles.uploadArea}>
+          <Ionicons
+            name={"image-outline"}
+            color={Themes.COLORS.primary}
+            size={32}
+          />
+          <Text style={styles.uploadTitle}>Add Pet Photos</Text>
+          <Text style={styles.uploadSub}>Show off their best angles!</Text>
+        </TouchableOpacity>
+        {errors.photos && <Text style={styles.errorText}>{errors.photos}</Text>}
+      </View>
+
+      {/* 🌟 Map through photos instead of FlatList */}
+      {petData.photos.map((item, index) => (
+        <View key={item._id || item.key || index}>
+          {renderImages({ item })}
+        </View>
+      ))}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Themes.COLORS.background },
-  scrollPadding: { paddingHorizontal: 24, paddingTop: 10, paddingBottom: 100 },
+
+  // App-standard headers and cards applied to the top upload area
+  sectionCard: {
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: Themes.RADIUS.md,
+    padding: Themes.SPACING.md,
+    marginBottom: Themes.SPACING.md,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Themes.SPACING.sm,
+    paddingBottom: Themes.SPACING.xs,
+  },
+  sectionTitle: {
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+    color: Themes.COLORS.primary,
+    marginLeft: Themes.SPACING.sm,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
 
   // UPLOAD DASHED BOX
   uploadArea: {
@@ -178,35 +182,35 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Themes.COLORS.primary,
     borderStyle: "dashed",
-    borderRadius: 20,
+    borderRadius: Themes.RADIUS.md,
     backgroundColor: "#F8FFF8",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 25,
+    marginVertical: Themes.SPACING.sm,
   },
   uploadTitle: {
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
-    fontSize: 18,
+    fontSize: 16,
     color: Themes.COLORS.primary,
     marginTop: 8,
   },
   uploadSub: {
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    fontSize: 12,
-    color: Themes.COLORS.textFaded,
+    fontSize: 13,
+    color: Themes.COLORS.textMuted,
   },
 
-  // PHOTO CARDS
+  // PHOTO CARDS - Updated to match app card standards
   photoCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 25,
-    marginBottom: 25,
-    elevation: 4,
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: Themes.RADIUS.md,
+    marginBottom: Themes.SPACING.md,
+    elevation: 2,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
     overflow: "hidden",
+    marginHorizontal: 2, // Helps prevent clipping the drop shadow
   },
   photoPreview: { width: "100%", height: 250 },
   deleteIcon: {
@@ -214,16 +218,19 @@ const styles = StyleSheet.create({
     top: Themes.SPACING.sm,
     right: Themes.SPACING.sm,
     zIndex: 10,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: 20,
+    padding: 4,
   },
 
-  cardContent: { padding: 18 },
+  cardContent: { padding: Themes.SPACING.md },
   captionInput: {
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    fontSize: 14,
+    fontSize: Themes.TYPOGRAPHY.body.fontSize,
     color: "#333",
     borderBottomWidth: 1,
     borderBottomColor: "#EEE",
-    paddingBottom: 10,
+    paddingBottom: 8,
     marginBottom: 15,
   },
 
@@ -246,237 +253,11 @@ const styles = StyleSheet.create({
   },
   mainTextActive: { color: "#FFF", fontWeight: "bold" },
 
-  // NAVIGATION
-  buttonContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between", // 👈 Spaces them out
-    marginTop: 30,
-    paddingBottom: 20, // 👈 Ensures it's not hugging the bottom of the screen
-  },
-  backButton: {
-    paddingVertical: Themes.SPACING.md,
-    paddingHorizontal: 25,
-    borderRadius: Themes.RADIUS.md,
-    backgroundColor: "#F5F5F5", // 👈 Give it a light background to look like a button
-    marginRight: 10,
-    elevation: 3,
-  },
-  nextButton: {
-    flex: 1, // 👈 Takes up the remaining width
-    backgroundColor: Themes.COLORS.primary,
-    paddingVertical: Themes.SPACING.md,
-    borderRadius: Themes.RADIUS.md,
-    alignItems: "center",
-    elevation: 3,
-  },
-  backButtonText: {
-    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    color: Themes.COLORS.textMuted, // A light gray
-    fontSize: 16,
-  },
-  nextButtonText: {
-    color: "#FFF",
-    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
-    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
-  },
   errorText: {
     color: "#FF6B6B",
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
     fontSize: 13,
     textAlign: "center",
-    marginBottom: 15,
+    marginTop: 5,
   },
 });
-
-// const styles = StyleSheet.create({
-//   PCStep1ComponentContainer: {
-//     flex: 1,
-//     backgroundColor: "#FFF9F5",
-//   },
-//   label: {
-//     fontSize: 12,
-//     fontWeight: 300,
-//     marginBottom: 4,
-//     letterSpacing: 0.1,
-//   },
-//   input: {
-//     backgroundColor: "#fff",
-//     borderRadius: 8,
-//     padding: 10,
-//     marginBottom: 12,
-//     borderRadius: 16,
-//     fontSize: 14,
-//     borderWidth: 1.5,
-//     borderColor: "#FDF2E9",
-//   },
-//   bioTextArea: {
-//     minHeight: 80,
-//     textAlignVertical: "top",
-//     multiline: true,
-//   },
-//   errorText: {
-//     color: "red",
-//     marginBottom: 8,
-//     fontSize: 11,
-//     letterSpacing: 0.1,
-//     marginTop: -8,
-//   },
-//   inputError: {
-//     borderColor: "red",
-//   },
-//   field: {
-//     marginBottom: 10,
-//   },
-//   nextButton: {
-//     backgroundColor: "#efb07d",
-//     paddingVertical: 12,
-//     borderRadius: 16,
-//   },
-//   nextButtonText: {
-//     color: "#fff",
-//     fontSize: 16,
-//     fontWeight: "600",
-//     textAlign: "center",
-//   },
-// });
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#FFF9F5",
-//     padding: 16,
-//   },
-//   addButton: {
-//     backgroundColor: "#fff",
-//     borderWidth: 1.5,
-//     borderColor: "#efb07d",
-//     padding: 16,
-//     borderRadius: 16,
-//     alignItems: "center",
-//     marginBottom: 16,
-//   },
-//   addButtonText: {
-//     color: "#efb07d",
-//     fontWeight: "600",
-//     fontSize: 16,
-//   },
-//   listContainer: {
-//     paddingBottom: 20,
-//   },
-//   errorText: {
-//     color: "red",
-//     marginBottom: 12,
-//     fontSize: 12,
-//     textAlign: "center",
-//   },
-//   nextButton: {
-//     backgroundColor: "#efb07d",
-//     paddingVertical: 14,
-//     borderRadius: 16,
-//     marginTop: 10,
-//   },
-//   nextButtonText: {
-//     color: "#fff",
-//     fontSize: 16,
-//     fontWeight: "600",
-//     textAlign: "center",
-//   },
-
-//   // Photo Card Styles
-//   image: {
-//     backgroundColor: "white",
-//     borderRadius: 16,
-//     marginBottom: 16,
-//     overflow: "hidden",
-//     borderWidth: 1.5,
-//     borderColor: "#FDF2E9",
-//   },
-//   photoPreview: {
-//     width: "100%",
-//     height: 220,
-//     backgroundColor: "#eaeaea", // Placeholder color while loading
-//   },
-//   controls: {
-//     padding: 14,
-//   },
-//   captionInput: {
-//     borderWidth: 1.5,
-//     borderColor: "#FDF2E9",
-//     borderRadius: 12,
-//     padding: 10,
-//     marginBottom: 12,
-//     backgroundColor: "#fff",
-//     fontSize: 14,
-//   },
-//   buttonRow: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//   },
-//   badge: {
-//     paddingVertical: 8,
-//     paddingHorizontal: 14,
-//     borderRadius: 20,
-//   },
-//   activeBadge: {
-//     backgroundColor: "#efb07d",
-//   },
-//   inactiveBadge: {
-//     backgroundColor: "#FDF2E9",
-//   },
-//   badgeText: {
-//     fontWeight: "600",
-//     color: "#333",
-//     fontSize: 12,
-//   },
-//   removeText: {
-//     color: "red",
-//     fontWeight: "600",
-//     fontSize: 13,
-//   },
-// });
-
-// try {
-//                   await Promise.all(
-//                     newPhotos.map(async (photo) => {
-//                       const presignResponse = await api.post(
-//                         "api/pet/presignUploadURL",
-//                         {
-//                           fileName: photo.name,
-//                           fileType: photo.type,
-//                           petId: petId,
-//                           // uri: photo.uri,
-//                           // name: photo.name,
-//                         },
-//                       );
-//                       const { url, key } = presignResponse.data.body;
-//                       const fetchImage = await fetch(photo.uri);
-//                       console.log("FETCHED IMAGE FOR UPLOAD:", fetchImage);
-//                       const blob = await fetchImage.blob();
-//                       console.log("blob", blob);
-
-//                       // await api.put(url, blob,
-//                       //   { headers: { "Content-Type": photo.type } }
-//                       // );
-//                       await fetch(url, {
-//                         method: "PUT",
-//                         body: blob,
-//                         contentType: photo.type,
-//                       });
-//                       // "x-amz-meta-uri": photo.uri, "x-amz-meta-name": photo.name
-//                       console.log("UPLOADED PHOTO TO S3 WITH KEY:", key);
-//                       console.log("NOW NOTIFYING BACKEND ABOUT THE UPLOADED PHOTO");
-
-//                       await api.post(`api/pet/${petId}/photo`, {
-//                         key: key,
-//                         caption: caption,
-//                         isProfile: 1,
-//                       });
-//                       console.log("UPLOAD SUCCESSFUL FOR PHOTO WITH KEY:", key);
-//                     }),
-//                   );
-//                   setPhotos((prev) => [...prev, ...newPhotos]);
-//                 } catch (error) {
-//                   console.log("ERROR IN UPLOADING PHOTO", error);
-//                 }
-//               }

@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Themes from "../../../assets/themes/themes";
+
 export default function PCStep5Component({ petData, onFinish }) {
   return (
     <View style={styles.container}>
@@ -21,9 +22,7 @@ export default function PCStep5Component({ petData, onFinish }) {
       {/* Final Action Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          onPress={() => {
-            onFinish;
-          }}
+          onPress={() => onFinish(petData)}
           style={styles.finishButton}
         >
           <Text style={styles.finishButtonText}>View My Adoptees</Text>

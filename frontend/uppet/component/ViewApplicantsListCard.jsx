@@ -1,14 +1,8 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  Dimensions,
-  TouchableOpacity,
-} from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import React from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
-const width = Dimensions.get("window").width;
 
 export default function ViewApplicantsCard({
   adoptionApp,
@@ -16,15 +10,10 @@ export default function ViewApplicantsCard({
   handleReject,
 }) {
   const navigator = useNavigation();
-  console.log("This is the adoption app in the card", adoptionApp);
   const applicant = adoptionApp.applicant;
 
   const onViewApplicantPress = () => {
-    console.log("View Applicant is pressed ", applicant);
     navigator.navigate("viewAdopterProfile", { id: applicant._id });
-  };
-  const onMessagePress = () => {
-    console.log("Message is pressed");
   };
 
   const Badge = ({ status }) => {
@@ -47,83 +36,129 @@ export default function ViewApplicantsCard({
         textStyle = styles.badgeTextPending;
     }
     return (
-      <View style={[styles.badgeContainer, badgeStyle]}>
-        <Text style={[styles.badgeText, textStyle]}>{status}</Text>
+      <View style={[styles.statusBadge, badgeStyle]}>
+        <Text style={[styles.statusText, textStyle]}>{status}</Text>
       </View>
     );
   };
+
   return (
     <TouchableOpacity
-      style={styles.adopterCardContainer}
+      style={styles.cardContainer}
       onPress={onViewApplicantPress}
+      activeOpacity={0.8}
     >
-      <View style={styles.adopterCardRow}>
-        <Image
-          source={require("../assets/images/doggoe.jpg")}
-          style={styles.profileImage}
-        />
-        <View style={styles.textContainer}>
-          <Text style={styles.applicantName}>
+      {/* Applicant Thumbnail */}
+      <Image
+        source={
+          applicant.profilePicture
+            ? { uri: applicant.profilePicture }
+            : require("../assets/images/doggoe.jpg")
+        }
+        style={styles.profileImage}
+      />
+
+      <View style={styles.infoContainer}>
+        <View style={styles.headerRow}>
+          <Text style={styles.applicantName} numberOfLines={1}>
             {applicant.firstName}{" "}
             {applicant.middleName ? applicant.middleName + " " : ""}
             {applicant.lastName}
           </Text>
+
+          {/* Status Badge */}
+          <Badge status={adoptionApp.status} />
+        </View>
+
+        <View style={styles.iconRow}>
+          <MaterialCommunityIcons
+            name="map-marker-outline"
+            size={14}
+            color={Themes.COLORS.textFaded || "#6B7280"}
+          />
           <Text style={styles.detailsText} numberOfLines={1}>
-            📍{applicant.address}
-          </Text>
-          <Text style={styles.detailsText} numberOfLines={1}>
-            📅
-            {adoptionApp.timeStamp
-              ? new Date(adoptionApp.timeStamp).toLocaleDateString()
-              : "N/A"}
+            {" "}
+            {applicant.address}
           </Text>
         </View>
-        <View style={styles.badgeContainer}>
-          <Badge status={adoptionApp.status} />
+
+        <View style={styles.footerRow}>
+          <View style={styles.statsContainer}>
+            <MaterialCommunityIcons
+              name="calendar-blank-outline"
+              size={14}
+              color={Themes.COLORS.primary}
+            />
+            <Text style={styles.statsText}>
+              {" "}
+              Applied on:{" "}
+              {adoptionApp.updatedAt
+                ? new Date(adoptionApp.updatedAt).toLocaleDateString()
+                : "N/A"}
+            </Text>
+          </View>
+          {/* The chevron arrow was intentionally removed here */}
         </View>
       </View>
     </TouchableOpacity>
   );
 }
+
 const styles = StyleSheet.create({
-  listContents: {
-    paddingHorizontal: Themes.SPACING.md,
-    paddingBottom: Themes.SPACING.lg,
-  },
-  adopterCardContainer: {
+  cardContainer: {
+    flexDirection: "row",
     backgroundColor: Themes.COLORS.card,
     borderRadius: Themes.RADIUS.md,
-    padding: Themes.SPACING.md,
-    marginTop: Themes.SPACING.sm, // Vertical space between cards
-    // Subtle shadow (Fredoka friendly)
     marginBottom: Themes.SPACING.sm,
-    elevation: 2,
+    padding: Themes.SPACING.md,
+    // Shadow for iOS
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
+    // Elevation for Android
+    elevation: 2,
   },
-  adopterCardRow: {
+  profileImage: {
+    width: 85,
+    height: 85,
+    borderRadius: 12,
+    backgroundColor: "#F5F5F5",
+  },
+  infoContainer: {
+    flex: 1,
+    marginLeft: Themes.SPACING.md,
+    justifyContent: "space-between",
+    paddingVertical: 2,
+  },
+  headerRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
   },
   applicantName: {
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
-    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+    fontSize: Themes.TYPOGRAPHY.subheading.fontSize,
     color: Themes.TYPOGRAPHY.heading.color,
+    flex: 1,
+    marginRight: Themes.SPACING.sm,
   },
-  badgeContainer: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Themes.RADIUS.pill,
-    minWidth: 70,
-    alignItems: "center",
+  statusBadge: {
+    paddingHorizontal: Themes.SPACING.sm,
+    paddingVertical: Themes.SPACING.xs,
+    borderRadius: Themes.SPACING.sm,
+  },
+  statusText: {
+    fontSize: Themes.TYPOGRAPHY.badgeText.fontSize,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   badgePending: {
     backgroundColor: "#FFF4E0",
   },
   badgeApproved: {
-    backgroundColor: Themes.COLORS.badge,
+    backgroundColor: Themes.COLORS.badge || "#D1FAE5",
   },
   badgeRejected: {
     backgroundColor: "#FEE2E2",
@@ -132,66 +167,34 @@ const styles = StyleSheet.create({
     color: "#D97706",
   },
   badgeTextApproved: {
-    color: Themes.COLORS.badgeText,
+    color: Themes.COLORS.badgeText || "#065F46",
   },
   badgeTextRejected: {
     color: "#991B1B",
   },
-  badgeText: {
-    fontFamily: Themes.TYPOGRAPHY.badgeText.fontFamily,
-    fontSize: Themes.TYPOGRAPHY.badgeText.fontSize,
-  },
-  profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Themes.COLORS.badge, // Placeholder background
-    overflow: "hidden",
-  },
-  textContainer: {
-    flex: 1,
-    paddingHorizontal: Themes.SPACING.md,
+  iconRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: -2,
   },
   detailsText: {
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
     fontSize: Themes.TYPOGRAPHY.body.fontSize,
-    color: Themes.COLORS.textDark,
-    marginTop: Themes.SPACING.xs,
+    color: Themes.COLORS.textFaded || "#6B7280",
+  },
+  footerRow: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    marginTop: Themes.SPACING.sm,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statsText: {
+    fontSize: Themes.TYPOGRAPHY.label.fontSize,
+    color: Themes.TYPOGRAPHY.label.color,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
   },
 });
-
-//  <View style={styles.cardContainer}>
-//       <View style={styles.TopDetailsContainer}>
-//         <View style={styles.profileImageContainer}>
-//           <Image
-//             source={require("../assets/images/doggoe.jpg")}
-//             style={styles.profileImageStyle}
-//             resizeMode="cover"
-//           ></Image>
-//         </View>
-//         <View style={styles.detailsContainer}>
-//           <Text>Name: {applicant.firstName}</Text>
-//           <Text>Address: {applicant.address}</Text>
-//         </View>
-//       </View>
-//       <TouchableOpacity onPress={onViewApplicantPress}>
-//         <Text>View Applicants</Text>
-//       </TouchableOpacity>
-//       <TouchableOpacity onPress={onMessagePress}>
-//         <Text>Message</Text>
-//       </TouchableOpacity>
-//       <TouchableOpacity
-//         onPress={handleAccept}
-//         disabled={!isPending}
-//         style={[{ backgroundColor: acceptColor }]}
-//       >
-//         <Text>{isApproved ? "Approved" : "Accept"}</Text>
-//       </TouchableOpacity>
-//       <TouchableOpacity
-//         onPress={handleReject}
-//         disabled={!isPending}
-//         style={[{ backgroundColor: declineColor }]}
-//       >
-//         <Text>{isRejected ? "Rejected" : "Decline"} </Text>
-//       </TouchableOpacity>
-//     </View>

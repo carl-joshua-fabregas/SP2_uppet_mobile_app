@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
@@ -18,6 +19,7 @@ export default function PetModal({ pet, onClose }) {
   const isOwner = user._id === pet.ownerId;
 
   const petProfilePhoto = pet?.photos?.find((photo) => photo.isProfile);
+
   return (
     <Modal
       visible={!!pet}
@@ -43,12 +45,61 @@ export default function PetModal({ pet, onClose }) {
             <View style={styles.petDetailsContainer}>
               <Text style={styles.petName}>{pet.name}</Text>
               <Text style={styles.petBreed}>
+                {pet.species ? `${pet.species} • ` : ""}
                 {pet.breed} • {pet.sex}
               </Text>
-              <View style={styles.badgeRow}>
-                <View style={styles.badgeContainer}>
-                  <Text style={styles.badgeText}>{pet.age} years old</Text>
+
+              {/* Stats Grid matching PetProfileCard */}
+              <View style={styles.statsGrid}>
+                <View style={styles.statItem}>
+                  <View style={styles.iconLabelRow}>
+                    <MaterialCommunityIcons
+                      name="calendar-clock"
+                      size={14}
+                      color={Themes.COLORS.textMuted}
+                    />
+                    <Text style={styles.statLabel}>Age</Text>
+                  </View>
+                  <Text style={styles.statValue}>{pet.age} yrs</Text>
                 </View>
+
+                {pet.size ? (
+                  <View style={styles.statItem}>
+                    <View style={styles.iconLabelRow}>
+                      <MaterialCommunityIcons
+                        name="ruler"
+                        size={14}
+                        color={Themes.COLORS.textMuted}
+                      />
+                      <Text style={styles.statLabel}>Size</Text>
+                    </View>
+                    <Text style={styles.statValue}>{pet.size}</Text>
+                  </View>
+                ) : null}
+
+                {pet.weight ? (
+                  <View style={styles.statItem}>
+                    <View style={styles.iconLabelRow}>
+                      <MaterialCommunityIcons
+                        name="weight-kilogram"
+                        size={14}
+                        color={Themes.COLORS.textMuted}
+                      />
+                      <Text style={styles.statLabel}>Weight</Text>
+                    </View>
+                    <Text style={styles.statValue}>{pet.weight}kg</Text>
+                  </View>
+                ) : null}
+              </View>
+
+              {/* Section Header matching PetProfileCard */}
+              <View style={styles.sectionHeaderRow}>
+                <MaterialCommunityIcons
+                  name="card-text-outline"
+                  size={18}
+                  color={Themes.COLORS.primary}
+                />
+                <Text style={styles.sectionTitle}>Bio</Text>
               </View>
               <Text style={styles.petBio}>{pet.bio}</Text>
             </View>
@@ -65,7 +116,7 @@ export default function PetModal({ pet, onClose }) {
               }}
             >
               <Text style={styles.meetButtonText}>
-                {isOwner ? `Review Adoptee Profile` : `Meet ${pet.name}!`}{" "}
+                {isOwner ? `Review Adoptee Profile` : `Meet ${pet.name}!`}
               </Text>
             </TouchableOpacity>
           </View>
@@ -93,53 +144,77 @@ const styles = StyleSheet.create({
   imageStyle: {
     resizeMode: "cover",
     width: "100%",
-    height: 220,
+    height: 260, // Slightly taller to match header image feel
   },
   petDetailsContainer: {
-    padding: Themes.SPACING.md,
+    padding: Themes.SPACING.lg, // increased padding to match profile
   },
   petName: {
-    fontSize: Themes.TYPOGRAPHY.heading.fontSize,
+    fontSize: 32, // Matched profile font size
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     color: Themes.TYPOGRAPHY.heading.color,
-    marginBottom: Themes.SPACING.xs,
+    marginBottom: 4,
+  },
+  petBreed: {
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+    fontFamily: Themes.TYPOGRAPHY.subsubheading.fontFamily,
+    color: Themes.COLORS.primary,
+    marginBottom: Themes.SPACING.md,
+  },
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: Themes.SPACING.lg,
+    width: "100%",
+  },
+  statItem: {
+    width: "31%", // slightly wider to ensure text fits
+    backgroundColor: Themes.COLORS.soft,
+    padding: Themes.SPACING.sm,
+    borderRadius: Themes.RADIUS.sm,
+    alignItems: "center",
+  },
+  iconLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontFamily: Themes.TYPOGRAPHY.label.fontFamily,
+    color: Themes.COLORS.textMuted,
+  },
+  statValue: {
+    fontSize: 14,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    color: Themes.COLORS.textDark,
+    marginTop: 4,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Themes.SPACING.sm,
+    gap: 6,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    color: Themes.COLORS.primary,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
   petBio: {
     fontSize: Themes.TYPOGRAPHY.body.fontSize,
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    color: Themes.TYPOGRAPHY.body.color,
-    lineHeight: 18,
-  },
-  badgeRow: {
-    flexDirection: "row",
-    marginBottom: Themes.SPACING.sm,
-    marginTop: Themes.SPACING.xs,
-    gap: Themes.SPACING.sm,
-    flexWrap: "wrap",
-  },
-  badgeText: {
-    fontSize: Themes.TYPOGRAPHY.badgeText.fontSize,
-    fontFamily: Themes.TYPOGRAPHY.badgeText.fontFamily,
-    color: Themes.TYPOGRAPHY.badgeText.color,
-  },
-  badgeContainer: {
-    backgroundColor: Themes.COLORS.badge,
-    borderColor: Themes.COLORS.soft,
-    borderWidth: 1,
-    borderRadius: Themes.RADIUS.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  petBreed: {
-    fontSize: Themes.TYPOGRAPHY.body.fontSize,
-    fontFamily: Themes.TYPOGRAPHY.subsubheading.fontFamily,
-    color: Themes.TYPOGRAPHY.subsubheading.color,
+    color: Themes.COLORS.textDark,
+    lineHeight: 22,
   },
   closeButton: {
     position: "absolute",
     top: Themes.SPACING.md,
     right: Themes.SPACING.md,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
     width: 32,
     height: 32,
     borderRadius: Themes.RADIUS.pill,
@@ -151,8 +226,8 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: Themes.COLORS.textLight,
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
-    lineHeight: 22, // Center the "x" vertically
-    transform: [{ translateY: -3 }], // Adjust vertical position if needed
+    lineHeight: 22,
+    transform: [{ translateY: -3 }],
   },
   meetButtonContainer: {
     padding: Themes.SPACING.md,
@@ -169,10 +244,7 @@ const styles = StyleSheet.create({
   },
   meetButtonText: {
     color: "#fff",
-
     fontSize: Themes.TYPOGRAPHY.subheading.fontSize,
     fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
   },
 });
-
-// backgroundColor: "rgba(29, 59, 46, 0.7)",

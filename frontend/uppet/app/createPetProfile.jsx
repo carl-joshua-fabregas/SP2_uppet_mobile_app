@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
@@ -17,11 +18,14 @@ import PCStep4Component from "../component/PetCreationSteps/steps/PCStep4Compone
 import PCStep5Component from "../component/PetCreationSteps/steps/PCStep5Component";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
-
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { useState } from "react";
 export default function CreateProfile() {
   const router = useRoute();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight() || 0;
   const { editPetData } = router.params ?? {};
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -321,27 +325,7 @@ export default function CreateProfile() {
       console.log("OKAY NA NA UPLOAD NA TEH");
     }
   };
-  const renderFooter = () => {
-    return (
-      <View style={styles.inlineFooterContainer}>
-        {currentStep > 0 && (
-          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-            <Text style={styles.backButtonText}>Back</Text>
-          </TouchableOpacity>
-        )}
 
-        <TouchableOpacity
-          style={[styles.nextButton, uploading && styles.disabledButton]}
-          onPress={handleNext}
-          disabled={uploading}
-        >
-          <Text style={styles.nextButtonText}>
-            {currentStep === STEPS.length - 2 ? "Finish & Save" : "Next"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
   const onFinish = (petData) => {
     console.log("FINISHED CREATING PET");
     navigation.goBack();
@@ -350,37 +334,21 @@ export default function CreateProfile() {
     switch (currentStep) {
       case 0:
         return (
-          <PCStep1Component
-            petData={pet}
-            setPetData={setPet}
-            errors={errors}
-            renderFooter={renderFooter}
-          />
+          <PCStep1Component petData={pet} setPetData={setPet} errors={errors} />
         );
       case 1:
         return (
-          <PCStep2Component
-            petData={pet}
-            setPetData={setPet}
-            errors={errors}
-            renderFooter={renderFooter}
-          />
+          <PCStep2Component petData={pet} setPetData={setPet} errors={errors} />
         );
       case 2:
         return (
-          <PCStep3Component
-            petData={pet}
-            setPetData={setPet}
-            errors={errors}
-            renderFooter={renderFooter}
-          />
+          <PCStep3Component petData={pet} setPetData={setPet} errors={errors} />
         );
       case 3:
         return (
           <PCStep4Component
             petData={pet}
             uploading={uploading}
-            renderFooter={renderFooter}
           ></PCStep4Component>
         );
       case 4:
@@ -399,19 +367,56 @@ export default function CreateProfile() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
+      keyboardVerticalOffset={headerHeight}
     >
       <View style={styles.createProfileContainer}>
         <PCProgressTracker currentStep={currentStep} STEPS={STEPS} />
+
         <View style={styles.headerContainer}>
           <Text style={styles.stepHeaderCount}>
-            Step{currentStep + 1} of {STEPS.length}
+            Step {currentStep + 1} of {STEPS.length}
           </Text>
-          <Text style={styles.stepHeaderTitle}>
-            {" "}
-            {STEPS[currentStep].label}
-          </Text>
+          <Text style={styles.stepHeaderTitle}>{STEPS[currentStep].label}</Text>
         </View>
-        {renderStep()}
+
+        {/* 1. ADD THE SCROLLVIEW HERE IN THE PARENT */}
+        <ScrollView
+          contentContainerStyle={styles.scrollContet}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderStep()}
+
+          {/* 2. PUT BUTTONS DIRECTLY IN PARENT (Like APC does) */}
+          {currentStep < STEPS.length - 1 && (
+            <View
+              style={[
+                styles.buttonContainer,
+                {
+                  paddingBottom:
+                    Platform.OS === "ios" ? insets.bottom : Themes.SPACING.md,
+                },
+              ]}
+            >
+              {currentStep > 0 && (
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={handleBack}
+                >
+                  <Text style={styles.backButtonText}>Back</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[styles.nextButton, uploading && styles.disabledButton]}
+                onPress={handleNext}
+                disabled={uploading}
+              >
+                <Text style={styles.nextButtonText}>
+                  {currentStep === STEPS.length - 2 ? "Finish & Save" : "Next"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </ScrollView>
       </View>
     </KeyboardAvoidingView>
   );
@@ -444,7 +449,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between", // 👈 Spaces them out
     marginTop: 30,
-    paddingBottom: 20, // 👈 Ensures it's not hugging the bottom of the screen
   },
   backButton: {
     paddingVertical: Themes.SPACING.md,
@@ -472,13 +476,7 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
   },
-  inlineFooterContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 30, // Pushes the buttons down from the last input
-    marginBottom: 20,
-    width: "100%",
-  },
+  scrollContet: { flexGrow: 1, padding: Themes.SPACING.md, paddingBottom: 50 },
 });
 
 // const handleImageRead = (petId, caption) => {

@@ -1,7 +1,6 @@
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
   Text,
   ActivityIndicator,
   Modal,
@@ -10,14 +9,9 @@ import {
 import PetProfileCardViewMore from "../../PetProfileCard";
 import * as Themes from "../../../assets/themes/themes";
 
-export default function PCStep4Component({
-  petData,
-  onCreate,
-  uploading,
-  renderFooter,
-}) {
+export default function PCStep4Component({ petData, uploading }) {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <Modal transparent={true} visible={uploading} animationType="fade">
         <View style={styles.modalBackground}>
           <View style={styles.activityIndicatorWrapper}>
@@ -26,58 +20,34 @@ export default function PCStep4Component({
               color={Themes.COLORS.primary}
               style={{ marginBottom: 15 }}
             />
-            <Text style={styles.loadingText}>Creating Pet Profile...</Text>
-            <Text style={styles.subLoadingText}>Uploading photos to cloud</Text>
+            <Text style={styles.loadingText}>Saving Pet Profile...</Text>
+            <Text style={styles.subLoadingText}>Uploading data to cloud</Text>
           </View>
         </View>
       </Modal>
-      <ScrollView style={{ flex: 1 }}>
-        <PetProfileCardViewMore pet={petData}></PetProfileCardViewMore>
-        {renderFooter()}
-      </ScrollView>
+
+      <PetProfileCardViewMore pet={petData} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  buttonContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between", // 👈 Spaces them out
-    marginTop: 30,
-    paddingBottom: 20, // 👈 Ensures it's not hugging the bottom of the screen
+  container: {
+    flex: 1,
+    backgroundColor: Themes.COLORS.background,
   },
-  backButton: {
-    paddingVertical: Themes.SPACING.md,
-    paddingHorizontal: 25,
-    borderRadius: Themes.RADIUS.md,
-    backgroundColor: "#F5F5F5", // 👈 Give it a light background to look like a button
-    marginRight: 10,
-    elevation: 3,
+  scrollContainer: {
+    flex: 1,
   },
-  nextButton: {
-    flex: 1, // 👈 Takes up the remaining width
-    backgroundColor: Themes.COLORS.primary,
-    paddingVertical: Themes.SPACING.md,
-    borderRadius: Themes.RADIUS.md,
-    alignItems: "center",
-    elevation: 3,
-  },
-  backButtonText: {
-    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    color: Themes.COLORS.textMuted, // A light gray
-    fontSize: 16,
-  },
-  nextButtonText: {
-    color: "#FFF",
-    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
-    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+  footerContainer: {
+    paddingHorizontal: Themes.SPACING.md,
+    paddingBottom: Themes.SPACING.xl,
   },
   modalBackground: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // 👈 Dims the screen
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   activityIndicatorWrapper: {
     backgroundColor: "#FFFFFF",
@@ -86,8 +56,8 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    elevation: 5, // Shadow for Android
-    shadowColor: "#000", // Shadow for iOS
+    elevation: 5,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,

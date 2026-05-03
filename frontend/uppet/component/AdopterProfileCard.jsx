@@ -207,7 +207,10 @@ export default function ProfileCard({
             )}
 
             <Text style={styles.sectionTitle}>Other Adopters’ Reviews</Text>
-            <View style={[styles.card, styles.reviewsSectionCard]}>
+            <View
+              style={[styles.card, styles.reviewsSectionCard]}
+              onLayout={(e) => handleRatingLayout(e)}
+            >
               {/* --- UPDATED HEADER ROW --- */}
               <View style={styles.reviewHeaderRow}>
                 {adopter.totalRating > 0 && (
@@ -231,10 +234,7 @@ export default function ProfileCard({
                   No reviews yet for this adopter.
                 </Text>
               ) : (
-                <View
-                  style={styles.reviewList}
-                  onLayout={(e) => handleRatingLayout(e)}
-                >
+                <View style={styles.reviewList}>
                   {displayedReviews.map((review, index) => (
                     <RatingCard
                       key={review._id || index}

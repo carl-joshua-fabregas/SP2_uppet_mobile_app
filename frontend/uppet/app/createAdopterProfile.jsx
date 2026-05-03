@@ -17,6 +17,8 @@ import APCStep2Component from "../component/AdopterProfileCreationSteps/steps/AP
 import APCStep3Component from "../component/AdopterProfileCreationSteps/steps/APCStep3Component";
 import APCStep4Component from "../component/AdopterProfileCreationSteps/steps/APCStep4Component";
 import APCStep5Component from "../component/AdopterProfileCreationSteps/steps/APCStep5Component";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useHeaderHeight } from "@react-navigation/elements";
 
 import { api } from "../api/axios";
 
@@ -28,7 +30,8 @@ export default function createAdopterProfile() {
   const [adopterForm, setAdopterForm] = useState(user);
   const navigation = useNavigation();
   const [errors, setErrors] = useState({});
-
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight() || 0;
   const validators = () => {
     const newErrors = {};
     switch (currentStep) {
@@ -326,38 +329,56 @@ export default function createAdopterProfile() {
   };
   // const { type } = props.route.params || {}; // safe access
   return (
-    // <KeyboardAvoidingView style={{ flex: 1 }}>
-    <View style={styles.createProfileContainer}>
-      <APCProgressTracker currentStep={currentStep} STEPS={STEPS} />
-      <View style={styles.headerContainer}>
-        <Text style={styles.stepHeaderCount}>
-          Step{currentStep + 1} of {STEPS.length}
-        </Text>
-        <Text style={styles.stepHeaderTitle}> {STEPS[currentStep].label}</Text>
-      </View>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {renderStep()}
-        {/* NAVIGATION BUTTONS */}
-        {currentStep < STEPS.length - 1 && (
-          <View style={styles.buttonContainer}>
-            {currentStep > 0 && (
-              <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                <Text style={styles.backButtonText}>Back</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1 }}
+      keyboardVerticalOffset={headerHeight}
+    >
+      <View style={styles.createProfileContainer}>
+        <APCProgressTracker currentStep={currentStep} STEPS={STEPS} />
+        <View style={styles.headerContainer}>
+          <Text style={styles.stepHeaderCount}>
+            Step{currentStep + 1} of {STEPS.length}
+          </Text>
+          <Text style={styles.stepHeaderTitle}>
+            {" "}
+            {STEPS[currentStep].label}
+          </Text>
+        </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderStep()}
+          {/* NAVIGATION BUTTONS */}
+          {currentStep < STEPS.length - 1 && (
+            <View
+              style={[
+                styles.buttonContainer,
+                {
+                  paddingBottom:
+                    Platform.OS === "ios" ? insets.bottom : Themes.SPACING.sm,
+                },
+              ]}
+            >
+              {currentStep > 0 && (
+                <TouchableOpacity
+                  onPress={handleBack}
+                  style={styles.backButton}
+                >
+                  <Text style={styles.backButtonText}>Back</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
+                <Text style={styles.nextButtonText}>
+                  Next: {STEPS[currentStep + 1].label}
+                </Text>
               </TouchableOpacity>
-            )}
-            <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-              <Text style={styles.nextButtonText}>
-                Next: {STEPS[currentStep + 1].label}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
-    </View>
-    // </KeyboardAvoidingView>
+            </View>
+          )}
+        </ScrollView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -420,5 +441,5 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
   },
-  scrollContet: { flexGrow: 1, padding: Themes.SPACING.lg, paddingBottom: 50 },
+  scrollContet: { flexGrow: 1, padding: Themes.SPACING.md, paddingBottom: 50 },
 });

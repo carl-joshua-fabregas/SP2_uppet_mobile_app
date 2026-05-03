@@ -7,13 +7,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useState } from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../../../assets/themes/themes";
-export default function PCStep1Component({
-  petData,
-  setPetData,
-  errors,
-  renderFooter,
-}) {
+
+export default function PCStep1Component({ petData, setPetData, errors }) {
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
 
@@ -33,96 +30,141 @@ export default function PCStep1Component({
     </TouchableOpacity>
   );
 
+  const FormInput = ({
+    label,
+    value,
+    onChange,
+    error,
+    placeholder,
+    multiline,
+    height,
+    keyboardType,
+    icon,
+  }) => (
+    <View style={styles.field}>
+      <View style={styles.infoRow}>
+        <MaterialCommunityIcons
+          name={icon}
+          size={20}
+          color={Themes.COLORS.primary}
+        />
+        <Text style={styles.label}>{label}</Text>
+      </View>
+      <TextInput
+        placeholderTextColor="#A9A9A9"
+        style={[
+          styles.input,
+          error && styles.inputError,
+          multiline && { height, textAlignVertical: "top" },
+        ]}
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        multiline={multiline}
+        keyboardType={keyboardType}
+      />
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
+  );
+
   return (
-    <ScrollView
-      style={styles.PCStep1ComponentContainer}
-      contentContainerStyle={styles.scrollPadding}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.field}>
-        <Text style={styles.label}>Name</Text>
-        <TextInput
-          placeholderTextColor="#A9A9A9"
-          placeholder="Pet's Name"
-          value={petData.name}
-          onChangeText={(text) => update("name", text)}
-          style={[styles.input, errors.name && styles.inputError]}
-        ></TextInput>
-        {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
-      </View>
-      <View style={styles.field}>
-        <Text style={styles.label}>Species</Text>
-        <TextInput
-          placeholderTextColor="#A9A9A9"
-          placeholder="Enter Species"
-          value={petData.species}
-          onChangeText={(text) => update("species", text)}
-          style={[styles.input, errors.species && styles.inputError]}
-        ></TextInput>
-        {errors.species && (
-          <Text style={styles.errorText}>{errors.species}</Text>
-        )}
-      </View>
-      <View style={styles.field}>
-        <Text style={styles.label}>Breed</Text>
-        <TextInput
-          placeholderTextColor="#A9A9A9"
-          placeholder="Enter Breed"
-          value={petData.breed}
-          onChangeText={(text) => update("breed", text)}
-          style={[styles.input, errors.breed && styles.inputError]}
-        ></TextInput>
-        {errors.breed && <Text style={styles.errorText}>{errors.breed}</Text>}
-      </View>
-      <View style={styles.field}>
-        <Text style={styles.label}>Age</Text>
-        <TextInput
-          placeholderTextColor="#A9A9A9"
-          placeholder="Enter Age"
-          value={petData.age}
-          onChangeText={(text) => update("age", text)}
-          keyboardType="numeric"
-          style={[styles.input, errors.age && styles.inputError]}
-        ></TextInput>
-        {errors.age && <Text style={styles.errorText}>{errors.age}</Text>}
-      </View>
-      <View style={styles.field}>
-        <Text style={styles.label}>Sex</Text>
-        <View style={styles.chipRow}>
-          <SelectionChip label="Male" value="male" field="sex"></SelectionChip>
-          <SelectionChip
-            label="Female"
-            value="female"
-            field="sex"
-          ></SelectionChip>
+    <View style={styles.PCStep1ComponentContainer}>
+      {/* SECTION 1: BASIC INFORMATION */}
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="paw"
+            size={20}
+            color={Themes.COLORS.primary}
+          />
+          <Text style={styles.sectionTitle}>Basic Information</Text>
         </View>
-        {errors.sex && <Text style={styles.errorText}>{errors.sex}</Text>}
+
+        <FormInput
+          label="Name"
+          value={petData.name}
+          onChange={(text) => update("name", text)}
+          error={errors.name}
+          placeholder="Pet's Name"
+          icon="tag-text-outline"
+        />
+
+        <View style={styles.row}>
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <FormInput
+              label="Species"
+              value={petData.species}
+              onChange={(text) => update("species", text)}
+              error={errors.species}
+              placeholder="e.g. Dog"
+              icon="cat"
+            />
+          </View>
+          <View style={{ flex: 1.5 }}>
+            <FormInput
+              label="Breed"
+              value={petData.breed}
+              onChange={(text) => update("breed", text)}
+              error={errors.breed}
+              placeholder="e.g. Aspin"
+              icon="dna"
+            />
+          </View>
+        </View>
+
+        <View style={styles.row}>
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <FormInput
+              label="Age"
+              value={petData.age}
+              onChange={(text) => update("age", text)}
+              error={errors.age}
+              placeholder="e.g. 2"
+              keyboardType="numeric"
+              icon="calendar"
+            />
+          </View>
+          <View style={{ flex: 1.5 }}>
+            <View style={styles.infoRow}>
+              <MaterialCommunityIcons
+                name="gender-male-female"
+                size={20}
+                color={Themes.COLORS.primary}
+              />
+              <Text style={styles.label}>Sex</Text>
+            </View>
+            <View style={styles.chipRow}>
+              <SelectionChip label="Male" value="male" field="sex" />
+              <SelectionChip label="Female" value="female" field="sex" />
+            </View>
+            {errors.sex && <Text style={styles.errorText}>{errors.sex}</Text>}
+          </View>
+        </View>
       </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>Bio</Text>
-        <TextInput
-          placeholderTextColor="#A9A9A9"
-          scrollEnabled={false}
-          placeholder="Enter Bio"
+      {/* SECTION 2: BIOGRAPHY */}
+      <View style={styles.sectionCard}>
+        <View style={styles.sectionHeader}>
+          <MaterialCommunityIcons
+            name="card-text-outline"
+            size={20}
+            color={Themes.COLORS.primary}
+          />
+          <Text style={styles.sectionTitle}>About</Text>
+        </View>
+
+        <FormInput
+          label="Bio"
           value={petData.bio}
-          multiline={true}
-          onChangeText={(text) => update("bio", text)}
-          style={[
-            styles.input,
-            styles.textArea,
-            errors.bio && styles.inputError,
-          ]}
-        ></TextInput>
-        {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
+          onChange={(text) => update("bio", text)}
+          error={errors.bio}
+          placeholder="Tell us about this pet..."
+          multiline
+          height={100}
+          icon="comment-text-outline"
+        />
       </View>
-      {renderFooter()}
-      {/* <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={handleNext} style={styles.nextButton}>
-          <Text style={styles.nextButtonText}>Next</Text>
-        </TouchableOpacity>
-      </View> */}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -130,16 +172,45 @@ const styles = StyleSheet.create({
   PCStep1ComponentContainer: {
     flex: 1,
     backgroundColor: Themes.COLORS.background,
-    padding: 8,
   },
   scrollPadding: { padding: Themes.SPACING.lg, paddingBottom: 50 },
   field: { marginBottom: Themes.SPACING.md },
+
+  // App-standard cards
+  sectionCard: {
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: Themes.RADIUS.md,
+    padding: Themes.SPACING.md,
+    marginBottom: Themes.SPACING.sm,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Themes.SPACING.sm,
+    paddingBottom: Themes.SPACING.xs,
+  },
+  sectionTitle: {
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
+    color: Themes.COLORS.primary,
+    marginLeft: Themes.SPACING.sm,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
   row: { flexDirection: "row", alignItems: "flex-start" },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+  },
   label: {
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: 14,
     color: Themes.COLORS.primary,
-    marginBottom: 6,
     marginLeft: 2,
   },
   input: {
@@ -152,22 +223,16 @@ const styles = StyleSheet.create({
     borderColor: "#EAEAEA",
     color: "#333",
   },
-  textArea: {
-    height: 100,
-    textAlignVertical: "top",
-  },
   inputError: { borderColor: "#FF6B6B" },
   errorText: {
     color: "#FF6B6B",
-    fontSize: 11, // 👈 Small but readable
+    fontSize: 11,
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    marginTop: 2, // 👈 Tight gap from the input
-    lineHeight: 12, // 👈 Force the container to be thin
+    marginTop: 2,
+    lineHeight: 12,
     marginLeft: 4,
   },
-
-  // Selection Chips
-  chipRow: { flexDirection: "row", height: 50 },
+  chipRow: { flexDirection: "row", height: 50, marginTop: 4 },
   chip: {
     flex: 1,
     backgroundColor: "#F5F5F5",
@@ -189,32 +254,5 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: Themes.COLORS.primary,
     fontWeight: "bold",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between", // 👈 Spaces them out
-    marginTop: 30,
-    paddingBottom: 20, // 👈 Ensures it's not hugging the bottom of the screen
-  },
-  backButton: {
-    paddingVertical: Themes.SPACING.md,
-    paddingHorizontal: 25,
-    borderRadius: Themes.RADIUS.md,
-    backgroundColor: "#F5F5F5", // 👈 Give it a light background to look like a button
-    marginRight: 10,
-  },
-  nextButton: {
-    flex: 1, // 👈 Takes up the remaining width
-    backgroundColor: Themes.COLORS.primary,
-    paddingVertical: Themes.SPACING.md,
-    borderRadius: Themes.RADIUS.md,
-    alignItems: "center",
-    elevation: 4,
-  },
-  nextButtonText: {
-    color: "#FFF",
-    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
-    fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
   },
 });

@@ -5,6 +5,7 @@ import {
   FlatList,
   ActivityIndicator,
   Button,
+  TouchableOpacity,
   Dimensions,
   RefreshControl,
 } from "react-native";
@@ -14,6 +15,7 @@ import PetCardHome from "../../../component/PetCardHome";
 import PetModal from "../../../component/PetModal";
 import * as Themes from "../../../assets/themes/themes";
 import { api } from "../../../api/axios";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 export default function Index() {
   const isFetchingRef = useRef(false);
   const [cursor, setCursor] = useState(null);
@@ -88,6 +90,7 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <FlatList
+        contentContainerStyle={styles.scrollContet}
         data={pets}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => {
@@ -117,16 +120,16 @@ export default function Index() {
           ></RefreshControl>
         }
       ></FlatList>
-      <View style={styles.buttonContainer}>
-        <Button
-          title="POST"
-          onPress={() => {
-            console.log("Pressed home button");
-            // router.navigate("createPetProfile");
-            router.navigate("createPetProfile");
-          }}
-        ></Button>
-      </View>
+      {/* Upgraded to a Floating Action Button (FAB) */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => {
+          console.log("Pressed home button");
+          router.navigate("createPetProfile");
+        }}
+      >
+        <MaterialCommunityIcons name="plus" size={30} color="#FFF" />
+      </TouchableOpacity>
       {setSelectedPetLatest && (
         <PetModal
           pet={setSelectedPetLatest}
@@ -139,10 +142,7 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
     backgroundColor: Themes.COLORS.background,
-    justifyContent: "center",
-    alignItems: "center",
     flex: 1,
   },
   image: {
@@ -150,10 +150,21 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 4,
   },
-  buttonContainer: {
+  fab: {
     position: "absolute",
-    bottom: Dimensions.get("window").height / 15,
-    right: Dimensions.get("window").width / 9,
+    bottom: 30,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Themes.COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   emptyText: {
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
@@ -164,4 +175,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: Themes.SPACING.lg,
     lineHeight: 22,
   },
+  scrollContet: { flexGrow: 1, padding: Themes.SPACING.md, paddingBottom: 50 },
 });

@@ -204,15 +204,27 @@ export async function findAllAvailPets(req, res) {
   }
 }
 
-export async function findMyPets(req, res) {
+export async function findMyPetsAvailable(req, res) {
   try {
-    const skip = (req.query.page - 1) * 10;
-    // const myPets = await Pet.find({ ownerId: req.user.id })
-    //   .skip((req.query.page - 1) * 10)
-    //   .limit(10);
+    const { limit, lastPetID, lastPetUpdate } = req.query;
+    let paginationQuery = {};
+    if (lastPetID && lastPetUpdate) {
+      paginationQuery = {
+        $or: [
+          { updatedAt: { $lt: lastPetUpdate } },
+          { updatedAt: lastPetUpdate, _id: { $lt: lastPetID } },
+        ],
+      };
+    }
     const aggregatePets = await Pet.aggregate([
-      { $match: { ownerId: new mongoose.Types.ObjectId(req.user.id) } },
-      { $skip: skip },
+      {
+        $match: {
+          ownerId: new mongoose.Types.ObjectId(req.user.id),
+          adoptedStatus: { $ne: true },
+          ...paginationQuery,
+        },
+      },
+      { $sort: { updatedAt: -1, _id: -1 } },
       { $limit: 10 },
       {
         $lookup: {
@@ -257,7 +269,71 @@ export async function findMyPets(req, res) {
     });
   }
 }
+export async function findMyPetsAdopted(req, res) {
+  try {
+    const { limit, lastPetID, lastPetUpdate } = req.query;
+    let paginationQuery = {};
+    if (lastPetID && lastPetUpdate) {
+      paginationQuery = {
+        $or: [
+          { updatedAt: { $lt: lastPetUpdate } },
+          { updatedAt: lastPetUpdate, _id: { $lt: lastPetID } },
+        ],
+      };
+    }
+    const aggregatePets = await Pet.aggregate([
+      {
+        $match: {
+          ownerId: new mongoose.Types.ObjectId(req.user.id),
+          adoptedStatus: { $eq: true },
+          ...paginationQuery,
+        },
+      },
+      { $sort: { updatedAt: -1, _id: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "adoptionapplications",
+          localField: "_id",
+          foreignField: "petToAdopt",
+          as: "allApps",
+        },
+      },
+      {
+        $addFields: {
+          applicationCount: { $size: "$allApps" },
+          pendingCount: {
+            $size: {
+              $filter: {
+                input: "$allApps",
+                as: "app",
+                cond: { $eq: ["$$app.status", "Pending"] }, // Double check if yours is "Pending" or "pending"
+              },
+            },
+          },
+        },
+      },
+      { $project: { allApps: 0 } },
+    ]);
+    if (aggregatePets.length == 0) {
+      return res.status(200).json({
+        message: "No pets found",
+        body: [],
+      });
+    }
+    return res.status(200).json({
+      message: "Successfully found all your pets",
+      body: aggregatePets,
+    });
+  } catch (err) {
+    console.log(err);
 
+    return res.status(500).json({
+      message: "Server Error Meow",
+      body: err.message,
+    });
+  }
+}
 export async function deletePetByID(req, res) {
   try {
     const pet = await Pet.findById(req.params.id);

@@ -22,6 +22,7 @@ export default function ViewPetProfile() {
   const [isOwner, setIsOwner] = useState(
     route?.params?.pet?.ownerId === user._id,
   );
+  const [placeholderHeight, setPlaceholderHeight] = useState(70);
   const [adoptionApp, setAdoptionApp] = useState({});
   const [loading, setLoading] = useState(false);
   const pet = route.params.pet;
@@ -230,8 +231,7 @@ export default function ViewPetProfile() {
       });
     }
   }
-  const placeholderHeight = 70; // Matches your placeholder's style height
-  const bottomOffset = 24; // Matches the stickyWrapper's 'bottom: 24'
+  const bottomOffset = Themes.SPACING?.lg || 24; // Matches the stickyWrapper's 'bottom: 24'
 
   // We only calculate this once both the placeholder and the scroll view have been measured
   const collisionPoint =
@@ -273,8 +273,10 @@ export default function ViewPetProfile() {
         {isGalleryExpanded && (
           <View
             key={`placeholder-${isGalleryExpanded}`}
-            onLayout={(e) => setPlaceholderY(e.nativeEvent.layout.y)}
-            style={{ height: 70, width: "100%" }}
+            onLayout={(e) =>
+              setPlaceholderY(e.nativeEvent.layout.y + Themes.SPACING?.xs || 8)
+            } // Add a small buffer to ensure the button is fully clear
+            style={{ height: placeholderHeight, width: "100%" }}
           />
         )}
 
@@ -322,6 +324,11 @@ export default function ViewPetProfile() {
       >
         <TouchableOpacity
           style={styles.stickyButton}
+          onLayout={(e) =>
+            setPlaceholderHeight(
+              e.nativeEvent.layout.height + Themes.SPACING.xs,
+            )
+          }
           onPress={() => {
             // 1. Instantly snap the opacity to 0 (bypasses the 250ms timer)
             fadeAnim.setValue(0);

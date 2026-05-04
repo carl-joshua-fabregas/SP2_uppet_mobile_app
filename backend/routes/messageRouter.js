@@ -6,11 +6,15 @@ import {
   findMessagesFromUser,
   presignDeleteURL,
   presignUploadURL,
+  editAMessage,
+  deleteAMessage,
 } from "../controller/MessageController.js";
 
 router.post(`/send`, sendMessage);
 router.post(`/presignUploadURL`, presignUploadURL);
 router.post(`/presignDeleteURL`, presignDeleteURL);
-router.get(`/:chatThreadOrigin`, findMessagesFromUser);
 
+router.patch(`/edit/:messageId`, editAMessage);
+router.get(`/:chatThreadOrigin`, findMessagesFromUser);
+router.delete(`/delete/:id`, deleteAMessage);
 export default router;

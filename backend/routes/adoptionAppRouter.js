@@ -22,6 +22,7 @@ router.get("/:id/applied", findPetUserApplication);
 router.get("/:id", findAdoptAppByID);
 
 router.post("/applied", createAdoptApp);
+
 router.post("/:id/approve", approveAdoption);
 router.patch("/:id/reject", rejectApplicant);
 

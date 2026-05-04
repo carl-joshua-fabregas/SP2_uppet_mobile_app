@@ -83,7 +83,7 @@ export default function PCStep2Component({ petData, setPetData, errors }) {
 
         <FormInput
           label="Weight (kg)"
-          value={petData.weight}
+          value={String(petData.weight ?? "")}
           onChange={(text) => update("weight", text)}
           error={errors.weight}
           placeholder="e.g. 2.5"

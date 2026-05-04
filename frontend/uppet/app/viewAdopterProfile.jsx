@@ -8,7 +8,7 @@ import {
   Animated,
 } from "react-native";
 import { useState, useEffect, useRef } from "react";
-import { useRoute } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import ProfileCard from "../component/AdopterProfileCard";
 import { api } from "../api/axios";
 import * as Themes from "../assets/themes/themes";
@@ -17,12 +17,13 @@ import ViewRatingModal from "../component/viewRatingModal";
 import RatingCard from "../component/ratingCard";
 import { useUser } from "../context/UserContext";
 
-export default function ViewAdopterProfile() {
+export default function ViewAdopterProfile({}) {
   const router = useRoute();
+  const navigation = useNavigation();
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
   );
-
+  const { adoptionApp } = router.params;
   const screenHeight = Dimensions.get("window").height;
   const [scrollHeight, setScrollHeight] = useState(0);
   const [placeholderHeight, setPlaceholderHeight] = useState(70);
@@ -152,18 +153,6 @@ export default function ViewAdopterProfile() {
     }
   };
 
-  const handleAccept = () => {
-    console.log("Accept applicant clicked");
-  };
-
-  const handleReject = () => {
-    console.log("Reject applicant clicked");
-  };
-
-  const handleMessage = () => {
-    console.log("Message applicant clicked");
-  };
-
   const fetchProfile = async () => {
     try {
       const res = await api.get(`/api/user/${router.params.id}`);
@@ -224,6 +213,7 @@ export default function ViewAdopterProfile() {
     fetchMyRating();
     fetchRating(null);
   }, [router.params.id]);
+
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: showStickyButton ? 1 : 0,
@@ -231,6 +221,7 @@ export default function ViewAdopterProfile() {
       useNativeDriver: true,
     }).start();
   }, [reviewsExpanded]);
+
   const handleLoadMoreRating = async () => {
     if (!loading && hasMore && !isFetching.current) {
       await fetchRating(cursorID);
@@ -261,23 +252,95 @@ export default function ViewAdopterProfile() {
     setCreateModalVisible(true);
   };
 
-  const buttons = [
-    {
-      title: "Accept Application",
-      onPress: handleAccept,
-      styleType: "calm",
-    },
-    {
-      title: "Reject Application",
-      onPress: handleReject,
-      styleType: "warning",
-    },
-    {
-      title: "Message Applicant",
-      onPress: handleMessage,
-      styleType: "neutral",
-    },
-  ];
+  // const buttons = [
+  //   {
+  //     title: "Accept Application",
+  //     onPress: handleAccept,
+  //     styleType: "calm",
+  //   },
+  //   {
+  //     title: "Reject Application",
+  //     onPress: handleReject,
+  //     styleType: "warning",
+  //   },
+  //   {
+  //     title: "Message Applicant",
+  //     onPress: handleMessage,
+  //     styleType: "neutral",
+  //   },
+  // ];
+  // const handleAccept = async (id) => {
+  //     try {
+  //       const res = await api.post(`api/adoptionApp/${id}/approve`);
+  //       const updatedApplicant = res.data.body;
+  //       updateLocalState(updatedApplicant);
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   };
+
+  //   const handleReject = async (id) => {
+  //     try {
+  //       const res = await api.patch(`api/adoptionApp/${id}/reject`);
+  //       const updatedApplicant = res.data.body;
+  //       updateLocalState(updatedApplicant);
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   };
+  //   const handleMessage = (applicantID) => {
+  //     console.log("Messaging applicant with ID:", applicantID);
+  //     navigation.navigate("messageScreen", {
+  //       receiverID: applicantID,
+  //       chatThreadOrigin: null,
+  //     });
+  //   };
+
+  const handleAccept = async () => {
+    try {
+      const res = await api.post(`api/adoptionApp/${adoptionApp._id}/approve`);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      const res = await api.patch(`api/adoptionApp/${adoptionApp._id}/reject`);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleMessage = () => {
+    console.log("Messaging applicant with ID:", adoptionApp.applicant._id);
+    navigation.navigate("messageScreen", {
+      receiverID: adoptionApp.applicant._id,
+      chatThreadOrigin: null,
+    });
+  };
+
+  const buttons = [];
+  if (adoptionApp.status === "Pending") {
+    buttons.push(
+      {
+        title: "Accept Application",
+        onPress: handleAccept,
+        styleType: "calm",
+      },
+      {
+        title: "Reject Application",
+        onPress: handleReject,
+        styleType: "warning",
+      },
+    );
+  }
+  buttons.push({
+    title: "Message Applicant",
+    onPress: handleMessage,
+    styleType: "neutral",
+  });
+
   const isCloseToBottom = ({
     layoutMeasurement,
     contentOffset,
@@ -407,7 +470,7 @@ export default function ViewAdopterProfile() {
               setReviewsExpanded(false);
             }}
           >
-            <Text style={styles.stickyButtonText}>Quick Action</Text>
+            <Text style={styles.stickyButtonText}>Close Rating</Text>
           </TouchableOpacity>
         </Animated.View>
       )}

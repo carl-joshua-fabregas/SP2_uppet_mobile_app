@@ -115,8 +115,8 @@ export default function PCStep1Component({ petData, setPetData, errors }) {
         <View style={styles.row}>
           <View style={{ flex: 1, marginRight: 12 }}>
             <FormInput
-              label="Age"
-              value={petData.age}
+              label="Age (years)"
+              value={String(petData.age ?? "")}
               onChange={(text) => update("age", text)}
               error={errors.age}
               placeholder="e.g. 2"

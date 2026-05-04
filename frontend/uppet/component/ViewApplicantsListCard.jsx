@@ -4,16 +4,15 @@ import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 
-export default function ViewApplicantsCard({
-  adoptionApp,
-  handleAccept,
-  handleReject,
-}) {
+export default function ViewApplicantsCard({ adoptionApp }) {
   const navigator = useNavigation();
   const applicant = adoptionApp.applicant;
 
   const onViewApplicantPress = () => {
-    navigator.navigate("viewAdopterProfile", { id: applicant._id });
+    navigator.navigate("viewAdopterProfile", {
+      id: applicant._id,
+      adoptionApp: adoptionApp,
+    });
   };
 
   const Badge = ({ status }) => {

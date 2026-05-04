@@ -10,12 +10,13 @@ import {
 } from "react-native";
 import ViewApplicantsCard from "../component/ViewApplicantsListCard";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRoute } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 
 export default function ViewApplicantList(props) {
   const router = useRoute();
+  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("pending");
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.badgeText.fontSize,
@@ -201,26 +202,6 @@ export default function ViewApplicantList(props) {
     else if (activeTab === "rejected") setRejected(updater);
   };
 
-  const handleAccept = async (id) => {
-    try {
-      const res = await api.post(`api/adoptionApp/${id}/approve`);
-      const updatedApplicant = res.data.body;
-      updateLocalState(updatedApplicant);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const handleReject = async (id) => {
-    try {
-      const res = await api.patch(`api/adoptionApp/${id}/reject`);
-      const updatedApplicant = res.data.body;
-      updateLocalState(updatedApplicant);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   const onRefreshPending = useCallback(async () => {
     setPending((prev) => ({
       ...prev,
@@ -367,13 +348,7 @@ export default function ViewApplicantList(props) {
       <FlatList
         data={currentData.applicants}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <ViewApplicantsCard
-            adoptionApp={item}
-            handleAccept={() => handleAccept(item._id)}
-            handleReject={() => handleReject(item._id)}
-          />
-        )}
+        renderItem={({ item }) => <ViewApplicantsCard adoptionApp={item} />}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         refreshControl={

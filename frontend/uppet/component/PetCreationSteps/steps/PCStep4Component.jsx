@@ -6,10 +6,18 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
+import { useState } from "react"; // Don't forget to import useState
 import PetProfileCardViewMore from "../../PetProfileCard";
 import * as Themes from "../../../assets/themes/themes";
 
 export default function PCStep4Component({ petData, uploading }) {
+  // Add the missing state to manage the gallery preview
+  const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
+
+  // Add a dummy handler to prevent crashes when the gallery renders
+  // We don't need the sticky button logic here, just an empty function so the prop is satisfied
+  const handleGalleryLayout = (event) => {};
+
   return (
     <View style={styles.container}>
       <Modal transparent={true} visible={uploading} animationType="fade">
@@ -26,7 +34,15 @@ export default function PCStep4Component({ petData, uploading }) {
         </View>
       </Modal>
 
-      <PetProfileCardViewMore pet={petData} />
+      {/* Wrap the card in a ScrollView so the preview is actually scrollable */}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <PetProfileCardViewMore
+          pet={petData}
+          isGalleryExpanded={isGalleryExpanded}
+          setIsGalleryExpanded={setIsGalleryExpanded}
+          handleGalleryLayout={handleGalleryLayout}
+        />
+      </ScrollView>
     </View>
   );
 }
@@ -37,7 +53,8 @@ const styles = StyleSheet.create({
     backgroundColor: Themes.COLORS.background,
   },
   scrollContainer: {
-    flex: 1,
+    flexGrow: 1,
+    paddingBottom: Themes.SPACING.xl, // Add a little bottom padding for the scroll
   },
   footerContainer: {
     paddingHorizontal: Themes.SPACING.md,

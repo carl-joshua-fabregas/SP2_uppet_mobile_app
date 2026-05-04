@@ -390,10 +390,25 @@ export async function approveAdoption(req, res) {
       });
     }
 
+    if (
+      acceptedApplication.status.toString() === "Approved" ||
+      acceptedApplication.status.toString() === "Cancelled" ||
+      acceptedApplication.status.toString() === "Rejected"
+    ) {
+      return res.status(409).json({
+        message: "Application Already Approved",
+      });
+    }
+
     const pet = await Pet.findById(acceptedApplication.petToAdopt);
     if (!pet) {
       return res.status(404).json({
         message: "Pet to adopt not found",
+      });
+    }
+    if (pet.adoptedStatus === true) {
+      return res.status(409).json({
+        message: "Pet already adopted",
       });
     }
 
@@ -419,7 +434,7 @@ export async function approveAdoption(req, res) {
         {
           petToAdopt: pet.id,
           _id: { $ne: req.params.id },
-          status: { $ne: "Approved", $ne: "Rejected", $ne: "Cancelled" },
+          status: { $eq: "Pending" },
         },
         { status: "Rejected" },
         options,
@@ -427,10 +442,8 @@ export async function approveAdoption(req, res) {
 
       const updatedList = await AdoptionApplication.find({
         petToAdopt: acceptedApplication.petToAdopt,
-      }).populate(
-        "applicant",
-        " firstName middleName lastName address, profilePic",
-      );
+      }).populate("applicant");
+
       if (updatedList.length === 0) {
         return res.status(500).json({
           message: "Error Retrieving Updated List",
@@ -439,10 +452,6 @@ export async function approveAdoption(req, res) {
       return res.status(200).json({
         message: "Approved",
         body: updatedList,
-      });
-    } else {
-      return res.status(425).json({
-        message: "Application Already Approved",
       });
     }
   } catch (err) {
@@ -466,12 +475,26 @@ export async function rejectApplicant(req, res) {
         message: "Application not found",
       });
     }
+    if (
+      application.status.toString() === "Approved" ||
+      application.status.toString() === "Cancelled" ||
+      application.status.toString() === "Rejected"
+    ) {
+      return res.status(409).json({
+        message: "Application Already Processed",
+      });
+    }
 
     const pet = await Pet.findById(application.petToAdopt);
 
     if (!pet) {
       return res.status(404).json({
         message: "Pet not found",
+      });
+    }
+    if (pet.adoptedStatus === true) {
+      return res.status(409).json({
+        message: "Pet already adopted",
       });
     }
 
@@ -493,10 +516,8 @@ export async function rejectApplicant(req, res) {
     );
     const updatedList = await AdoptionApplication.find({
       petToAdopt: rejectApplication.petToAdopt,
-    }).populate(
-      "applicant",
-      " firstName middleName lastName address profilePhoto",
-    );
+    }).populate("applicant");
+
     if (updatedList.length === 0) {
       return res.status(500).json({
         message: "Error Retrieving Updated List",

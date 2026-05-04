@@ -20,6 +20,7 @@ import {
   ActivityIndicator,
   Dimensions,
   Image,
+  Modal,
 } from "react-native";
 import * as Themes from "../assets/themes/themes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -43,6 +44,7 @@ export default function messageScreen() {
   const { user } = useUser();
   const socket = useSocket();
   const { receiverID } = router.params;
+  console.log("Receiver ID in message screen:", receiverID);
   const [chatThreadOrigin, setChatThreadOrigin] = useState(
     router.params.chatThreadOrigin,
   );
@@ -57,7 +59,11 @@ export default function messageScreen() {
   const [selectedMessageOptions, setSelectedMessageOptions] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
+  // NEW STATE: Tracks the message currently being edited
+  const [editingMessage, setEditingMessage] = useState(null);
+
   const roomID = [user._id, receiverID].sort().join("_");
+
   const formatSectionTime = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -87,24 +93,69 @@ export default function messageScreen() {
       year: "numeric",
     })}, ${timeString}`;
   };
+
   const handleToggleMessageSelect = (id) => {
-    // If you click the same message, hide the timestamp. If a different one, show the new one.
     setSelectedMessageID((prevID) => (prevID === id ? null : id));
   };
+
   const handlePressImage = (media) => {
     setSelectedImage(media);
     setShowImageViewer(true);
   };
+
   const handleOpenOptions = (message) => {
     setSelectedMessageOptions(message);
     setIsModalVisible(true);
   };
+
+  const handleEditAction = () => {
+    if (selectedMessageOptions) {
+      setEditingMessage(selectedMessageOptions);
+      setTextInput(selectedMessageOptions.body || ""); // Populate input
+    }
+    setIsModalVisible(false);
+  };
+
+  // NEW ACTION: Cancel Edit
+  const cancelEdit = () => {
+    setEditingMessage(null);
+    // Notice we do NOT clear textInput here as per your requirements
+  };
+
+  // NEW ACTION: Handle Delete
+  const handleDeleteAction = async () => {
+    if (!selectedMessageOptions) return;
+    if (selectedMessageOptions.media !== null) {
+      try {
+        const presignedUrl = await api.post(`/api/message/presignDeleteURL`, {
+          key: selectedMessageOptions.media.key,
+        });
+        const { url } = presignedUrl.data.body;
+        const aws3res = await fetch(url, {
+          method: "DELETE",
+        });
+        console.log("Did we delete the media from S3?", aws3res.ok);
+      } catch (err) {
+        console.log("Error deleting media from S3:", err.message);
+      }
+    }
+    try {
+      await api.delete(`/api/message/delete/${selectedMessageOptions._id}`);
+      setMessages((prev) =>
+        prev.filter((msg) => msg._id !== selectedMessageOptions._id),
+      );
+    } catch (err) {
+      console.log("Error deleting message:", err.message);
+    } finally {
+      setIsModalVisible(false);
+    }
+  };
+
   useEffect(() => {
     if (!socket) return;
 
     socket.emit("join_chat", roomID);
 
-    // When the screen loads, mark all messages as read
     if (chatThreadOrigin) {
       socket.emit("messages_read", {
         chatThreadOrigin: chatThreadOrigin._id || chatThreadOrigin,
@@ -114,21 +165,17 @@ export default function messageScreen() {
     }
 
     socket.on("receive_message", (newMessage) => {
-      // Ignore messages sent by the current user since we handle them optimistically
       if (newMessage.sender === user._id) return;
 
       setMessages((prevMessages) => {
-        // Prevent duplicate keys if the message already exists
         if (prevMessages.some((msg) => msg._id === newMessage._id)) {
           return prevMessages;
         }
         return [newMessage, ...prevMessages];
       });
 
-      // Emit delivered
       socket.emit("message_delivered", { messageID: newMessage._id, roomID });
 
-      // Since we are actively on the screen, we also read it immediately
       if (chatThreadOrigin) {
         socket.emit("messages_read", {
           chatThreadOrigin: chatThreadOrigin._id || chatThreadOrigin,
@@ -143,11 +190,9 @@ export default function messageScreen() {
       ({ messageID, chatThreadOrigin: updatedThreadOrigin, status }) => {
         setMessages((prev) =>
           prev.map((msg) => {
-            // If a specific message was delivered
             if (messageID && msg._id === messageID) {
               return { ...msg, status };
             }
-            // If the whole thread was read
             if (
               updatedThreadOrigin &&
               msg.status !== "read" &&
@@ -157,12 +202,6 @@ export default function messageScreen() {
             }
             return msg;
           }),
-        );
-        console.log(
-          "Message Receipt Received",
-          messageID,
-          updatedThreadOrigin,
-          status,
         );
       },
     );
@@ -174,9 +213,20 @@ export default function messageScreen() {
     };
   }, [socket]);
 
+  const retrieveChatThread = async () => {
+    try {
+      const res = await api.get(`/api/chatlist/get/${receiverID}`);
+      const thread = res.data.body;
+      setChatThreadOrigin(thread);
+    } catch (err) {
+      console.log("Error retrieving chat thread:", err.message);
+    }
+  };
   useEffect(() => {
-    if (!chatThreadOrigin) return;
     const initialMount = async () => {
+      if (!chatThreadOrigin) {
+        await retrieveChatThread();
+      }
       await fetchMessages(null, false);
     };
     initialMount();
@@ -187,7 +237,6 @@ export default function messageScreen() {
     setLoading(true);
     try {
       const limit = messages.length > 0 ? 15 : initialLimit;
-      console.log("CHAT THREAD ORIGIN IS", chatThreadOrigin);
       const res = await api.get(`/api/message/${chatThreadOrigin._id}`, {
         params: { lastMessageId: lastMessageId, limit: limit },
       });
@@ -217,6 +266,7 @@ export default function messageScreen() {
     }
     return;
   };
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     setHasMore(true);
@@ -252,7 +302,6 @@ export default function messageScreen() {
           };
         });
 
-        console.log(selectedMedia);
         const uploadedMedia = await Promise.all(
           selectedMedia.map(async (media) => {
             const presignedURL = await api.post(
@@ -284,10 +333,6 @@ export default function messageScreen() {
             return true;
           }),
         );
-
-        console.log("here are the images", result.assets);
-      } else {
-        console.log("The user has cancelled the image library");
       }
     } catch (err) {
       console.error("Error picking media:", err);
@@ -304,23 +349,17 @@ export default function messageScreen() {
 
   const renderMessages = ({ item, index }) => {
     const isSender = item.sender === user._id;
-
-    // 1. Grab the message that was sent immediately before this one
     const olderMessage = messages[index + 1];
-
     let showTimeHeader = false;
 
-    // 2. If there is no older message, this is the very first message of the chat. Show header.
     if (!olderMessage) {
       showTimeHeader = true;
     } else {
-      // 3. Calculate the time difference between this message and the older one
       const currTime = new Date(item.updatedAt || item.timestamp).getTime();
       const olderTime = new Date(
         olderMessage.updatedAt || olderMessage.timestamp,
       ).getTime();
 
-      // If the gap is greater than 1 hour (60 mins * 60 secs * 1000 ms), start a new group!
       if (currTime - olderTime > 60 * 60 * 1000) {
         showTimeHeader = true;
       }
@@ -328,7 +367,6 @@ export default function messageScreen() {
 
     return (
       <View>
-        {/* If this is the earliest message in the new group, render the header above it */}
         {showTimeHeader && (
           <View style={styles.timeHeaderContainer}>
             <Text style={styles.timeHeaderText}>
@@ -343,7 +381,7 @@ export default function messageScreen() {
           isSelected={selectedMessageID === item._id}
           onToggleSelect={handleToggleMessageSelect}
           onPressImage={handlePressImage}
-          onOpenOptions={handleOpenOptions} // Modal trigger from previous step
+          onOpenOptions={handleOpenOptions}
         />
       </View>
     );
@@ -354,6 +392,18 @@ export default function messageScreen() {
   };
 
   const handleSend = async (body, media) => {
+    if (editingMessage) {
+      const res = await api.patch(`/api/message/edit/${editingMessage._id}`, {
+        body,
+        media,
+      });
+      // After successful edit, reset state
+      setEditingMessage(null);
+      setTextInput("");
+      return;
+    }
+
+    // Normal Send Logic
     let dbChatThread = chatThreadOrigin;
 
     if (!chatThreadOrigin) {
@@ -363,7 +413,6 @@ export default function messageScreen() {
         });
         dbChatThread = res.data.body;
         setChatThreadOrigin(dbChatThread);
-        console.log("Chat Thread has been initialized", dbChatThread);
       } catch (err) {
         console.log("Error in making chatlist", err.message);
       }
@@ -383,7 +432,6 @@ export default function messageScreen() {
 
     try {
       setMessages((prev) => [tempMessage, ...prev]);
-      console.log("message media is", media);
       const messageRes = await api.post(`/api/message/send`, {
         chatThreadOrigin: dbChatThread._id || dbChatThread,
         receiver: receiverID,
@@ -413,6 +461,7 @@ export default function messageScreen() {
       setMsgMedia(null);
     }
   };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -447,6 +496,30 @@ export default function messageScreen() {
         }
         inverted
       ></FlatList>
+
+      {/* NEW: Edit Message Indicator */}
+      {editingMessage && (
+        <View style={styles.editIndicatorContainer}>
+          <View style={styles.editIndicatorLeft}>
+            <MaterialCommunityIcons
+              name="pencil"
+              size={16}
+              color={Themes.COLORS.primary}
+            />
+            <Text style={styles.editIndicatorText}>Editing message</Text>
+          </View>
+          <TouchableOpacity
+            onPress={cancelEdit}
+            style={styles.editIndicatorClose}
+          >
+            <MaterialCommunityIcons
+              name="close"
+              size={20}
+              color={Themes.COLORS.textMuted}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View
         style={[
@@ -484,13 +557,13 @@ export default function messageScreen() {
           />
         </TouchableOpacity>
       </View>
+
       <ImageView
         images={selectedImage ? [{ uri: selectedImage.url }] : []}
         visible={showImageViewer}
         onRequestClose={() => setShowImageViewer(false)}
         swipeToCloseEnabled={true}
         doubleTapToZoomEnabled={true}
-        // ✅ Add it directly inline like this:
         HeaderComponent={() => (
           <View
             style={[
@@ -507,6 +580,39 @@ export default function messageScreen() {
           </View>
         )}
       />
+
+      {/* NEW: Message Options Modal */}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            {!selectedMessageOptions?.media && (
+              <TouchableOpacity
+                onPress={handleEditAction}
+                style={styles.modalOption}
+              >
+                <Text style={styles.modalOptionText}>Edit</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={handleDeleteAction}
+              style={[styles.modalOption, styles.modalOptionNoBorder]}
+            >
+              <Text style={[styles.modalOptionText, { color: "#FF3B30" }]}>
+                Delete
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -544,7 +650,7 @@ const styles = StyleSheet.create({
   footerContainer: {
     flexDirection: "row",
     paddingHorizontal: Themes.SPACING.md,
-    paddingTop: Themes.SPACING.sm, // ← top only
+    paddingTop: Themes.SPACING.sm,
     alignItems: "center",
     backgroundColor: Themes.COLORS.background,
     borderTopWidth: 1,
@@ -579,7 +685,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Themes.COLORS.textFaded || "#888",
     textAlign: "center",
-    marginTop: 100, // Pushes it down so it's not hugging the top
+    marginTop: 100,
     paddingHorizontal: Themes.SPACING.lg,
     lineHeight: 22,
   },
@@ -587,13 +693,12 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#8E8E93",
     marginTop: 4,
-    alignSelf: "flex-end", // Keeps the time tucked in the corner
+    alignSelf: "flex-end",
   },
   viewerHeaderContainer: {
     width: "100%",
     position: "absolute",
     zIndex: 1,
-    // top: 40, <-- REMOVE THIS LINE
   },
   customCloseButton: {
     alignSelf: "flex-end",
@@ -606,7 +711,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 8,
-    backgroundColor: "#000", // Black background while it loads
+    backgroundColor: "#000",
   },
   timeHeaderContainer: {
     alignItems: "center",
@@ -616,10 +721,63 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY.label.fontFamily,
     fontSize: 12,
     color: Themes.COLORS.textMuted,
-    backgroundColor: Themes.COLORS.badge, // Uses your subtle tint
+    backgroundColor: Themes.COLORS.badge,
     paddingHorizontal: Themes.SPACING.md,
     paddingVertical: 4,
     borderRadius: Themes.RADIUS.pill,
-    overflow: "hidden", // Required for borderRadius to work on <Text> in iOS
+    overflow: "hidden",
+  },
+
+  // NEW STYLES: Modal Elements
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: Themes.COLORS.card,
+    width: "70%",
+    borderRadius: Themes.RADIUS.md,
+    overflow: "hidden",
+  },
+  modalOption: {
+    paddingVertical: Themes.SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5EA",
+  },
+  modalOptionNoBorder: {
+    borderBottomWidth: 0,
+  },
+  modalOptionText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: 16,
+    color: Themes.COLORS.textDark,
+    textAlign: "center",
+  },
+
+  // NEW STYLES: Edit Indicator
+  editIndicatorContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: Themes.COLORS.soft,
+    paddingHorizontal: Themes.SPACING.md,
+    paddingVertical: Themes.SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5EA",
+  },
+  editIndicatorLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  editIndicatorText: {
+    fontFamily: Themes.TYPOGRAPHY.label.fontFamily,
+    fontSize: 12,
+    color: Themes.COLORS.textDark,
+  },
+  editIndicatorClose: {
+    padding: Themes.SPACING.xs,
   },
 });

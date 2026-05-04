@@ -218,6 +218,35 @@ export async function findMessageById(req, res) {
   }
 }
 
+export async function editAMessage(req, res) {
+  try {
+    const message = await Message.findById(req.params.id);
+    if (!message) {
+      return res.status(404).json({
+        message: "Not Found",
+      });
+    }
+    if (message.sender.toString() !== req.user.id.toString()) {
+      return res.status(403).json({
+        message: "Forbidden",
+      });
+    }
+    const updatedMessage = await Message.findByIdAndUpdate(
+      req.params.id,
+      { body: req.body.body, media: req.body.media },
+      { new: true },
+    );
+    return res.status(200).json({
+      message: "Message updated successfully",
+      body: updatedMessage,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+      body: err.message,
+    });
+  }
+}
 export async function deleteAMessage(req, res) {
   try {
     const message = await Message.findById(req.params.id);

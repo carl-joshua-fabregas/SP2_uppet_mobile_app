@@ -78,7 +78,10 @@ export default function CreateRatingModal({
       <TouchableOpacity
         style={styles.modalOverlay}
         activeOpacity={1}
-        onPress={() => setShowMenu(false)}
+        onPress={() => {
+          setShowMenu(false);
+          onClose();
+        }}
       >
         <TouchableOpacity activeOpacity={1} style={styles.cardContainer}>
           {/* --- THREE DOTS MENU --- */}

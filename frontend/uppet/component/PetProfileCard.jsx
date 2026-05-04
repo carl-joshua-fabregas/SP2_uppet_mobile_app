@@ -8,6 +8,7 @@ export default function PetProfileCardViewMore({
   isGalleryExpanded,
   setIsGalleryExpanded,
   handleGalleryLayout,
+  handlePressImage, // <-- Make sure this is destructured here!
 }) {
   const profilePhoto =
     pet.photos && pet.photos.length > 0
@@ -34,7 +35,6 @@ export default function PetProfileCardViewMore({
     photos: pet.photos,
   };
 
-  // Helper component for section headers
   const SectionHeader = ({ icon, title, style }) => (
     <View style={[styles.sectionHeaderRow, style]}>
       <MaterialCommunityIcons
@@ -46,7 +46,6 @@ export default function PetProfileCardViewMore({
     </View>
   );
 
-  // Helper component for info labels inside cards
   const InfoLabel = ({ icon, title, style }) => (
     <View style={[styles.infoLabelRow, style]}>
       <MaterialCommunityIcons
@@ -62,14 +61,22 @@ export default function PetProfileCardViewMore({
     <View style={styles.profileContainer}>
       {/* 1. THE HEADER CARD */}
       <View style={styles.headerCard}>
-        <Image
-          source={
-            profilePhoto
-              ? { uri: profilePhoto.url }
-              : require("../assets/images/doggoe.jpg")
-          }
-          style={styles.headerImage}
-        />
+        {/* --- ADDED: Touchable for Header Image --- */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => {
+            if (profilePhoto?.url) handlePressImage(profilePhoto, 0);
+          }}
+        >
+          <Image
+            source={
+              profilePhoto
+                ? { uri: profilePhoto.url }
+                : require("../assets/images/doggoe.jpg")
+            }
+            style={styles.headerImage}
+          />
+        </TouchableOpacity>
 
         <View style={styles.headerTextContainer}>
           <Text style={styles.petName}>{form.name}</Text>
@@ -77,7 +84,6 @@ export default function PetProfileCardViewMore({
             {form.species} • {form.breed} • {form.sex}
           </Text>
 
-          {/* Stats Grid */}
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <View style={styles.iconLabelRow}>
@@ -189,7 +195,7 @@ export default function PetProfileCardViewMore({
           </>
         )}
 
-        {/* 4. GALLERY SECTION (NOW WRAPPED IN A CARD) */}
+        {/* 4. GALLERY SECTION */}
         {form.photos && form.photos.length > 0 && (
           <View
             style={styles.gallerySection}
@@ -201,7 +207,6 @@ export default function PetProfileCardViewMore({
               style={{ marginTop: 0 }}
             />
 
-            {/* Main Gallery Card Wrapper */}
             <View
               style={[
                 styles.card,
@@ -211,7 +216,6 @@ export default function PetProfileCardViewMore({
                 },
               ]}
             >
-              {/* Header inside the card */}
               <View style={styles.galleryHeader}>
                 <Text style={styles.infoLabel}>
                   {form.photos.length} Photos
@@ -234,10 +238,22 @@ export default function PetProfileCardViewMore({
                   ]}
                   key={`carousel- ${isGalleryExpanded}`}
                 >
-                  <Image
-                    source={{ uri: form.photos[currentPhotoIndex]?.url }}
-                    style={styles.carouselImage}
-                  />
+                  {/* --- ADDED: Touchable for Carousel Image --- */}
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() => {
+                      const currentPhotoUrl =
+                        form.photos[currentPhotoIndex]?.url;
+                      if (currentPhotoUrl)
+                        handlePressImage(form.photos, currentPhotoIndex);
+                    }}
+                  >
+                    <Image
+                      source={{ uri: form.photos[currentPhotoIndex]?.url }}
+                      style={styles.carouselImage}
+                    />
+                  </TouchableOpacity>
+
                   {form.photos.length > 1 && (
                     <View
                       style={StyleSheet.absoluteFill}
@@ -273,7 +289,7 @@ export default function PetProfileCardViewMore({
                                 : index === currentPhotoIndex;
                           return (
                             <View
-                              key={index}
+                              key={`dot-${index}`}
                               style={[
                                 styles.carouselDot,
                                 isActive && styles.carouselDotActive,
@@ -292,11 +308,21 @@ export default function PetProfileCardViewMore({
                   key={`gallery-${isGalleryExpanded}`}
                 >
                   {form.photos.map((photo, index) => (
-                    <View key={index} style={styles.photoFeedItem}>
-                      <Image
-                        source={{ uri: photo.url }}
-                        style={styles.photoFeedImage}
-                      />
+                    <View
+                      key={`photo-${photo.key}`}
+                      style={styles.photoFeedItem}
+                    >
+                      {/* --- ADDED: Touchable for Feed Image --- */}
+                      <TouchableOpacity
+                        activeOpacity={0.9}
+                        onPress={() => handlePressImage(form.photos, index)}
+                      >
+                        <Image
+                          source={{ uri: photo.url }}
+                          style={styles.photoFeedImage}
+                        />
+                      </TouchableOpacity>
+
                       <View style={styles.photoFeedContent}>
                         <View style={styles.photoCardTitleRow}>
                           <MaterialCommunityIcons
@@ -508,23 +534,20 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginTop: -1,
   },
-
-  // --- NEW EXPANDED FEED STYLES ---
   expandedGalleryContainer: {
     marginTop: Themes.SPACING.xs,
   },
   photoFeedItem: {
-    // We remove the margin and border so there are no awkward lines or gaps
     marginBottom: 0,
   },
   photoFeedContent: {
     padding: Themes.SPACING.md,
-    paddingBottom: Themes.SPACING.lg, // Add extra padding here so the text doesn't touch the next image
+    paddingBottom: Themes.SPACING.lg,
     backgroundColor: Themes.COLORS.card,
   },
   photoFeedImage: {
     width: "100%",
-    height: 320, // Tall, edge-to-edge Instagram style feed
+    height: 320,
     resizeMode: "cover",
   },
   photoCardTitleRow: {

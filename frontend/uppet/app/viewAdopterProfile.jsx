@@ -16,6 +16,9 @@ import CreateRatingModal from "../component/createRatingModal";
 import ViewRatingModal from "../component/viewRatingModal";
 import RatingCard from "../component/ratingCard";
 import { useUser } from "../context/UserContext";
+import ImageView from "react-native-image-viewing";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function ViewAdopterProfile({}) {
   const router = useRoute();
@@ -31,6 +34,9 @@ export default function ViewAdopterProfile({}) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const overlapAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets(); // <-- ADDED
+
+  const [showImageViewer, setShowImageViewer] = useState(false);
 
   const [showStickyButton, setShowStickyButton] = useState(false);
   const [ratingSectionLayout, setRatingSectionLayout] = useState({
@@ -39,7 +45,6 @@ export default function ViewAdopterProfile({}) {
   });
   // New state to track the Y position of the bottom buttons and the overlap calculation
   const [buttonSectionY, setButtonSectionY] = useState(0);
-  const [overlapDelta, setOverlapDelta] = useState(0);
 
   const handleRatingLayout = (event) => {
     const { y, height } = event.nativeEvent.layout;
@@ -317,6 +322,7 @@ export default function ViewAdopterProfile({}) {
     navigation.navigate("messageScreen", {
       receiverID: adoptionApp.applicant._id,
       chatThreadOrigin: null,
+      receiverName: `${adoptionApp.applicant.firstName} ${adoptionApp.applicant.middleName || ""} ${adoptionApp.applicant.lastName}`,
     });
   };
 
@@ -394,6 +400,7 @@ export default function ViewAdopterProfile({}) {
           onViewMoreReviews={() => setReviewsExpanded(true)}
           onCreateRatingPress={handleCreateReview}
           handleRatingLayout={handleRatingLayout}
+          setShowImageViewer={setShowImageViewer}
         />
 
         <CreateRatingModal
@@ -474,6 +481,30 @@ export default function ViewAdopterProfile({}) {
           </TouchableOpacity>
         </Animated.View>
       )}
+      <ImageView
+        images={
+          adopter?.profilePhoto?.url ? [{ uri: adopter.profilePhoto.url }] : []
+        }
+        visible={showImageViewer}
+        onRequestClose={() => setShowImageViewer(false)}
+        swipeToCloseEnabled={true}
+        doubleTapToZoomEnabled={true}
+        HeaderComponent={() => (
+          <View
+            style={[
+              styles.viewerHeaderContainer,
+              { marginTop: insets.top || 40 },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.customCloseButton}
+              onPress={() => setShowImageViewer(false)}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -570,5 +601,17 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY?.body?.fontFamily,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  viewerHeaderContainer: {
+    width: "100%",
+    position: "absolute",
+    zIndex: 1,
+  },
+  customCloseButton: {
+    alignSelf: "flex-end",
+    marginRight: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 10,
+    borderRadius: 20,
   },
 });

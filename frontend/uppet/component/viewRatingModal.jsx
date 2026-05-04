@@ -42,7 +42,7 @@ export default function ViewRatingModal({ visible, onClose, review }) {
       onRequestClose={onClose}
     >
       <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.modalCard} onPress={() => null}>
+        <View style={styles.modalCard} onPress={() => null}>
           <View style={styles.topRow}>
             <View style={styles.reviewerRow}>
               <Image source={avatarSource} style={styles.avatar} />
@@ -94,7 +94,7 @@ export default function ViewRatingModal({ visible, onClose, review }) {
               </Text>
             ) : null}
           </Pressable>
-        </Pressable>
+        </View>
       </Pressable>
     </Modal>
   );
@@ -103,7 +103,7 @@ export default function ViewRatingModal({ visible, onClose, review }) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(29, 59, 46, 0.45)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
     padding: Themes.SPACING.md,

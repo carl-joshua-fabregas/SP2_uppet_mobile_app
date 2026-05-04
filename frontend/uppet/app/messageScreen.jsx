@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSocket } from "../context/SocketContext";
-import { useRoute } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
 import * as ImagePicker from "expo-image-picker";
 import ImageView from "react-native-image-viewing";
@@ -32,6 +32,7 @@ export default function messageScreen() {
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.badgeText.fontSize,
   );
+  const navigation = useNavigation();
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageViewer, setShowImageViewer] = useState(false);
 
@@ -44,7 +45,12 @@ export default function messageScreen() {
   const { user } = useUser();
   const socket = useSocket();
   const { receiverID } = router.params;
-  console.log("Receiver ID in message screen:", receiverID);
+  console.log(
+    "Receiver ID in message screen:",
+    receiverID,
+    "receiverName:",
+    router.params.receiverName,
+  );
   const [chatThreadOrigin, setChatThreadOrigin] = useState(
     router.params.chatThreadOrigin,
   );
@@ -230,6 +236,9 @@ export default function messageScreen() {
       await fetchMessages(null, false);
     };
     initialMount();
+    navigation.setOptions({
+      headerTitle: `${router.params.receiverName || "User"}`,
+    });
   }, [chatThreadOrigin]);
 
   const fetchMessages = async (lastMessageId, isRefreshing = false) => {

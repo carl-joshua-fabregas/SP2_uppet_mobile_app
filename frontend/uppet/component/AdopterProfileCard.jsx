@@ -27,6 +27,7 @@ export default function ProfileCard({
   // onEditReviewPress = () => {},
   showRatingsAndReviews = true,
   handleRatingLayout = { handleRatingLayout },
+  setShowImageViewer,
 }) {
   const InfoSection = ({ icon, label, value }) => (
     <View style={styles.infoRow}>
@@ -68,14 +69,17 @@ export default function ProfileCard({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Image
-          source={
-            adopter.profilePhoto
-              ? { uri: adopter.profilePhoto.url }
-              : require("../assets/images/doggoe.jpg")
-          }
-          style={styles.profileImage}
-        />
+        <TouchableOpacity onPress={() => setShowImageViewer(true)}>
+          <Image
+            source={
+              adopter.profilePhoto
+                ? { uri: adopter.profilePhoto.url }
+                : require("../assets/images/doggoe.jpg")
+            }
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
+
         <Text style={styles.fullName}>
           {adopter.firstName}{" "}
           {adopter.middleName ? adopter.middleName + " " : ""}
@@ -178,31 +182,41 @@ export default function ProfileCard({
             {!isOwner && (
               <>
                 <Text style={styles.sectionTitle}>Your Review</Text>
-                <TouchableOpacity
-                  activeOpacity={0.9}
-                  onPress={() => onCreateRatingPress(myRating)}
-                >
-                  <View style={[styles.card, styles.topReviewCard]}>
-                    <View style={styles.reviewHeaderRow}>
-                      <Text style={styles.reviewLabel}>Your latest review</Text>
-                      <View style={styles.ratingDetailRow}>
-                        {renderStars(myRating?.score || 0)}
-                        <Text style={styles.reviewScoreText}>
-                          {myRating?.score
-                            ? `${myRating.score}.0`
-                            : "No rating yet"}
+                {myRating ? (
+                  <RatingCard
+                    review={myRating}
+                    onPress={() => onCreateRatingPress(myRating)}
+                  />
+                ) : (
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() => onCreateRatingPress(myRating)}
+                  >
+                    <View style={[styles.card, styles.topReviewCard]}>
+                      <View style={styles.reviewHeaderRow}>
+                        <Text style={styles.reviewLabel}>
+                          Your latest review
                         </Text>
+
+                        <View style={styles.ratingDetailRow}>
+                          {renderStars(myRating?.score || 0)}
+                          <Text style={styles.reviewScoreText}>
+                            {myRating?.score
+                              ? `${myRating.score}.0`
+                              : "No rating yet"}
+                          </Text>
+                        </View>
                       </View>
+                      <Text style={styles.reviewBodyText} numberOfLines={4}>
+                        {myRating?.body ||
+                          "Tap here to write a review for this adopter."}
+                      </Text>
+                      <Text style={styles.reviewActionText}>
+                        {myRating ? "Tap to view or edit" : "Write a review"}
+                      </Text>
                     </View>
-                    <Text style={styles.reviewBodyText} numberOfLines={4}>
-                      {myRating?.body ||
-                        "Tap here to write a review for this adopter."}
-                    </Text>
-                    <Text style={styles.reviewActionText}>
-                      {myRating ? "Tap to view or edit" : "Write a review"}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                )}
               </>
             )}
 

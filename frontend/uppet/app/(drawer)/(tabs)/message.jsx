@@ -140,6 +140,7 @@ export default function ChatList() {
           navigation.navigate("messageScreen", {
             chatThreadOrigin: item,
             receiverID: item.members[0]?._id,
+            receiverName: `${item.members[0]?.firstName} ${item.members[0]?.middleName || ""} ${item.members[0]?.lastName}`,
           });
         }}
       >

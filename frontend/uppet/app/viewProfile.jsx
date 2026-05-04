@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   Text,
   Dimensions,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useState, useEffect, useRef } from "react";
@@ -13,12 +15,16 @@ import ProfileCard from "../component/AdopterProfileCard";
 import { api } from "../api/axios";
 import * as Themes from "../assets/themes/themes.js";
 import ViewRatingModal from "../component/viewRatingModal";
+import ImageView from "react-native-image-viewing";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function AdopterProfile() {
   const { user, logout } = useUser();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // --- Sizing & Layout State ---
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
   );
@@ -31,7 +37,7 @@ export default function AdopterProfile() {
   });
   const [buttonSectionY, setButtonSectionY] = useState(0);
   const [overlapDelta, setOverlapDelta] = useState(0);
-
+  const [showImageViewer, setShowImageViewer] = useState(false);
   // --- Ratings State ---
   const [adopterRating, setAdopterRating] = useState([]);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
@@ -42,7 +48,7 @@ export default function AdopterProfile() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [cursorID, setCursorID] = useState(null);
-
+  const [showLoadMoreButton, setShowLoadMoreButton] = useState(false);
   // --- Existing Profile Handlers ---
   const handleEditing = () => {
     navigation.navigate("createAdopterProfile");
@@ -52,7 +58,12 @@ export default function AdopterProfile() {
     logout();
   };
 
-  const handleDeleteProfile = async () => {
+  const handleDeleteProfile = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    setLoading(true);
     try {
       const presignURL = await api.post(`/api/user/presignDeleteURL`, {
         key: user.profilePhoto.key,
@@ -74,8 +85,11 @@ export default function AdopterProfile() {
       );
     } catch (err) {
       console.log("Error in deleting Profile", err.message);
+      setLoading(false);
+      setShowDeleteModal(false); // Close modal if it fails so they aren't stuck
     } finally {
-      logout();
+      setLoading(false);
+      logout(); // This handles logging them out / navigating away
     }
   };
 
@@ -166,6 +180,10 @@ export default function AdopterProfile() {
     if (user?._id) {
       fetchRating(null);
     }
+    navigation.setOptions({
+      headerTitle: "My Profile",
+      headerTitleAlign: "center",
+    });
   }, [user?._id]);
 
   const handleLoadMoreRating = async () => {
@@ -203,6 +221,7 @@ export default function AdopterProfile() {
           hasMoreReviews={hasMore}
           onViewMoreReviews={() => setReviewsExpanded(true)}
           handleRatingLayout={handleRatingLayout}
+          setShowImageViewer={setShowImageViewer}
         />
         <View
           style={styles.buttonSection}
@@ -240,6 +259,91 @@ export default function AdopterProfile() {
           </TouchableOpacity>
         </View>
       )}
+      <ImageView
+        images={user?.profilePhoto?.url ? [{ uri: user.profilePhoto.url }] : []}
+        visible={showImageViewer}
+        onRequestClose={() => setShowImageViewer(false)}
+        swipeToCloseEnabled={true}
+        doubleTapToZoomEnabled={true}
+        HeaderComponent={() => (
+          <View
+            style={[
+              styles.viewerHeaderContainer,
+              { marginTop: insets.top || 40 },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.customCloseButton}
+              onPress={() => setShowImageViewer(false)}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+      {/* CUTE DELETE CONFIRMATION MODAL */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showDeleteModal}
+        onRequestClose={() => {
+          if (!loading) setShowDeleteModal(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.cuteModalCard}>
+            {loading ? (
+              <View style={{ alignItems: "center", paddingVertical: 20 }}>
+                <ActivityIndicator size="large" color={Themes.COLORS.primary} />
+                <Text style={[styles.modalTitle, { marginTop: 16 }]}>
+                  Saying Goodbye...
+                </Text>
+                <Text style={styles.modalText}>
+                  Please wait while we delete your account.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.modalIconContainer}>
+                  <MaterialCommunityIcons
+                    name="emoticon-sad-outline"
+                    size={50}
+                    color={Themes.COLORS.primary}
+                  />
+                  <MaterialCommunityIcons
+                    name="help"
+                    size={24}
+                    color={Themes.COLORS.primary}
+                    style={styles.questionMark}
+                  />
+                </View>
+
+                <Text style={styles.modalTitle}>Delete Account?</Text>
+                <Text style={styles.modalText}>
+                  Are you sure you want to delete your profile? This can't be
+                  undone!
+                </Text>
+
+                <View style={styles.modalButtonRow}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalCancelBtn]}
+                    onPress={() => setShowDeleteModal(false)}
+                  >
+                    <Text style={styles.modalCancelText}>Keep Account</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalDeleteBtn]}
+                    onPress={confirmDelete}
+                  >
+                    <Text style={styles.modalDeleteText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -317,5 +421,92 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY?.body?.fontFamily,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  viewerHeaderContainer: {
+    width: "100%",
+    position: "absolute",
+    zIndex: 1,
+  },
+  customCloseButton: {
+    alignSelf: "flex-end",
+    marginRight: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 10,
+    borderRadius: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  cuteModalCard: {
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: "center",
+    width: "85%",
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  modalIconContainer: {
+    flexDirection: "row",
+    marginBottom: 16,
+    alignItems: "flex-start",
+  },
+  questionMark: {
+    position: "absolute",
+    right: -15,
+    top: -5,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    color: Themes.COLORS.textDark,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  modalText: {
+    fontSize: 15,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    color: Themes.COLORS.textMuted,
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalButtonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCancelBtn: {
+    backgroundColor: Themes.COLORS.soft,
+  },
+  modalCancelText: {
+    color: Themes.COLORS.textDark,
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  modalDeleteBtn: {
+    backgroundColor: "#f37270",
+  },
+  modalDeleteText: {
+    color: "#fff",
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
+    fontWeight: "600",
+    fontSize: 16,
   },
 });

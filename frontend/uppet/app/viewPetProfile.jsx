@@ -5,19 +5,28 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
-  Animated, // <-- Add this
+  Animated,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
-import { useEffect, useState, useRef } from "react"; // <-- Add useRef
+import { useEffect, useState, useRef } from "react";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
 import PetProfileCardViewMore from "../component/PetProfileCard";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useUser } from "../context/UserContext";
+
+import ImageView from "react-native-image-viewing";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 export default function ViewPetProfile() {
   const { user } = useUser();
   const route = useRoute();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [status, setStatus] = useState(false);
   const [isOwner, setIsOwner] = useState(
     route?.params?.pet?.ownerId === user._id,
@@ -34,9 +43,15 @@ export default function ViewPetProfile() {
   const [showStickyButton, setShowStickyButton] = useState(false);
   const [placeholderY, setPlaceholderY] = useState(0);
   const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
+
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
+
   const overlapAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
   const getstatus = async () => {
     try {
       const res = await api.get(`/api/adoptionApp/${pet._id}/applied`, {});
@@ -49,6 +64,7 @@ export default function ViewPetProfile() {
       console.error(err);
     }
   };
+
   const handleGalleryLayout = (event) => {
     const { y, height } = event.nativeEvent.layout;
     setGallerySectionLayout({ y, height });
@@ -58,7 +74,6 @@ export default function ViewPetProfile() {
     const currentOffset = event.nativeEvent.contentOffset.y;
     const hasScreenWorthOfSCrolling =
       gallerySectionLayout.height > scrollViewHeight;
-    const viewportHeight = event.nativeEvent.layoutMeasurement.height;
 
     if (hasScreenWorthOfSCrolling && isGalleryExpanded) {
       const stickyThreshold = gallerySectionLayout.y + scrollViewHeight;
@@ -71,23 +86,31 @@ export default function ViewPetProfile() {
       if (showStickyButton) setShowStickyButton(false);
     }
   };
+
   useEffect(() => {
     if (pet._id) {
       getstatus();
     }
+    navigation.setOptions({
+      headerTitle: `${pet.name}'s Profile`,
+    });
   }, [pet._id]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: showStickyButton ? 1 : 0,
-      duration: 250, // 250ms fade
-      useNativeDriver: true, // Crucial for performance
+      duration: 250,
+      useNativeDriver: true,
     }).start();
   }, [showStickyButton]);
-  //   const handleViewGallery = () => {
-  //     console.log("HandleViewClicked");
-  //   };
-  //       <Button title="View Gallery" onPress={handleViewGallery}></Button>
+
+  // --- NEW HANDLER FOR IMAGE PRESS ---
+  const handlePressImage = (image, index) => {
+    console.log("Image Pressed: ", image, index);
+    setSelectedImage(image);
+    setImageViewerIndex(index);
+    setShowImageViewer(true);
+  };
 
   const handleMessage = async () => {
     console.log("HandleMessageClicked: ", pet.ownerId);
@@ -105,12 +128,14 @@ export default function ViewPetProfile() {
       console.log("ERROR in handling Message", err.message);
     }
   };
+
   const handleViewOwnerProfile = () => {
     console.log("View Owner Profile Clicked");
     navigation.navigate("viewAdopterProfile", {
       id: pet.ownerId,
     });
   };
+
   const handleApply = async () => {
     await api.post(`/api/adoptionApp/applied`, {
       petToAdopt: pet._id,
@@ -119,6 +144,7 @@ export default function ViewPetProfile() {
     console.log("HandleApplyClicked");
   };
 
+  //Update this shi not delete this shit, we need to set the status to cancelled and not delete the application because we want to keep the record of the application for future reference and analytics. Deleting the application would remove all history and data associated with it, which could be valuable for understanding user behavior and improving the adoption process. By setting the status to cancelled, we can maintain a complete record of all applications while still allowing users to manage their applications effectively.
   const handleCancel = async () => {
     await api.delete(`/api/adoptionApp/${pet._id}/cancelled`, {});
     setStatus("Cancelled");
@@ -136,35 +162,28 @@ export default function ViewPetProfile() {
     navigation.navigate("createPetProfile", { editPetData: pet });
   };
 
-  const handleDeletPetProfile = async () => {
+  const handleDeletPetProfile = () => {
     console.log("Handle Delete Profile Clicked");
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
     try {
       setLoading(true);
       const deletePhotos = await Promise.all(
         pet.photos.map(async (photo) => {
-          console.log("Deleting Photo with ID: ", photo._id);
-
           const presignDeleteUrl = await api.post(`/api/pet/presignDeleteURL`, {
             key: photo.key,
           });
-          console.log(
-            "Presign URL for Deleting Photo: ",
-            presignDeleteUrl.data,
-          );
-
-          const { url, key } = presignDeleteUrl.data.body;
-
-          const awsDelete = await fetch(url, {
-            method: "DELETE",
-          });
-          console.log("Status of aws deletion", awsDelete.status);
+          const { url } = presignDeleteUrl.data.body;
+          await fetch(url, { method: "DELETE" });
         }),
       );
-      const res = await api.delete(`/api/pet/${pet._id}`, {});
-      console.log("Pet deleted successfully", res.status);
+      await api.delete(`/api/pet/${pet._id}`, {});
     } catch (err) {
-      console.log("Error in deleting Pet");
-      console.log(err);
+      console.log("Error in deleting Pet", err);
+      setLoading(false);
+      setShowDeleteModal(false);
     } finally {
       setLoading(false);
       navigation.goBack();
@@ -205,7 +224,7 @@ export default function ViewPetProfile() {
     if (isApplicant) {
       if (adoptionApp.status === "Approved") {
         buttons.push({
-          title: "Approved", // Changed to past tense for clarity
+          title: "Approved",
           disabled: true,
           styleType: "disabled",
         });
@@ -223,7 +242,6 @@ export default function ViewPetProfile() {
         });
       }
     } else {
-      // User HAS NOT applied yet
       buttons.push({
         title: "Apply",
         onPress: handleApply,
@@ -231,9 +249,8 @@ export default function ViewPetProfile() {
       });
     }
   }
-  const bottomOffset = Themes.SPACING?.lg || 24; // Matches the stickyWrapper's 'bottom: 24'
 
-  // We only calculate this once both the placeholder and the scroll view have been measured
+  const bottomOffset = Themes.SPACING?.lg || 24;
   const collisionPoint =
     placeholderY > 0 && scrollViewHeight > 0
       ? placeholderY + placeholderHeight - scrollViewHeight + bottomOffset
@@ -241,18 +258,18 @@ export default function ViewPetProfile() {
 
   const pushThreshold = Math.max(1, collisionPoint);
 
-  // 3. For every 1 pixel you scroll past the threshold, push the button UP 1 pixel.
   const overlapTranslateY = scrollY.interpolate({
     inputRange: [0, pushThreshold, pushThreshold + 1],
     outputRange: [0, 0, -1],
     extrapolateLeft: "clamp",
     extrapolateRight: "extend",
   });
+
   return (
     <View style={{ flex: 1 }}>
       <Animated.ScrollView
         contentContainerStyle={styles.scrollContainer}
-        onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)} // <--- ADD THIS LINE
+        onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
         scrollEventThrottle={16}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -267,23 +284,21 @@ export default function ViewPetProfile() {
           isGalleryExpanded={isGalleryExpanded}
           setIsGalleryExpanded={setIsGalleryExpanded}
           handleGalleryLayout={handleGalleryLayout}
+          handlePressImage={handlePressImage} // <-- ADDED PROP
         />
-        {/* THE PLACEHOLDER: Only shows when gallery is expanded. 
-            Give it the approximate height of your sticky button + padding (e.g., 70px) */}
+
         {isGalleryExpanded && (
           <View
             key={`placeholder-${isGalleryExpanded}`}
             onLayout={(e) =>
               setPlaceholderY(e.nativeEvent.layout.y + Themes.SPACING?.xs || 8)
-            } // Add a small buffer to ensure the button is fully clear
+            }
             style={{ height: placeholderHeight, width: "100%" }}
           />
         )}
 
-        {/* FIX: Actually rendering the buttons to the screen */}
         <View style={styles.buttonSection}>
           {buttons.map((btn, index) => {
-            // Assign styles dynamically based on the styleType defined above
             const containerStyle =
               btn.styleType === "warning"
                 ? styles.warningButtonContainer
@@ -310,14 +325,14 @@ export default function ViewPetProfile() {
           })}
         </View>
       </Animated.ScrollView>
-      {/* Notice we removed the {showStickyButton && ...} wrapper so the fade-out animation can play before disappearing visually */}
+
       <Animated.View
         style={[
           styles.stickyWrapper,
           {
             bottom: Themes.SPACING?.lg || 24,
             opacity: fadeAnim,
-            transform: [{ translateY: overlapTranslateY }], // <--- The magic push
+            transform: [{ translateY: overlapTranslateY }],
           },
         ]}
         pointerEvents={showStickyButton ? "box-none" : "none"}
@@ -330,19 +345,110 @@ export default function ViewPetProfile() {
             )
           }
           onPress={() => {
-            // 1. Instantly snap the opacity to 0 (bypasses the 250ms timer)
             fadeAnim.setValue(0);
-
-            // 2. Update the state immediately so the fade out doesn't try to play
             setShowStickyButton(false);
-
-            // 3. Close the gallery as normal
             setIsGalleryExpanded(false);
           }}
         >
           <Text style={styles.stickyButtonText}>Close Gallery</Text>
         </TouchableOpacity>
       </Animated.View>
+
+      {/* --- NEW MODAL FOR IMAGE VIEWER --- */}
+      <ImageView
+        images={
+          selectedImage
+            ? !Array.isArray(selectedImage)
+              ? [{ uri: selectedImage.url }]
+              : selectedImage.map((img) => ({ uri: img.url }))
+            : []
+        }
+        imageIndex={imageViewerIndex}
+        visible={showImageViewer}
+        onRequestClose={() => setShowImageViewer(false)}
+        swipeToCloseEnabled={true}
+        doubleTapToZoomEnabled={true}
+        HeaderComponent={() => (
+          <View
+            style={[
+              styles.viewerHeaderContainer,
+              { marginTop: insets.top || 40 },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.customCloseButton}
+              onPress={() => setShowImageViewer(false)}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
+      />
+      {/* CUTE DELETE CONFIRMATION MODAL */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showDeleteModal}
+        onRequestClose={() => {
+          if (!loading) setShowDeleteModal(false); // Prevent closing while loading
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.cuteModalCard}>
+            {loading ? (
+              // --- WHAT SHOWS WHILE DELETING ---
+              <View style={{ alignItems: "center", paddingVertical: 20 }}>
+                <ActivityIndicator size="large" color={Themes.COLORS.primary} />
+                <Text style={[styles.modalTitle, { marginTop: 16 }]}>
+                  Saying Goodbye...
+                </Text>
+                <Text style={styles.modalText}>
+                  Please wait while we pack up {pet.name}'s things.
+                </Text>
+              </View>
+            ) : (
+              // --- THE ORIGINAL CONFIRMATION UI ---
+              <>
+                <View style={styles.modalIconContainer}>
+                  <MaterialCommunityIcons
+                    name="dog"
+                    size={50}
+                    color={Themes.COLORS.primary}
+                  />
+                  <MaterialCommunityIcons
+                    name="help"
+                    size={24}
+                    color={Themes.COLORS.primary}
+                    style={styles.questionMark}
+                  />
+                </View>
+
+                <Text style={styles.modalTitle}>Say Goodbye?</Text>
+                <Text style={styles.modalText}>
+                  Are you sure you want to delete {pet.name}'s profile? This
+                  can't be undone!
+                </Text>
+
+                <View style={styles.modalButtonRow}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalCancelBtn]}
+                    onPress={() => setShowDeleteModal(false)}
+                  >
+                    <Text style={styles.modalCancelText}>Keep Pet</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalDeleteBtn]}
+                    onPress={confirmDelete}
+                  >
+                    <Text style={styles.modalDeleteText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -350,17 +456,17 @@ export default function ViewPetProfile() {
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: Themes.SPACING?.xl || 32, // Padding at the bottom so the last button isn't cut off
+    paddingBottom: Themes.SPACING?.xl || 32,
     backgroundColor: Themes.COLORS.background,
   },
   buttonSection: {
     marginTop: 16,
-    paddingHorizontal: Themes.SPACING?.md || 16, // Added horizontal padding so buttons don't touch screen edges
+    paddingHorizontal: Themes.SPACING?.md || 16,
     gap: Themes.SPACING?.md || 12,
     width: "100%",
   },
   calmButtonContainer: {
-    backgroundColor: Themes.COLORS.primary, // Your original Green color
+    backgroundColor: Themes.COLORS.primary,
     paddingVertical: Themes.SPACING?.md || 12,
     borderRadius: Themes.RADIUS?.md || 8,
     alignItems: "center",
@@ -379,7 +485,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   neutralButtonContainer: {
-    backgroundColor: "#F5F5F5", // A soft gray instead of bright blue
+    backgroundColor: "#F5F5F5",
     borderWidth: 1,
     borderColor: "#E0E0E0",
     minHeight: 48,
@@ -392,22 +498,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    // Removed elevation so it sits flat behind the primary button
   },
   neutralButtonText: {
-    color: "#686262", // Dark gray text for readability
+    color: "#686262",
     fontSize: Themes.TYPOGRAPHY?.subheading?.fontSize || 16,
     fontFamily: Themes.TYPOGRAPHY?.subheading?.fontFamily,
     fontWeight: "600",
     textAlign: "center",
   },
-
-  // DESTRUCTIVE ACTION (Cancel / Delete) - Clear, but not overwhelming
   warningButtonContainer: {
-    // backgroundColor: "transparent", // Removing the solid red block
     backgroundColor: "#f37270",
-    // borderWidth: 1,
-    // borderColor: "#EF5350", // Red outline
     minHeight: 48,
     paddingVertical: Themes.SPACING?.md || 12,
     borderRadius: Themes.RADIUS?.md || 8,
@@ -415,9 +515,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   warningButtonText: {
-    // color: "#EF5350", // Red text alerts the user without shouting
     color: "#fff",
-
     fontSize: Themes.TYPOGRAPHY?.subheading?.fontSize || 16,
     fontFamily: Themes.TYPOGRAPHY?.subheading?.fontFamily,
     fontWeight: "600",
@@ -427,13 +525,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    alignItems: "center", // Centers the button horizontally
+    alignItems: "center",
     zIndex: 999,
   },
   stickyButton: {
     backgroundColor: Themes.COLORS.primary || "#007BFF",
     paddingVertical: Themes.SPACING?.md || 14,
-    paddingHorizontal: Themes.SPACING?.lg || 32, // Widened slightly for better aesthetics
+    paddingHorizontal: Themes.SPACING?.lg || 32,
     borderRadius: 30,
     elevation: 5,
     shadowColor: "#000",
@@ -447,5 +545,92 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY?.body?.fontFamily,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  viewerHeaderContainer: {
+    width: "100%",
+    position: "absolute",
+    zIndex: 1,
+  },
+  customCloseButton: {
+    alignSelf: "flex-end",
+    marginRight: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 10,
+    borderRadius: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)", // Dim the background
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  cuteModalCard: {
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: 24, // Extra round for cuteness
+    padding: 24,
+    alignItems: "center",
+    width: "85%",
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  modalIconContainer: {
+    flexDirection: "row",
+    marginBottom: 16,
+    alignItems: "flex-start",
+  },
+  questionMark: {
+    position: "absolute",
+    right: -15,
+    top: -5,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    color: Themes.COLORS.textDark,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  modalText: {
+    fontSize: 15,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    color: Themes.COLORS.textMuted,
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalButtonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCancelBtn: {
+    backgroundColor: Themes.COLORS.soft,
+  },
+  modalCancelText: {
+    color: Themes.COLORS.textDark,
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  modalDeleteBtn: {
+    backgroundColor: "#f37270", // Your warning color
+  },
+  modalDeleteText: {
+    color: "#fff",
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
+    fontWeight: "600",
+    fontSize: 16,
   },
 });

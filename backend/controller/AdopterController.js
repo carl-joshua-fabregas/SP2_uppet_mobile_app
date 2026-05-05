@@ -198,7 +198,7 @@ export async function updateUser(req, res) {
       new: true,
       runValidators: true,
     };
-
+    const { initialCreation = false, ...updateData } = req.body;
     const user = await Adopter.findById(req.user.id);
     if (!user) {
       return res.status(200).json({
@@ -209,24 +209,41 @@ export async function updateUser(req, res) {
 
     const newUser = await Adopter.findByIdAndUpdate(
       req.user.id,
-      { $set: req.body },
+      { $set: updateData },
       options,
     );
-
-    const notifcations = new Notification({
-      recipient: newUser._id,
-      sender: newUser._id,
-      relatedEntity: newUser._id,
-      entityModel: "Adopter",
-      message: "Successfully updated adopter profile",
-      notifType: "ADOPTER_UPDATED",
-    });
-
-    const saveNotif = await notifcations.save();
-    console.log("Notification Saved", saveNotif);
     const io = req.app.get("io");
 
-    io.to(newUser._id.toString()).emit("new_notification", saveNotif);
+    if (initialCreation) {
+      const notifcations = new Notification({
+        recipient: newUser._id,
+        sender: newUser._id,
+        relatedEntity: newUser._id,
+        entityModel: "Adopter",
+        message: "Successfully updated adopter profile",
+        notifType: "ADOPTER_NEW",
+      });
+      const saveNotif = await notifcations.save();
+      io.emit("adopter_created", {
+        message: "A New Profile has been created",
+        adopter: newUser,
+      });
+    } else {
+      const notifcations = new Notification({
+        recipient: newUser._id,
+        sender: newUser._id,
+        relatedEntity: newUser._id,
+        entityModel: "Adopter",
+        message: "Successfully updated adopter profile",
+        notifType: "ADOPTER_UPDATED",
+      });
+      const saveNotif = await notifcations.save();
+      io.emit("adopter_updated", {
+        message: "A Profile has been updated",
+        adopter: newUser,
+      });
+    }
+    // io.to(newUser._id.toString()).emit("new_notification", saveNotif);
 
     return res.status(200).json({
       message: "Successfully updated",
@@ -405,7 +422,10 @@ export async function deleteUser(req, res) {
     ];
     const deletionStatus = await Promise.all(deletionTask);
     const io = req.app.get("io");
-    io.emit("user_deleted", req.user.id);
+    io.emit("adopter_deleted", {
+      message: "Adopter Successfully deleted",
+      adopterID: req.user.id,
+    });
     return res.status(200).json({
       message: "Successfully deleted user",
     });

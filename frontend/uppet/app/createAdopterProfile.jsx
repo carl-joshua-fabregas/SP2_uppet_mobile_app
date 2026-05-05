@@ -250,6 +250,7 @@ export default function createAdopterProfile() {
       const finalAdopterFormRes = await api.patch(`/api/user/update`, {
         ...adopterForm,
         profilePhoto: finalPhotoDetails,
+        initialCreation: true,
       });
       console.log(
         "-------------------THE FINAL FORM IS ,",

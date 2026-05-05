@@ -316,6 +316,7 @@ export default function CreateProfile() {
       await api.patch(`api/pet/${petID}`, {
         ...pet,
         photos: uploadedPhotos,
+        initialCreation: true,
       });
       setUploading(false);
       return true;

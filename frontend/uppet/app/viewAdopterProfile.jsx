@@ -19,9 +19,10 @@ import { useUser } from "../context/UserContext";
 import ImageView from "react-native-image-viewing";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-
+import { useSocket } from "../context/SocketContext";
 export default function ViewAdopterProfile({}) {
   const router = useRoute();
+  const socket = useSocket();
   const navigation = useNavigation();
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
@@ -80,7 +81,16 @@ export default function ViewAdopterProfile({}) {
     }
   };
 
-  const [adopter, setAdopter] = useState({});
+  const [adopter, setAdopter] = useState({ _id: router.params.id });
+  const [isDeleted, setIsDeleted] = useState(false);
+
+  if (isDeleted) {
+    return (
+      <View style={{ flex: 1 }}>
+        <Text> This is a placeholder for a tombstone</Text>
+      </View>
+    );
+  }
   const [adopterRating, setAdopterRating] = useState([]);
 
   const [myRating, setMyRating] = useState(null);
@@ -217,7 +227,7 @@ export default function ViewAdopterProfile({}) {
     fetchProfile();
     fetchMyRating();
     fetchRating(null);
-  }, [router.params.id]);
+  }, []);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -227,6 +237,29 @@ export default function ViewAdopterProfile({}) {
     }).start();
   }, [reviewsExpanded]);
 
+  useEffect(() => {
+    if (!socket) return;
+    console.log("socket in adopter profile connected: ", socket.connected);
+    socket.on("adopter_updated", (data) => {
+      console.log("adopter updated in view adopter profile", data.message);
+      if (adopter._id === data.adopter._id) {
+        setAdopter(data.adopter);
+      }
+    });
+
+    socket.on("adopter_deleted", (data) => {
+      console.log("adopter deleted in view adopter profile", data.message);
+      if (adopter._id === data.adopterID) {
+        setAdopter(null);
+        setIsDeleted(true);
+      }
+    });
+
+    return () => {
+      socket.off("adopter_updated");
+      socket.off("adopter_deleted");
+    };
+  }, [socket, adopter]);
   const handleLoadMoreRating = async () => {
     if (!loading && hasMore && !isFetching.current) {
       await fetchRating(cursorID);
@@ -317,17 +350,17 @@ export default function ViewAdopterProfile({}) {
     }
   };
 
-  const handleMessage = () => {
-    console.log("Messaging applicant with ID:", adoptionApp.applicant._id);
+  const handleMessage = (entity) => {
+    console.log("Messaging applicant with ID:", entity._id);
     navigation.navigate("messageScreen", {
-      receiverID: adoptionApp.applicant._id,
+      receiverID: entity._id,
       chatThreadOrigin: null,
-      receiverName: `${adoptionApp.applicant.firstName} ${adoptionApp.applicant.middleName || ""} ${adoptionApp.applicant.lastName}`,
+      receiverName: `${entity.firstName} ${entity.middleName || ""} ${entity.lastName}`,
     });
   };
 
   const buttons = [];
-  if (adoptionApp.status === "Pending") {
+  if (adoptionApp && adoptionApp.status === "Pending") {
     buttons.push(
       {
         title: "Accept Application",
@@ -341,11 +374,21 @@ export default function ViewAdopterProfile({}) {
       },
     );
   }
-  buttons.push({
-    title: "Message Applicant",
-    onPress: handleMessage,
-    styleType: "neutral",
-  });
+
+  if (adopter._id !== user._id) {
+    console.log("adopter and user id", adopter._id, user);
+    buttons.push({
+      title: "Message Applicant",
+      onPress: () => handleMessage(adoptionApp.applicant),
+      styleType: "neutral",
+    });
+  } else {
+    buttons.push({
+      title: "Message Owner",
+      onPress: () => handleMessage(adopter),
+      styleType: "neutral",
+    });
+  }
 
   const isCloseToBottom = ({
     layoutMeasurement,

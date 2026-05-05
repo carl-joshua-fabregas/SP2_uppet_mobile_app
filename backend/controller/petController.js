@@ -355,7 +355,11 @@ export async function deletePetByID(req, res) {
 
     await AdoptionApplication.deleteMany({ petToAdopt: req.params.id });
     await Pet.findByIdAndDelete(req.params.id);
-
+    const io = req.app.get("io");
+    io.emit("pet_deleted", {
+      message: "Pet deletion was successful",
+      petID: req.params.id,
+    });
     return res.status(200).json({
       message: "Successfully delete pet",
     });
@@ -389,12 +393,14 @@ export async function deleteAll(req, res) {
 }
 
 export async function updatePet(req, res) {
+  console.log("We are updating in update Pet");
   try {
     const options = {
       new: true,
       runValidators: true,
     };
-
+    const { initialCreation = false, ...updateData } = req.body;
+    console.log("This are the req.body", req.body, initialCreation, updateData);
     const pet = await Pet.findById(req.params.id);
 
     if (!pet) {
@@ -414,10 +420,24 @@ export async function updatePet(req, res) {
 
     const updatedPet = await Pet.findByIdAndUpdate(
       req.params.id,
-      { $set: req.body },
+      { $set: updateData },
       options,
     );
 
+    const io = req.app.get("io");
+    if (initialCreation) {
+      io.emit("pet_created", {
+        message: "Message has been created",
+        pet: updatedPet,
+      });
+      console.log("we emitted pet created");
+    } else {
+      io.emit("pet_updated", {
+        message: "Pet has been updated",
+        pet: updatedPet,
+      });
+      console.log("we emitted pet update");
+    }
     return res.status(200).json({
       message: "Successfully updated a pet",
       body: updatedPet,

@@ -32,7 +32,7 @@ export default function ViewPetProfile() {
     route?.params?.pet?.ownerId === user._id,
   );
   const [placeholderHeight, setPlaceholderHeight] = useState(70);
-  const [adoptionApp, setAdoptionApp] = useState({});
+  const [adoptionApp, setAdoptionApp] = useState(null);
   const [loading, setLoading] = useState(false);
   const pet = route.params.pet;
   const [gallerySectionLayout, setGallerySectionLayout] = useState({

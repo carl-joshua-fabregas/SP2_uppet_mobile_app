@@ -5,18 +5,32 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import { useState } from "react"; // Don't forget to import useState
 import PetProfileCardViewMore from "../../PetProfileCard";
 import * as Themes from "../../../assets/themes/themes";
+import ImageView from "react-native-image-viewing";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function PCStep4Component({ petData, uploading }) {
   // Add the missing state to manage the gallery preview
   const [isGalleryExpanded, setIsGalleryExpanded] = useState(false);
+  const [showImageViewer, setShowImageViewer] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
+  const insets = useSafeAreaInsets();
 
   // Add a dummy handler to prevent crashes when the gallery renders
   // We don't need the sticky button logic here, just an empty function so the prop is satisfied
   const handleGalleryLayout = (event) => {};
+  const handlePressImage = (image, index) => {
+    console.log("Image Pressed: ", image, index);
+    setSelectedImage(image);
+    setImageViewerIndex(index);
+    setShowImageViewer(true);
+  };
 
   return (
     <View style={styles.container}>
@@ -41,8 +55,38 @@ export default function PCStep4Component({ petData, uploading }) {
           isGalleryExpanded={isGalleryExpanded}
           setIsGalleryExpanded={setIsGalleryExpanded}
           handleGalleryLayout={handleGalleryLayout}
+          handlePressImage={handlePressImage}
         />
       </ScrollView>
+      <ImageView
+        images={
+          selectedImage
+            ? !Array.isArray(selectedImage)
+              ? [{ uri: selectedImage.url }]
+              : selectedImage.map((img) => ({ uri: img.url }))
+            : []
+        }
+        imageIndex={imageViewerIndex}
+        visible={showImageViewer}
+        onRequestClose={() => setShowImageViewer(false)}
+        swipeToCloseEnabled={true}
+        doubleTapToZoomEnabled={true}
+        HeaderComponent={() => (
+          <View
+            style={[
+              styles.viewerHeaderContainer,
+              { marginTop: insets.top || 40 },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.customCloseButton}
+              onPress={() => setShowImageViewer(false)}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -89,5 +133,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Themes.COLORS.textMuted,
     marginTop: 5,
+  },
+  viewerHeaderContainer: {
+    width: "100%",
+    position: "absolute",
+    zIndex: 1,
+  },
+  customCloseButton: {
+    alignSelf: "flex-end",
+    marginRight: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    padding: 10,
+    borderRadius: 20,
   },
 });

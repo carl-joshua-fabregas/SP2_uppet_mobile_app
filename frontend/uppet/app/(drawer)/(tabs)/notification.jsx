@@ -79,7 +79,7 @@ export default function Notification() {
     fetchNotification(null);
   }, []);
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: Themes.COLORS.background }}>
       <FlatList
         data={notification}
         keyExtractor={(item) => item._id}

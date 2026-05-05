@@ -14,7 +14,7 @@ router.post(`/send`, sendMessage);
 router.post(`/presignUploadURL`, presignUploadURL);
 router.post(`/presignDeleteURL`, presignDeleteURL);
 
-router.patch(`/edit/:messageId`, editAMessage);
+router.patch(`/edit/:messageID`, editAMessage);
 router.get(`/:chatThreadOrigin`, findMessagesFromUser);
 router.delete(`/delete/:id`, deleteAMessage);
 export default router;

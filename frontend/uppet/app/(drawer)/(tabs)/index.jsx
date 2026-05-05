@@ -16,7 +16,10 @@ import PetModal from "../../../component/PetModal";
 import * as Themes from "../../../assets/themes/themes";
 import { api } from "../../../api/axios";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useSocket } from "../../../context/SocketContext";
+
 export default function Index() {
+  const socket = useSocket();
   const isFetchingRef = useRef(false);
   const [cursor, setCursor] = useState(null);
   const initialLimit = Math.ceil(
@@ -81,6 +84,42 @@ export default function Index() {
   useEffect(() => {
     fetchPets(null);
   }, []);
+  useEffect(() => {
+    if (!socket) return;
+    console.log("socket", socket.connected);
+
+    socket.on("pet_created", (data) => {
+      console.log("pet created was heard with message", data.message);
+      const isInArray = pets.some((p) => p._id === data.pet._id);
+      console.log("Is it in the array?", isInArray, data.pet);
+      if (!isInArray) setPets((prev) => [data.pet, ...prev]);
+    });
+
+    socket.on("pet_deleted", (data) => {
+      console.log("pet deleted is heard", data);
+      const isInArray = pets.some((p) => p._id === data.petID);
+      if (isInArray) {
+        const filteredPets = pets.filter((pet) => pet._id !== data.petID);
+        setPets(filteredPets);
+      }
+    });
+
+    socket.on("pet_updated", (data) => {
+      console.log("pet updated was heard with message", data.message);
+      const isInArray = pets.some((p) => p._id === data.pet._id);
+      console.log("Is it in the array?", isInArray);
+      if (isInArray) {
+        setPets((prev) => {
+          return prev.map((p) => (p._id === data.pet._id ? data.pet : p));
+        });
+      }
+    });
+    return () => {
+      socket.off("pet_created");
+      socket.off("pet_deleted");
+      socket.off("pet_updated");
+    };
+  }, [socket, pets]);
 
   const handleLoadMore = () => {
     if (!loading && hasMore && !isFetchingRef.current) {

@@ -42,6 +42,7 @@ export default function messageScreen() {
   const headerHeight = useHeaderHeight() || 0;
   const router = useRoute();
   const isFetchingRef = useRef(false);
+  const isSending = useRef(false);
   const { user } = useUser();
   const socket = useSocket();
   const { receiverID } = router.params;
@@ -110,6 +111,8 @@ export default function messageScreen() {
   };
 
   const handleOpenOptions = (message) => {
+    console.log("MODAAAL 0, ", message, user._id);
+    if (message.sender !== user._id) return;
     setSelectedMessageOptions(message);
     setIsModalVisible(true);
   };
@@ -212,12 +215,33 @@ export default function messageScreen() {
       },
     );
 
+    socket.on("message_updated", (data) => {
+      console.log(
+        "A message is updated with message",
+        data.message,
+        data,
+        messages,
+      );
+      const isInArray = messages.some((msg) => {
+        console.log(msg._id, data.updmessage._id);
+        return data.updmessage._id === msg._id;
+      });
+      console.log("IS IT IN THE ARRAY", isInArray);
+      if (isInArray) {
+        setMessages((prev) => {
+          return prev.map((m) =>
+            m._id === data.updmessage._id ? data.updmessage : m,
+          );
+        });
+      }
+    });
     return () => {
       socket.emit("leave_chat", roomID);
       socket.off("receive_message");
       socket.off("message_receipt");
+      socket.off("message_updated");
     };
-  }, [socket]);
+  }, [socket, messages]);
 
   const retrieveChatThread = async () => {
     try {
@@ -337,7 +361,7 @@ export default function messageScreen() {
               url: finalUrl,
               type: media.type,
             };
-            const body = textInput ? textInput : " ";
+            const body = textInput ? textInput : "";
             handleSend(body, uploadetails);
             return true;
           }),
@@ -401,14 +425,24 @@ export default function messageScreen() {
   };
 
   const handleSend = async (body, media) => {
+    if (isSending.current === true) return;
+    isSending.current = true;
     if (editingMessage) {
-      const res = await api.patch(`/api/message/edit/${editingMessage._id}`, {
-        body,
-        media,
-      });
-      // After successful edit, reset state
-      setEditingMessage(null);
-      setTextInput("");
+      try {
+        const res = await api.patch(`/api/message/edit/${editingMessage._id}`, {
+          body,
+          media,
+          receiver: receiverID,
+          sender: user._id,
+        });
+      } catch (err) {
+        console.log("ERROR IN EDITING MESSAGE", err.message);
+      } finally {
+        // After successful edit, reset state
+        setEditingMessage(null);
+        setTextInput("");
+        isSending.current = false;
+      }
       return;
     }
 
@@ -468,6 +502,7 @@ export default function messageScreen() {
     } finally {
       setTextInput("");
       setMsgMedia(null);
+      isSending.current = false;
     }
   };
 
@@ -556,7 +591,7 @@ export default function messageScreen() {
         <TouchableOpacity
           onPress={() => handleSend(textInput, msgMedia)}
           style={[styles.sendButton, !textInput.trim() && { opacity: 0.5 }]}
-          disabled={!textInput.trim()}
+          disabled={!textInput.trim() || isSending.current}
         >
           <MaterialCommunityIcons
             name="send"

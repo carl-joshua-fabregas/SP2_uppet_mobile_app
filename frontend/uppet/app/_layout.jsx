@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { UserProvider, useUser } from "../context/UserContext";
 import { SocketProvider, useSocket } from "../context/SocketContext";
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
@@ -13,6 +13,7 @@ import {
 
 function NavigationStack() {
   const { token, loading, newUser } = useUser();
+  const socket = useSocket();
   const [fontsLoaded] = useFonts({
     "Fredoka-Regular": Fredoka_400Regular,
     "Fredoka-Medium": Fredoka_500Medium,
@@ -33,6 +34,10 @@ function NavigationStack() {
   }
 
   if (loading) {
+    return null;
+  }
+
+  if (!socket) {
     return null;
   }
 
@@ -82,7 +87,7 @@ export default function RootLayout() {
     <UserProvider>
       <SocketProvider>
         <SafeAreaProvider>
-            <NavigationStack></NavigationStack>
+          <NavigationStack></NavigationStack>
         </SafeAreaProvider>
       </SocketProvider>
     </UserProvider>

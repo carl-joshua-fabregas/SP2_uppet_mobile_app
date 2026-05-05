@@ -28,6 +28,7 @@ export const SocketProvider = ({ children }) => {
     newSocket.on("connect_error", (err) => {
       console.log("SOCKET ERROR IN FRONTEND", err.message);
     });
+
     setSocket(newSocket);
     return () => {
       newSocket.disconnect();

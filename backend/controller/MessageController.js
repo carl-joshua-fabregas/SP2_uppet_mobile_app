@@ -126,7 +126,6 @@ export async function sendMessage(req, res) {
 
     io.to(roomID).emit("receive_message", newMessage);
     io.to(receiver).emit("update_chatlist", updatedChatList);
-
     return res.status(200).json({
       message: "Successfully",
       body: newMessage,
@@ -220,7 +219,8 @@ export async function findMessageById(req, res) {
 
 export async function editAMessage(req, res) {
   try {
-    const message = await Message.findById(req.params.id);
+    console.log(req.params.messageID);
+    const message = await Message.findById(req.params.messageID);
     if (!message) {
       return res.status(404).json({
         message: "Not Found",
@@ -232,10 +232,17 @@ export async function editAMessage(req, res) {
       });
     }
     const updatedMessage = await Message.findByIdAndUpdate(
-      req.params.id,
+      req.params.messageID,
       { body: req.body.body, media: req.body.media },
       { new: true },
     );
+
+    const io = req.app.get("io");
+    const roomID = [req.body.sender, req.body.receiver].sort().join("_");
+    io.to(roomID).emit("message_updated", {
+      message: "Updated a Message",
+      updmessage: updatedMessage,
+    });
     return res.status(200).json({
       message: "Message updated successfully",
       body: updatedMessage,

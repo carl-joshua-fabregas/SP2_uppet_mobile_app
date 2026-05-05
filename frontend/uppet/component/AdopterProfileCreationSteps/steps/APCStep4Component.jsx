@@ -9,8 +9,10 @@ import {
 import ProfileCard from "../../AdopterProfileCard";
 import * as Themes from "../../../assets/themes/themes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-
+import { useState } from "react";
 export default function APCStep4Component({ adopterData, uploading }) {
+  const [reviewExpanded, setReviewExpanded] = useState(false);
+  const handleRatingLayout = () => {};
   return (
     <View style={styles.container}>
       <Modal transparent={true} visible={uploading} animationType="fade">
@@ -28,7 +30,12 @@ export default function APCStep4Component({ adopterData, uploading }) {
           </View>
         </View>
       </Modal>
-      <ProfileCard adopter={adopterData}></ProfileCard>
+      <ProfileCard
+        adopter={adopterData}
+        handleRatingLayout={handleRatingLayout}
+        reviewsExpanded={reviewExpanded}
+        showRatingsAndReviews={false}
+      ></ProfileCard>
     </View>
   );
 }

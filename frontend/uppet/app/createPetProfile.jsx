@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
   },
-  scrollContet: { flexGrow: 1, padding: Themes.SPACING.md, paddingBottom: 50 },
+  scrollContet: { flexGrow: 1, padding: Themes.SPACING.md, paddingBottom: 100 },
 });
 
 // const handleImageRead = (petId, caption) => {

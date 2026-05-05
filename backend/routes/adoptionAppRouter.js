@@ -11,6 +11,7 @@ import {
   rejectApplicant,
   cancelAdoptApp,
   findAdoptAppByID,
+  reapplyUpdateAdoptionApp,
 } from "../controller/AdoptionApplicationController.js";
 
 router.get("/myAdoptees", findMyListAdoptApp);
@@ -25,7 +26,7 @@ router.post("/applied", createAdoptApp);
 
 router.post("/:id/approve", approveAdoption);
 router.patch("/:id/reject", rejectApplicant);
-
+router.patch("/:id/reapply", reapplyUpdateAdoptionApp);
 router.delete("/:id/cancelled", cancelAdoptApp);
 
 export default router;

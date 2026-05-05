@@ -137,11 +137,25 @@ export default function ViewPetProfile() {
   };
 
   const handleApply = async () => {
-    await api.post(`/api/adoptionApp/applied`, {
-      petToAdopt: pet._id,
-    });
-    setStatus("Pending");
-    console.log("HandleApplyClicked");
+    try {
+      if (adoptionApp) {
+        const res = await api.patch(
+          `/api/adoptionApp/${adoptionApp._id}/reapply`,
+          {
+            petToAdopt: pet._id,
+          },
+        );
+        console.log("Reapply Response: ", res.data);
+        setStatus("Pending");
+      } else {
+        await api.post(`/api/adoptionApp/applied`, {
+          petToAdopt: pet._id,
+        });
+        setStatus("Pending");
+      }
+    } catch (err) {
+      console.log("Error in handle Apply: ", err);
+    }
   };
 
   //Update this shi not delete this shit, we need to set the status to cancelled and not delete the application because we want to keep the record of the application for future reference and analytics. Deleting the application would remove all history and data associated with it, which could be valuable for understanding user behavior and improving the adoption process. By setting the status to cancelled, we can maintain a complete record of all applications while still allowing users to manage their applications effectively.

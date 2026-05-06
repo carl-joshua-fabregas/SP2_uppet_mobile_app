@@ -1,4 +1,5 @@
 import Rating from "../models/Rating.js";
+import Notification from "../models/Notification.js";
 
 export async function createRating(req, res) {
   try {
@@ -23,7 +24,32 @@ export async function createRating(req, res) {
 
     const newRating = await rating.save();
     const io = req.app.get("io");
-    io.emit(`newRating-${ratedUser}`, newRating);
+    const ratingNotification = new Notification({
+      recipient: ratedUser,
+      sender: req.user.id,
+      notifType: "RATING_RECEIVED",
+      relatedEntity: newRating._id,
+      entityModel: "Rating",
+      message: "A RATING WAS CREATED",
+    });
+
+    const ratingNotRes = await ratingNotification.save();
+
+    io.to(ratedUser.toString()).emit("rating_created", {
+      message: "New Rating was created",
+      rating: newRating,
+    });
+
+    io.to(req.user.id.toString()).emit("rating_created", {
+      message: "New Rating was created",
+      rating: newRating,
+    });
+
+    io.to(ratedUser.toString()).emit("notification_created", {
+      message: "Notification Created in Rating",
+      notification: ratingNotRes,
+    });
+
     return res.status(200).json({
       message: "Successfully made Rating",
       body: newRating,
@@ -202,6 +228,32 @@ export async function updateRating(req, res) {
       { $set: req.body },
       options,
     );
+
+    const updateRatingNotification = new Notification({
+      recipient: newRating.ratedUser._id,
+      sender: req.user.id,
+      relatedEntity: newRating._id,
+      entityModel: "Rating",
+      message: "A User has updated their review",
+    });
+
+    const upResNotRes = await updateRatingNotification.save();
+    const io = req.app.get("io");
+
+    io.to(newRating.ratedUser._id.toString()).emit("rating_updated", {
+      message: "Rating has been updated",
+      rating: newRating,
+    });
+
+    io.to(newRating.ratedUser._id.toString()).emit("notification_created", {
+      message: "Notification Created in rating",
+      notification: upResNotRes,
+    });
+
+    io.to(req.user.id.toString()).emit("rating_updated", {
+      message: "Rating Updated By YOUUUUUUU",
+      rating: newRating,
+    });
 
     return res.status(200).json({
       message: "Successfully updated rating",

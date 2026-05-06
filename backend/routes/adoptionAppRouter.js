@@ -27,6 +27,6 @@ router.post("/applied", createAdoptApp);
 router.post("/:id/approve", approveAdoption);
 router.patch("/:id/reject", rejectApplicant);
 router.patch("/:id/reapply", reapplyUpdateAdoptionApp);
-router.delete("/:id/cancelled", cancelAdoptApp);
+router.patch("/:id/cancelled", cancelAdoptApp);
 
 export default router;

@@ -10,6 +10,7 @@ import {
   Fredoka_500Medium,
   Fredoka_600SemiBold,
 } from "@expo-google-fonts/fredoka";
+import * as Themes from "../assets/themes/themes";
 
 function NavigationStack() {
   const { token, loading, newUser } = useUser();
@@ -25,6 +26,7 @@ function NavigationStack() {
       SplashScreen.hideAsync();
       console.log("Fonts loaded successfully");
     } else {
+      SplashScreen.preventAutoHideAsync();
       console.log("Loading fonts...");
     }
   }, [fontsLoaded, loading]);
@@ -42,7 +44,14 @@ function NavigationStack() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerTitleStyle: {
+          fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+        },
+      }}
+    >
       <Stack.Protected guard={token}>
         <Stack.Screen name="(drawer)"></Stack.Screen>
         <Stack.Screen
@@ -51,7 +60,11 @@ function NavigationStack() {
         ></Stack.Screen>
         <Stack.Screen
           name="viewProfile"
-          options={{ headerShown: true, title: "Profile" }}
+          options={{
+            headerShown: true,
+            title: "Profile",
+            headerTitleStyle: {},
+          }}
         ></Stack.Screen>
 
         <Stack.Screen

@@ -49,7 +49,7 @@ export async function findAllChatThread(req, res) {
 
 export async function findChatThreadOfUsers(req, res) {
   console.log(
-    "F______________________U______________________C_________________K",
+    "F______________________U______________________D_________________G__________E",
   );
   try {
     const chatThread = await ChatThread.findOne({
@@ -62,11 +62,11 @@ export async function findChatThreadOfUsers(req, res) {
       req.user.id,
     );
     if (!chatThread)
-      return res.status(200).json({
-        body: null,
+      return res.status(404).json({
         message: "NO USER FOUND",
       });
     console.log("___________________NAHANAP______________________NA");
+
     return res.status(200).json({
       message: "Successfully obtained ChatThread of Users",
       body: chatThread,
@@ -108,6 +108,7 @@ export async function findChatThreadByID(req, res) {
     });
   }
 }
+
 export async function findAllUserChatThread(req, res) {
   console.log("FINDING THE CHAT THREAD OF USER___________________");
   try {
@@ -153,7 +154,6 @@ export async function deleteChatThread(req, res) {
         message: "Not Found",
       });
     }
-
     const isMember = chatThread.members.some((memberID) => {
       return req.user.id.toString() === memberID.toString();
     });
@@ -163,9 +163,24 @@ export async function deleteChatThread(req, res) {
         message: "Forbidden",
       });
     }
+    const otherMember = chatThread.members.filter(
+      (m) => m.toString() !== req.user.id.toString(),
+    );
+
+    const io = req.app.get("io");
 
     await Message.deleteMany({ chatThreadOrigin: req.params.id });
     await ChatThread.findByIdAndDelete(req.params.id);
+
+    io.to(otherMember).emit("chatThread_deleted", {
+      message: "Chat Thread has been deleted",
+      chatThread: req.params.id,
+    });
+    io.to(req.user.id).emit("chatThread_deleted", {
+      message: "Chat Thread has been deleted",
+      chatThread: req.params.id,
+    });
+
     return res.status(200).json({
       message: "Deleted Chat Thread",
     });

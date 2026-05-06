@@ -1,9 +1,32 @@
 import AdoptionApplication from "../models/AdoptionApplication.js";
+import Notification from "../models/Notification.js";
 import Pet from "../models/Pet.js";
 
 export async function createAdoptApp(req, res) {
   try {
     const { petToAdopt } = req.body;
+
+    const oldAdopApp = await AdoptionApplication.findOne({
+      applicant: req.user.id,
+      petToAdopt: petToAdopt,
+    });
+
+    if (oldAdopApp)
+      return res.status(409).json({
+        message: "Cannot Create since application already exists",
+      });
+
+    const pet = await Pet.findById(petToAdopt);
+    if (!pet)
+      return res.status(404).json({
+        message: "PET NOT FOUND",
+      });
+
+    if (pet.ownerId.toString() === req.user.id.toString()) {
+      return res.status(409).json({
+        message: "Owner Cannot Apply for their Pet",
+      });
+    }
 
     const adoptionApplication = new AdoptionApplication({
       petToAdopt: petToAdopt,
@@ -11,6 +34,48 @@ export async function createAdoptApp(req, res) {
     });
 
     const adoptStat = await adoptionApplication.save();
+    const io = req.app.get("io");
+
+    const newOwnerNotification = new Notification({
+      recipient: pet.ownerId,
+      sender: req.user.id,
+      notifType: "ADOP_APP_RECEIVED",
+      entityModel: "AdoptionApplication",
+      relatedEntity: adoptStat._id,
+      message: "Successfully Applied for a pet",
+    });
+
+    const newApplicantNotification = new Notification({
+      recipient: req.user.id,
+      sender: pet.ownerId,
+      notifType: "ADOP_APP_RECEIVED",
+      entityModel: "AdoptionApplication",
+      relatedEntity: adoptStat._id,
+      message: "Successfully Applied for a pet",
+    });
+
+    const newOwnNotifRes = await newOwnerNotification.save();
+    const newAplNotifRes = await newApplicantNotification.save();
+
+    io.to(pet.ownerId.toString()).emit("adoptionApp_created", {
+      message: "adoption app was created",
+      adoptionApp: adoptStat,
+    });
+
+    io.to(pet.ownerId.toString()).emit("notification_created", {
+      message: "Notification created for applying",
+      notification: newOwnNotifRes,
+    });
+
+    io.to(req.user.id.toString()).emit("adoptionApp_created", {
+      message: "adoption app was created",
+      adoptionApp: adoptStat,
+    });
+
+    io.to(req.user.id.toString()).emit("notification_created", {
+      message: "Notification created for applying",
+      notification: newAplNotifRes,
+    });
 
     return res.status(200).json({
       message: "Successfully created Adoption Application",
@@ -54,9 +119,8 @@ export async function findAdoptAppByID(req, res) {
   try {
     const adoptApp = await AdoptionApplication.findById(req.params.id);
     if (!adoptApp) {
-      return res.status(200).json({
+      return res.status(404).json({
         message: "No Applications Found",
-        body: [],
       });
     }
     return res.status(200).json({
@@ -312,6 +376,48 @@ export async function reapplyUpdateAdoptionApp(req, res) {
       options,
     );
 
+    const io = req.app.get("io");
+
+    const newOwnerNotification = new Notification({
+      recipient: pet.ownerId,
+      sender: req.user.id,
+      notifType: "ADOP_APP_RECEIVED",
+      entityModel: "AdoptionApplication",
+      relatedEntity: newAdoptionApp._id,
+      message: "Successfully Applied for a pet",
+    });
+
+    const newApplicantNotification = new Notification({
+      recipient: req.user.id,
+      sender: pet.ownerId,
+      notifType: "ADOP_APP_RECEIVED",
+      entityModel: "AdoptionApplication",
+      relatedEntity: newAdoptionApp._id,
+      message: "Successfully Applied for a pet",
+    });
+
+    const newOwnNotifRes = await newOwnerNotification.save();
+    const newAplNotifRes = await newApplicantNotification.save();
+
+    io.to(pet.ownerId.toString()).emit("adoptionApp_created", {
+      message: "adoption app was updated",
+      adoptionApp: newAdoptionApp,
+    });
+
+    io.to(pet.ownerId.toString()).emit("notification_created", {
+      message: "Notification created for applying",
+      notification: newOwnNotifRes,
+    });
+
+    io.to(req.user.id.toString()).emit("adoptionApp_created", {
+      message: "adoption app was created",
+      adoptionApp: newAdoptionApp,
+    });
+
+    io.to(req.user.id.toString()).emit("notification_created", {
+      message: "Notification created for applying",
+      notification: newAplNotifRes,
+    });
     return res.status(200).json({
       message: "Success in reapplying",
       body: newAdoptionApp,
@@ -383,12 +489,88 @@ export async function updateAdoptionApp(req, res) {
 
 export async function cancelAdoptApp(req, res) {
   try {
-    const app = await AdoptionApplication.findOneAndDelete({
-      applicant: req.user.id,
-      petToAdopt: req.params.id,
+    const options = {
+      new: true,
+      runValidators: true,
+    };
+    const app = await AdoptionApplication.findById(req.params.id);
+    if (!app) {
+      return res.status(404).json({
+        message: "Adoption Application Does not exists",
+      });
+    }
+    if (!(app.status === "Pending")) {
+      return res.status(209).json({
+        message: "Conflict in server, Cannot cancel not pending value",
+      });
+    }
+    const pet = await Pet.findById(app.petToAdopt);
+
+    if (!pet)
+      return res.status(404).json({
+        message: "Pet does not exist",
+      });
+
+    if (pet.adoptedStatus) {
+      return res.status(209).json({
+        message:
+          "Pet status conflict, cannot cancel pet that is already adoptedd",
+      });
+    }
+
+    const cancelledApp = await AdoptionApplication.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: { status: "Cancelled" },
+      },
+      options,
+    );
+    const io = req.app.get("io");
+
+    const newOwnerNotification = new Notification({
+      recipient: pet.ownerId,
+      sender: req.user.id,
+      notifType: "ADOP_APP_CANCELLED",
+      entityModel: "AdoptionApplication",
+      relatedEntity: cancelledApp._id,
+      message: "Successfully Cancelled Application for a pet",
     });
+
+    const newApplicantNotification = new Notification({
+      recipient: req.user.id,
+      sender: pet.ownerId,
+      notifType: "ADOP_APP_CANCELLED",
+      entityModel: "AdoptionApplication",
+      relatedEntity: cancelledApp._id,
+      message: "Successfully Cancelled Application for a pet",
+    });
+
+    const newOwnNotifRes = await newOwnerNotification.save();
+    const newAplNotifRes = await newApplicantNotification.save();
+
+    io.to(pet.ownerId.toString()).emit("adoptionApp_cancelled", {
+      message: "adoption app was created",
+      adoptionApp: cancelledApp,
+    });
+
+    io.to(pet.ownerId.toString()).emit("notification_created", {
+      message: "Notification created for applying",
+      notification: newOwnNotifRes,
+    });
+
+    io.to(req.user.id.toString()).emit("adoptionApp_created", {
+      message: "adoption app was created",
+      adoptionApp: cancelledApp,
+    });
+
+    io.to(req.user.id.toString()).emit("adoptionApp_cancelled", {
+      message: "Notification created for applying",
+      notification: newAplNotifRes,
+    });
+
     return res.status(200).json({
       message: "Cancelled Adoption App",
+      body: cancelledApp,
     });
   } catch (err) {
     return res.status(500).json({
@@ -448,7 +630,7 @@ export async function approveAdoption(req, res) {
       acceptedApplication.status.toString() === "Rejected"
     ) {
       return res.status(409).json({
-        message: "Application Already Approved",
+        message: `Application Already ${acceptedApplication.status.toString()}`,
       });
     }
 
@@ -476,7 +658,49 @@ export async function approveAdoption(req, res) {
         { status: "Approved" },
         options,
       );
-      const updatePet = await Pet.findById(
+      const io = req.app.get("io");
+
+      const newAcceptAplNotification = new Notification({
+        recipient: accept.applicant._id,
+        sender: req.user.id,
+        notifType: "ADOP_APP_APPROVED",
+        entityModel: "AdoptionApplication",
+        relatedEntity: accept._id,
+        message: "Adoption App has been successful",
+      });
+
+      const newAcceptOwnNotification = new Notification({
+        recipient: req.user.id,
+        sender: accept.applicant._id,
+        notifType: "ADOP_APP_APPROVED",
+        entityModel: "AdoptionApplication",
+        relatedEntity: accept._id,
+        message: "Adoption App has been successful",
+      });
+      const newAccAplNotRes = await newAcceptAplNotification.save();
+      const newAccOwnNotRes = await newAcceptOwnNotification.save();
+      // Winner winner chicken dinner (Approved Adoption Emitter)
+      io.to(accept.applicant._id.toString()).emit("adoptionApp_approved", {
+        message: "Adoption App emittion, it has been accepted",
+        adoptionApp: accept,
+      });
+
+      io.to(accept.applicant._id.toString()).emit("notification_created", {
+        message: "Notification created for applying",
+        notification: newAccAplNotRes,
+      });
+
+      io.to(pet.ownerId.toString()).emit("adoptionApp_approved", {
+        message: "Adoption App emittion, it has been accepted",
+        adoptionApp: accept,
+      });
+
+      io.to(pet.ownerId.toString()).emit("notification_created", {
+        message: "Notification created for applying",
+        notification: newAccOwnNotRes,
+      });
+
+      const updatePet = await Pet.findByIdAndUpdate(
         pet.id,
         { adoptedStatus: true },
         options,
@@ -489,7 +713,40 @@ export async function approveAdoption(req, res) {
           status: { $eq: "Pending" },
         },
         { status: "Rejected" },
-        options,
+      );
+
+      const rejectedList = await AdoptionApplication.find({
+        petToAdopt: pet._id,
+        _id: { $ne: req.params.id },
+        status: { $eq: "Rejected" },
+      });
+
+      const rejectOthers = await Promise.all(
+        rejectedList.map(async (adopApp) => {
+          const rejectNotif = new Notification({
+            recipient: adopApp.applicant._id,
+            sender: req.user.id,
+            relatedEntity: adopApp._id,
+            entityModel: "AdoptionApplication",
+            message: "Application Rejected",
+            notifType: "ADOP_APP_REJECTED",
+          });
+          const rejectNotifRes = await rejectNotif.save();
+
+          io.to(adopApp.applicant._id.toString()).emit("adoptionApp_rejected", {
+            message: "Adoption App Rejected",
+            adoptionApp: adopApp,
+          });
+          io.to(adopApp.applicant._id.toString()).emit("notification_created", {
+            message: "Notification created for approving",
+            notification: rejectNotifRes,
+          });
+
+          io.to(pet.ownerId.toString()).emit("adoptionApp_rejected", {
+            message: "Adoption App of adopter is Rejected",
+            adoptionApp: adopApp,
+          });
+        }),
       );
 
       const updatedList = await AdoptionApplication.find({
@@ -501,6 +758,7 @@ export async function approveAdoption(req, res) {
           message: "Error Retrieving Updated List",
         });
       }
+
       return res.status(200).json({
         message: "Approved",
         body: updatedList,
@@ -566,6 +824,40 @@ export async function rejectApplicant(req, res) {
       },
       options,
     );
+
+    const rejectNotif = new Notification({
+      recipient: rejectApplication.applicant._id,
+      sender: req.user.id,
+      relatedEntity: rejectApplication._id,
+      entityModel: "AdoptionApplication",
+      message: "Application Rejected",
+      notifType: "ADOP_APP_REJECTED",
+    });
+    const rejectNotifRes = await rejectNotif.save();
+
+    const io = req.app.get("io");
+
+    io.to(rejectApplication.applicant._id.toString()).emit(
+      "adoptionApp_rejected",
+      {
+        message: "Adoption App emittion, it has been accepted",
+        adoptionApp: rejectApplication,
+      },
+    );
+
+    io.to(rejectApplication.applicant._id.toString()).emit(
+      "notification_created",
+      {
+        message: "Notification created for applying",
+        notification: rejectNotifRes,
+      },
+    );
+
+    io.to(pet.ownerId.toString()).emit("adoptionApp_rejected", {
+      message: "Adoption App emittion, it has been accepted",
+      adoptionApp: rejectApplication,
+    });
+
     const updatedList = await AdoptionApplication.find({
       petToAdopt: rejectApplication.petToAdopt,
     }).populate("applicant");

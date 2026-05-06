@@ -145,6 +145,12 @@ export async function deleteUserNotification(req, res) {
       });
     }
     const notification = await Notification.findByIdAndDelete(req.params.id);
+    const io = req.app.get("io");
+
+    io.to(req.user.id).emit("notification_deleted", {
+      message: "A notification has been deleted",
+      notification: user.id,
+    });
 
     return res.status(200).json({
       message: "Successfully deleted Notification",

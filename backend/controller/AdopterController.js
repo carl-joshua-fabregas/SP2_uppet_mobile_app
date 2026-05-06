@@ -82,20 +82,20 @@ export async function createAdopter(req, res) {
       { expiresIn: "14d" },
     );
     //New Adopter Notification
-    const notifcations = new Notification({
-      recipient: newAdopter._id,
-      sender: newAdopter._id,
-      relatedEntity: newAdopter._id,
-      entityModel: "Adopter",
-      message: "Successfully created new adopter profile",
-      notifType: "ADOPTER_NEW",
-    });
-    const saveNotif = await notifcations.save();
-    console.log("Notification Saved", saveNotif);
-    const io = req.app.get("io");
+    // const notifcations = new Notification({
+    //   recipient: newAdopter._id,
+    //   sender: newAdopter._id,
+    //   relatedEntity: newAdopter._id,
+    //   entityModel: "Adopter",
+    //   message: "Successfully created new adopter profile",
+    //   notifType: "ADOPTER_NEW",
+    // });
+    // const saveNotif = await notifcations.save();
+    // console.log("Notification Saved", saveNotif);
+    // const io = req.app.get("io");
 
-    //Console log tell notifications of the user
-    io.to(newAdopter._id.toString()).emit("new_notification", saveNotif);
+    // //Console log tell notifications of the user
+    // io.to(newAdopter._id.toString()).emit("new_notification", saveNotif);
 
     return res.status(200).json({
       message: "Successfully added user",
@@ -147,12 +147,10 @@ export async function findUserByID(req, res) {
     console.log("FIND BY USER ID");
     console.log(user);
     if (!user) {
-      return res.status(200).json({
+      return res.status(404).json({
         message: "Not found",
-        body: [],
       });
     }
-
     return res.status(200).json({
       message: "Successfully found User",
       body: user,
@@ -173,7 +171,6 @@ export async function findCurrentUser(req, res) {
     if (!user) {
       return res.status(404).json({
         message: "Not found",
-        body: [],
       });
     }
     return res.status(200).json({
@@ -201,7 +198,7 @@ export async function updateUser(req, res) {
     const { initialCreation = false, ...updateData } = req.body;
     const user = await Adopter.findById(req.user.id);
     if (!user) {
-      return res.status(200).json({
+      return res.status(404).json({
         message: "Not Found",
         body: [],
       });

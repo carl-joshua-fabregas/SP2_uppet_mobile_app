@@ -64,7 +64,7 @@ export default function ProfileDrawer(props) {
               styles.menuItem,
               pressed && styles.menuItemPressed,
             ]}
-            onPress={() => router.navigate("myAdoptee")}
+            onPress={() => router.navigate("viewMyApplication")}
           >
             <Ionicons
               name="paw-outline"

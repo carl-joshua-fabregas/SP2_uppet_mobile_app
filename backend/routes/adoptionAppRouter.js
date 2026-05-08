@@ -6,6 +6,9 @@ import {
   findPetApprovedApplicants,
   findPetRejectedApplicants,
   findPetUserApplication,
+  findMyPetApprovedApplications,
+  findMyPetRejectedApplications,
+  findMyPetPendingApplications,
   createAdoptApp,
   approveAdoption,
   rejectApplicant,
@@ -14,11 +17,14 @@ import {
   reapplyUpdateAdoptionApp,
 } from "../controller/AdoptionApplicationController.js";
 
-router.get("/myAdoptees", findMyListAdoptApp);
+router.get("/my/approved", findMyPetApprovedApplications);
+router.get("/my/rejected", findMyPetRejectedApplications);
+router.get("/my/pending", findMyPetPendingApplications);
 
 router.get("/:id/rejected", findPetRejectedApplicants);
 router.get("/:id/approved", findPetApprovedApplicants);
 router.get("/:id/pending", findPetPendingApplicants);
+
 router.get("/:id/applied", findPetUserApplication);
 router.get("/:id", findAdoptAppByID);
 

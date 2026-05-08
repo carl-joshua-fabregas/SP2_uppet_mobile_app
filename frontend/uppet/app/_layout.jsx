@@ -83,6 +83,10 @@ function NavigationStack() {
           name="messageScreen"
           options={{ headerShown: true, title: "Messages" }}
         ></Stack.Screen>
+        <Stack.Screen
+          name="viewMyApplication"
+          options={{ headerShown: true, title: "My Application" }}
+        ></Stack.Screen>
       </Stack.Protected>
       <Stack.Protected guard={!token && !newUser}>
         <Stack.Screen name="index"></Stack.Screen>

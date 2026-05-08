@@ -9,7 +9,7 @@ import {
   Modal,
   ActivityIndicator,
 } from "react-native";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
 import PetProfileCardViewMore from "../component/PetProfileCard";
@@ -26,8 +26,9 @@ export default function ViewPetProfile() {
   const route = useRoute();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const [showCancelModal, setShowCancelModal] = useState(false);
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [status, setStatus] = useState(false);
   const [isOwner, setIsOwner] = useState(
     route?.params?.pet?.ownerId === user._id,
   );
@@ -47,17 +48,16 @@ export default function ViewPetProfile() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [imageViewerIndex, setImageViewerIndex] = useState(0);
-
+  const isSubmitting = useRef(false);
   const overlapAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const getstatus = async () => {
+  const fetchAdoptionApp = async () => {
     try {
       const res = await api.get(`/api/adoptionApp/${pet._id}/applied`, {});
       console.log("This is the adoption App", res.data);
       if (res.data.body) {
-        setStatus(res.data.body.status);
         setAdoptionApp(res.data.body);
       }
     } catch (err) {
@@ -89,7 +89,7 @@ export default function ViewPetProfile() {
 
   useEffect(() => {
     if (pet._id) {
-      getstatus();
+      fetchAdoptionApp();
     }
     navigation.setOptions({
       headerTitle: `${pet.name}'s Profile`,
@@ -113,7 +113,6 @@ export default function ViewPetProfile() {
   };
 
   const handleMessage = async () => {
-    console.log("HandleMessageClicked: ", pet.ownerId);
     try {
       const res = await api.get(`/api/chatlist/get/${pet.ownerId}`);
       const chatThreadOrigin = res.data.body;
@@ -137,6 +136,8 @@ export default function ViewPetProfile() {
   };
 
   const handleApply = async () => {
+    if (isSubmitting.current) return;
+    isSubmitting.current = true;
     try {
       if (adoptionApp) {
         const res = await api.patch(
@@ -145,24 +146,41 @@ export default function ViewPetProfile() {
             petToAdopt: pet._id,
           },
         );
-        console.log("Reapply Response: ", res.data);
-        setStatus("Pending");
+        console.log(res.data);
+        setAdoptionApp(res.data.body);
       } else {
-        await api.post(`/api/adoptionApp/applied`, {
+        const res = await api.post(`/api/adoptionApp/applied`, {
           petToAdopt: pet._id,
         });
-        setStatus("Pending");
+        setAdoptionApp(res.data.body);
+        console.log(res.data);
       }
     } catch (err) {
       console.log("Error in handle Apply: ", err);
+    } finally {
+      isSubmitting.current = false;
     }
   };
 
   //Update this shi not delete this shit, we need to set the status to cancelled and not delete the application because we want to keep the record of the application for future reference and analytics. Deleting the application would remove all history and data associated with it, which could be valuable for understanding user behavior and improving the adoption process. By setting the status to cancelled, we can maintain a complete record of all applications while still allowing users to manage their applications effectively.
+  const confirmCancel = async () => {
+    try {
+      setLoading(true);
+      const res = await api.patch(
+        `/api/adoptionApp/${adoptionApp._id}/cancelled`,
+        {},
+      );
+      setAdoptionApp(res.data.body);
+    } catch (err) {
+      console.log("Error in handle Cancel", err.message);
+    } finally {
+      setLoading(false);
+      setShowCancelModal(false);
+    }
+  };
+
   const handleCancel = async () => {
-    await api.delete(`/api/adoptionApp/${pet._id}/cancelled`, {});
-    setStatus("Cancelled");
-    console.log("HandleCancelClicked");
+    setShowCancelModal(true);
   };
 
   const handleViewApplicants = () => {
@@ -193,7 +211,8 @@ export default function ViewPetProfile() {
           await fetch(url, { method: "DELETE" });
         }),
       );
-      await api.delete(`/api/pet/${pet._id}`, {});
+      const res = await api.delete(`/api/pet/${pet._id}`, {});
+      setAdoptionApp(res.data.body);
     } catch (err) {
       console.log("Error in deleting Pet", err);
       setLoading(false);
@@ -204,65 +223,81 @@ export default function ViewPetProfile() {
     }
   };
 
-  const buttons = [];
-  if (isOwner) {
-    buttons.push({
-      title: "View Applicants",
-      onPress: handleViewApplicants,
-      styleType: "calm",
-    });
-    buttons.push({
-      title: "Edit Pet Profile",
-      onPress: handleEditPetProfile,
-      styleType: "neutral",
-    });
-    buttons.push({
-      title: "Delete Pet Profile",
-      onPress: handleDeletPetProfile,
-      styleType: "warning",
-    });
-  } else {
-    buttons.push({
-      title: "View Owner Profile",
-      onPress: handleViewOwnerProfile,
-      styleType: "calm",
-    });
-    buttons.push({
-      title: "Message Owner",
-      onPress: handleMessage,
-      styleType: "neutral",
-    });
+  const actionButtons = useMemo(() => {
+    const btns = [];
 
-    const isApplicant = adoptionApp && adoptionApp.applicant === user._id;
-
-    if (isApplicant) {
-      if (adoptionApp.status === "Approved") {
-        buttons.push({
-          title: "Approved",
-          disabled: true,
-          styleType: "disabled",
-        });
-      } else if (adoptionApp.status === "Pending") {
-        buttons.push({
-          title: "Cancel Application",
-          onPress: handleCancel,
-          styleType: "warning",
-        });
-      } else if (adoptionApp.status === "Rejected") {
-        buttons.push({
-          title: "Apply Again",
-          onPress: handleApply,
+    if (isOwner) {
+      btns.push(
+        {
+          title: "View Applicants",
+          onPress: handleViewApplicants,
           styleType: "calm",
-        });
-      }
+        },
+        {
+          title: "Edit Pet Profile",
+          onPress: handleEditPetProfile,
+          styleType: "neutral",
+        },
+        {
+          title: "Delete Pet Profile",
+          onPress: handleDeletPetProfile,
+          styleType: "warning",
+        },
+      );
     } else {
-      buttons.push({
-        title: "Apply",
-        onPress: handleApply,
-        styleType: "calm",
-      });
+      btns.push(
+        {
+          title: "View Owner Profile",
+          onPress: handleViewOwnerProfile,
+          styleType: "calm",
+        },
+        {
+          title: "Message Owner",
+          onPress: handleMessage,
+          styleType: "neutral",
+        },
+      );
+
+      // Inside your useMemo block...
+      const isApplicant = adoptionApp && adoptionApp.applicant === user._id;
+
+      if (isApplicant) {
+        switch (adoptionApp.status) {
+          case "Approved":
+            btns.push({
+              title: "Approved",
+              disabled: true,
+              styleType: "disabled",
+            });
+            break;
+          case "Pending":
+            btns.push({
+              title: "Cancel Application",
+              onPress: handleCancel,
+              styleType: "warning",
+            });
+            break;
+
+          // 👇 Both Rejected and Cancelled trigger the Apply Again button!
+          case "Rejected":
+          case "Cancelled":
+            btns.push({
+              title: "Apply Again",
+              onPress: handleApply,
+              styleType: "calm",
+            });
+            break;
+
+          default:
+            break;
+        }
+      } else {
+        btns.push({ title: "Apply", onPress: handleApply, styleType: "calm" });
+      }
     }
-  }
+
+    return btns;
+  }, [isOwner, adoptionApp, user._id]);
 
   const bottomOffset = Themes.SPACING?.lg || 24;
   const collisionPoint =
@@ -312,18 +347,21 @@ export default function ViewPetProfile() {
         )}
 
         <View style={styles.buttonSection}>
-          {buttons.map((btn, index) => {
+          {actionButtons.map((btn, index) => {
+            // <-- FIXED: Removed .btns
             const containerStyle =
               btn.styleType === "warning"
                 ? styles.warningButtonContainer
                 : btn.styleType === "neutral"
                   ? styles.neutralButtonContainer
-                  : styles.calmButtonContainer;
+                  : btn.styleType === "disabled" // <-- Added this just in case you want specific disabled styling!
+                    ? [styles.neutralButtonContainer, { opacity: 0.5 }]
+                    : styles.calmButtonContainer;
 
             const textStyle =
               btn.styleType === "warning"
                 ? styles.warningButtonText
-                : btn.styleType === "neutral"
+                : btn.styleType === "neutral" || btn.styleType === "disabled"
                   ? styles.neutralButtonText
                   : styles.calmButtonText;
 
@@ -332,6 +370,7 @@ export default function ViewPetProfile() {
                 key={index}
                 style={containerStyle}
                 onPress={btn.onPress}
+                disabled={btn.disabled} // <-- FIXED: Added the disabled prop
               >
                 <Text style={textStyle}>{btn.title}</Text>
               </TouchableOpacity>
@@ -456,6 +495,71 @@ export default function ViewPetProfile() {
                     onPress={confirmDelete}
                   >
                     <Text style={styles.modalDeleteText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+      {/* CUTE CANCELLATION CONFIRMATION MODAL */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showCancelModal}
+        onRequestClose={() => {
+          if (!loading) setShowCancelModal(false); // Prevent closing while loading
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.cuteModalCard}>
+            {loading ? (
+              // --- WHAT SHOWS WHILE DELETING ---
+              <View style={{ alignItems: "center", paddingVertical: 20 }}>
+                <ActivityIndicator size="large" color={Themes.COLORS.primary} />
+                <Text style={[styles.modalTitle, { marginTop: 16 }]}>
+                  Cancelling Application
+                </Text>
+                <Text style={styles.modalText}>
+                  Please wait while we process your request for cancellation.
+                </Text>
+              </View>
+            ) : (
+              // --- THE ORIGINAL CONFIRMATION UI ---
+              <>
+                <View style={styles.modalIconContainer}>
+                  <MaterialCommunityIcons
+                    name="cat"
+                    size={50}
+                    color={Themes.COLORS.primary}
+                  />
+                  <MaterialCommunityIcons
+                    name="help"
+                    size={24}
+                    color={Themes.COLORS.primary}
+                    style={styles.questionMark}
+                  />
+                </View>
+
+                <Text style={styles.modalTitle}>Cancel Application?</Text>
+                <Text style={styles.modalText}>
+                  Are you sure you want to cancel your application for{" "}
+                  {pet.name}? You can always change your decision
+                </Text>
+
+                <View style={styles.modalButtonRow}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalCancelBtn]}
+                    onPress={() => setShowCancelModal(false)}
+                  >
+                    <Text style={styles.modalCancelText}>Keep It</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalDeleteBtn]}
+                    onPress={confirmCancel}
+                  >
+                    <Text style={styles.modalDeleteText}>Withdraw</Text>
                   </TouchableOpacity>
                 </View>
               </>

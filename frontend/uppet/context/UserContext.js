@@ -33,6 +33,7 @@ export const UserProvider = ({ children }) => {
   const logout = async () => {
     setUser(null);
     setToken(null);
+    setNewUser(false);
     await SecureStore.deleteItemAsync("token");
     await GoogleSignin.signOut();
   };
@@ -41,7 +42,7 @@ export const UserProvider = ({ children }) => {
     if (signingIn) return;
 
     setSigningIn(true);
-
+    console.log("Handling signInr");
     try {
       if (Platform.OS === "android") {
         await GoogleSignin.hasPlayServices();
@@ -100,6 +101,7 @@ export const UserProvider = ({ children }) => {
           const userInfo = await GoogleSignin.signInSilently();
           console.log("CHECKING IF SAVED TOKEN IS VALID...");
           if (userInfo?.idToken) {
+            console.log("FOUND A TOKEN");
             const res = await api.post("/api/auth/google", {
               token: {
                 idToken: userInfo.idToken,
@@ -110,6 +112,8 @@ export const UserProvider = ({ children }) => {
               console.log("USER IS AN OLD USER");
             }
           }
+        } else {
+          handleSignIn();
         }
       } catch (err) {
         console.error("SAVED TOKEN ERROR", err);

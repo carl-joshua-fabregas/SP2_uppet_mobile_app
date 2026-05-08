@@ -14,6 +14,7 @@ import socketController from "./controller/SocketController.js";
 import messageRouter from "./routes/messageRouter.js";
 import chatThreadRouter from "./routes/chatThreadRouter.js";
 import ratingRouter from "./routes/ratingRouter.js";
+import matchRouter from "./routes/matchRouter.js";
 const app = express();
 const corsOption = {
   origin: "*",
@@ -54,6 +55,7 @@ app.use("/api/notification", notificationRouter);
 app.use("/api/message", messageRouter);
 app.use("/api/chatlist", chatThreadRouter);
 app.use("/api/rating", ratingRouter);
+app.use("/api/match", matchRouter);
 //Connecting To MONGODB ATLAS
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/sp2_uppet";

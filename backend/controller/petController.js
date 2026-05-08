@@ -7,6 +7,9 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import mongoose from "mongoose";
+import Adopter from "../models/Adopter.js";
+import Match from "../models/Match.js";
+import { generateSingleMatch } from "../services/matchingServices.js";
 
 console.log("AWS REGION:", process.env.AWS_REGION);
 console.log("AWS ACCESS KEY ID:", process.env.AWS_ACCESS_KEY_ID);
@@ -360,9 +363,11 @@ export async function deletePetByID(req, res) {
       message: "Pet deletion was successful",
       petID: req.params.id,
     });
-    return res.status(200).json({
+    res.status(200).json({
       message: "Successfully delete pet",
     });
+
+    await Match.deleteMany({ petID: pet._id });
   } catch (err) {
     return res.status(500).json({
       message: "Server Error",
@@ -438,9 +443,15 @@ export async function updatePet(req, res) {
       });
       console.log("we emitted pet update");
     }
-    return res.status(200).json({
+    res.status(200).json({
       message: "Successfully updated a pet",
       body: updatedPet,
+    });
+
+    const adopterList = await Adopter.find({ _id: { $ne: updatePet.ownerId } });
+
+    adopterList.map((adopter) => {
+      generateSingleMatch(adopter, updatedPet);
     });
   } catch (err) {
     return res.status(500).json({

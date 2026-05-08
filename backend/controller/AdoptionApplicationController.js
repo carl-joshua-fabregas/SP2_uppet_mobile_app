@@ -360,7 +360,7 @@ export async function reapplyUpdateAdoptionApp(req, res) {
         message: "Forbidden",
       });
     }
-    if (pet.adoptedStatus === false) {
+    if (pet.adoptedStatus) {
       return res.status(209).json({
         message: "Collission with data in reapply",
       });
@@ -493,12 +493,15 @@ export async function cancelAdoptApp(req, res) {
       new: true,
       runValidators: true,
     };
+    console.log("This is the cancel adoptApp, wite", req.params.id);
     const app = await AdoptionApplication.findById(req.params.id);
+    console.log("This is the app", app);
     if (!app) {
       return res.status(404).json({
         message: "Adoption Application Does not exists",
       });
     }
+    console.log("App exists");
     if (!(app.status === "Pending")) {
       return res.status(209).json({
         message: "Conflict in server, Cannot cancel not pending value",
@@ -573,6 +576,7 @@ export async function cancelAdoptApp(req, res) {
       body: cancelledApp,
     });
   } catch (err) {
+    console.log("Cancel Error in adoption App", err.message);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,

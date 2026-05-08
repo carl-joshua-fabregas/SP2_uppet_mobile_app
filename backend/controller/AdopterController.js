@@ -15,6 +15,8 @@ import {
   Bucket$,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { generateSingleMatch } from "../services/matchingServices.js";
+import Match from "../models/Match.js";
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -209,6 +211,7 @@ export async function updateUser(req, res) {
       { $set: updateData },
       options,
     );
+
     const io = req.app.get("io");
 
     if (initialCreation) {
@@ -242,9 +245,18 @@ export async function updateUser(req, res) {
     }
     // io.to(newUser._id.toString()).emit("new_notification", saveNotif);
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Successfully updated",
       body: newUser,
+    });
+
+    const findAvailPets = await Pet.find({
+      adoptedStatus: { $eq: false },
+      ownerId: { $ne: req.user.id },
+    });
+
+    findAvailPets.map((pet) => {
+      generateSingleMatch(newUser, pet);
     });
   } catch (err) {
     console.log("==========ERROR IN UPDATING=========");
@@ -416,6 +428,7 @@ export async function deleteUser(req, res) {
       Pet.deleteMany({ ownerId: req.user.id }),
       AdoptionApplication.deleteMany({ applicant: req.user.id }),
       Adopter.findByIdAndDelete(req.user.id),
+      Match.deleteMany({ adopterID: req.user.id }),
     ];
     const deletionStatus = await Promise.all(deletionTask);
     const io = req.app.get("io");

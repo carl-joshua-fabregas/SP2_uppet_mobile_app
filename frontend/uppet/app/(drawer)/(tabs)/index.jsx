@@ -4,7 +4,6 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  Button,
   TouchableOpacity,
   Dimensions,
   RefreshControl,
@@ -20,29 +19,53 @@ import { useSocket } from "../../../context/SocketContext";
 
 export default function Index() {
   const socket = useSocket();
-  const isFetchingRef = useRef(false);
-  const [cursor, setCursor] = useState(null);
+  const router = useNavigation();
+
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.heading.fontSize,
   );
 
-  const router = useNavigation();
-  const [pets, setPets] = useState([]);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  // Separate states for "All" and "Best Match" tabs
+  const [all, setAll] = useState({
+    pets: [],
+    loading: false,
+    hasMore: true,
+    refreshing: false,
+    tabCursorID: null,
+  });
+
+  const [bestMatch, setBestMatch] = useState({
+    pets: [],
+    loading: false,
+    hasMore: true,
+    refreshing: false,
+    tabCursorID: null,
+  });
+
+  const [activeTab, setActiveTab] = useState("all");
   const [selectedPet, setSelectedPet] = useState(null);
 
+  const isFetchingRef = useRef({
+    all: false,
+    bestMatch: false,
+  });
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+  };
+
+  // Determine current active state
+  const currentData = activeTab === "all" ? all : bestMatch;
+
   const setSelectedPetLatest = selectedPet
-    ? pets.find((pet) => pet._id === selectedPet._id)
+    ? currentData.pets.find((pet) => pet._id === selectedPet._id)
     : null;
 
-  const fetchPets = async (lastPet, isRefreshing = false) => {
-    isFetchingRef.current = true;
-    setLoading(true);
+  const fetchAllPets = async (lastPet, isRefreshing = false) => {
+    setAll((prev) => ({ ...prev, loading: true }));
+    isFetchingRef.current.all = true;
     try {
-      const limit = pets.length > 0 ? 10 : initialLimit;
+      const limit = all.pets.length === 0 ? initialLimit : 10;
       const res = await api.get("/api/pet/avail", {
         params: {
           lastPetID: lastPet ? lastPet._id : null,
@@ -53,84 +76,194 @@ export default function Index() {
       const newPets = res.data.body;
 
       if (newPets?.length < 10) {
-        setHasMore(false);
+        setAll((prev) => ({ ...prev, hasMore: false }));
       }
-      setPets((prev) => {
-        if (isRefreshing) return newPets;
-        else return [...prev, ...newPets];
-      });
-      if (newPets.length > 0) {
-        setCursor(newPets[newPets.length - 1]);
-      }
-      console.log("FINISHED FETHCING PETS");
+      setAll((prev) => ({
+        ...prev,
+        pets: isRefreshing ? newPets : [...prev.pets, ...newPets],
+        tabCursorID:
+          newPets.length > 0 ? newPets[newPets.length - 1] : prev.tabCursorID,
+      }));
     } catch (err) {
-      console.error("Error fetching pets:", err);
-      console.error("Status:", err.response?.status); // Is it actually 404?
-      console.error("Data:", err.response?.data); // Does it say "Pet not found"?
+      console.error("Error fetching all pets:", err);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
-      isFetchingRef.current = false;
+      isFetchingRef.current.all = false;
+      setAll((prev) => ({ ...prev, loading: false, refreshing: false }));
     }
   };
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    setPage(1);
-    setHasMore(true);
-    await fetchPets(null, true);
+  const fetchBestMatchPets = async (lastPet, isRefreshing = false) => {
+    setBestMatch((prev) => ({ ...prev, loading: true }));
+    isFetchingRef.current.bestMatch = true;
+    try {
+      const limit = bestMatch.pets.length === 0 ? initialLimit : 10;
+      // Note: adjust this endpoint or parameters if you have a specific best match route
+      const res = await api.get("/api/match/bestMatch", {
+        params: {
+          lastPetID: lastPet ? lastPet._id : null,
+          limit: limit,
+          lastPetUpdate: lastPet ? lastPet.updatedAt : null,
+        },
+      });
+      const newPets = res.data.body;
+
+      if (newPets?.length < 10) {
+        setBestMatch((prev) => ({ ...prev, hasMore: false }));
+      }
+      setBestMatch((prev) => ({
+        ...prev,
+        pets: isRefreshing ? newPets : [...prev.pets, ...newPets],
+        tabCursorID:
+          newPets.length > 0 ? newPets[newPets.length - 1] : prev.tabCursorID,
+      }));
+    } catch (err) {
+      console.error("Error fetching best match pets:", err);
+    } finally {
+      isFetchingRef.current.bestMatch = false;
+      setBestMatch((prev) => ({ ...prev, loading: false, refreshing: false }));
+    }
+  };
+
+  const onRefreshAll = useCallback(async () => {
+    setAll({
+      pets: [],
+      refreshing: true,
+      hasMore: true,
+      tabCursorID: null,
+      loading: false,
+    });
+    await fetchAllPets(null, true);
   }, []);
 
-  useEffect(() => {
-    fetchPets(null);
+  const onRefreshBestMatch = useCallback(async () => {
+    setBestMatch({
+      pets: [],
+      refreshing: true,
+      hasMore: true,
+      tabCursorID: null,
+      loading: false,
+    });
+    await fetchBestMatchPets(null, true);
   }, []);
+
+  const handleLoadMoreAll = () => {
+    if (!all.loading && all.hasMore && !isFetchingRef.current.all) {
+      fetchAllPets(all.tabCursorID);
+    }
+  };
+
+  const handleLoadMoreBestMatch = () => {
+    if (
+      !bestMatch.loading &&
+      bestMatch.hasMore &&
+      !isFetchingRef.current.bestMatch
+    ) {
+      fetchBestMatchPets(bestMatch.tabCursorID);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllPets(null, true);
+    fetchBestMatchPets(null, true);
+  }, []);
+
   useEffect(() => {
     if (!socket) return;
-    console.log("socket", socket.connected);
 
     socket.on("pet_created", (data) => {
-      console.log("pet created was heard with message", data.message);
-      const isInArray = pets.some((p) => p._id === data.pet._id);
-      console.log("Is it in the array?", isInArray, data.pet);
-      if (!isInArray) setPets((prev) => [data.pet, ...prev]);
+      // Add pet to All Tab
+      setAll((prev) => {
+        const isInArray = prev.pets.some((p) => p._id === data.pet._id);
+        return isInArray ? prev : { ...prev, pets: [data.pet, ...prev.pets] };
+      });
+
+      // Add pet to Best Match Tab
+      setBestMatch((prev) => {
+        const isInArray = prev.pets.some((p) => p._id === data.pet._id);
+        return isInArray ? prev : { ...prev, pets: [data.pet, ...prev.pets] };
+      });
     });
 
     socket.on("pet_deleted", (data) => {
-      console.log("pet deleted is heard", data);
-      const isInArray = pets.some((p) => p._id === data.petID);
-      if (isInArray) {
-        const filteredPets = pets.filter((pet) => pet._id !== data.petID);
-        setPets(filteredPets);
-      }
+      setAll((prev) => ({
+        ...prev,
+        pets: prev.pets.filter((pet) => pet._id !== data.petID),
+      }));
+      setBestMatch((prev) => ({
+        ...prev,
+        pets: prev.pets.filter((pet) => pet._id !== data.petID),
+      }));
     });
 
     socket.on("pet_updated", (data) => {
-      console.log("pet updated was heard with message", data.message);
-      const isInArray = pets.some((p) => p._id === data.pet._id);
-      console.log("Is it in the array?", isInArray);
-      if (isInArray) {
-        setPets((prev) => {
-          return prev.map((p) => (p._id === data.pet._id ? data.pet : p));
-        });
-      }
+      setAll((prev) => ({
+        ...prev,
+        pets: prev.pets.map((p) => (p._id === data.pet._id ? data.pet : p)),
+      }));
+      setBestMatch((prev) => ({
+        ...prev,
+        pets: prev.pets.map((p) => (p._id === data.pet._id ? data.pet : p)),
+      }));
     });
+
     return () => {
       socket.off("pet_created");
       socket.off("pet_deleted");
       socket.off("pet_updated");
     };
-  }, [socket, pets]);
+  }, [socket]);
 
-  const handleLoadMore = () => {
-    if (!loading && hasMore && !isFetchingRef.current) {
-      fetchPets(cursor);
-    }
-  };
+  const currentRefresh =
+    activeTab === "all" ? onRefreshAll : onRefreshBestMatch;
+  const currentLoadMore =
+    activeTab === "all" ? handleLoadMoreAll : handleLoadMoreBestMatch;
+
   return (
     <View style={styles.container}>
+      {/* Custom Tab UI - Smooth Boxes */}
+      <View style={styles.tabWrapper}>
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === "all" && styles.activeTab]}
+            onPress={() => handleTabChange("all")}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "all" && styles.activeTabText,
+              ]}
+            >
+              All
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "bestMatch" && styles.activeTab,
+            ]}
+            onPress={() => handleTabChange("bestMatch")}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "bestMatch" && styles.activeTabText,
+              ]}
+            >
+              Best Match
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* The separating layer for the contents */}
+      <View style={styles.contentDivider} />
+
       <FlatList
         contentContainerStyle={styles.scrollContet}
-        data={pets}
+        data={currentData.pets}
         keyExtractor={(item) => item._id}
         renderItem={({ item }) => {
           return (
@@ -139,27 +272,35 @@ export default function Index() {
               onPress={() => {
                 setSelectedPet(item);
               }}
-            ></PetCardHome>
+            />
           );
         }}
         ListEmptyComponent={
-          !loading && (
+          !currentData.loading && (
             <Text style={styles.emptyText}>No Available Pets Found</Text>
           )
         }
         ListFooterComponent={
-          hasMore ? <ActivityIndicator size="large" /> : null
+          currentData.hasMore && currentData.pets.length > 0 ? (
+            <ActivityIndicator
+              size="large"
+              color={Themes.COLORS.primary}
+              style={{ marginVertical: 20 }}
+            />
+          ) : null
         }
-        onEndReached={handleLoadMore}
+        onEndReached={currentLoadMore}
         onEndReachedThreshold={0.4}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          ></RefreshControl>
+            refreshing={currentData.refreshing}
+            onRefresh={currentRefresh}
+            tintColor={Themes.COLORS.primary}
+          />
         }
-      ></FlatList>
-      {/* Upgraded to a Floating Action Button (FAB) */}
+      />
+
+      {/* Floating Action Button (FAB) */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => {
@@ -169,11 +310,12 @@ export default function Index() {
       >
         <MaterialCommunityIcons name="plus" size={30} color="#FFF" />
       </TouchableOpacity>
+
       {setSelectedPetLatest && (
         <PetModal
           pet={setSelectedPetLatest}
           onClose={() => setSelectedPet(null)}
-        ></PetModal>
+        />
       )}
     </View>
   );
@@ -183,6 +325,49 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: Themes.COLORS.background,
     flex: 1,
+  },
+  // --- Tab UI Styles ---
+  tabWrapper: {
+    paddingHorizontal: Themes.SPACING.md,
+    paddingTop: Themes.SPACING.md,
+    paddingBottom: Themes.SPACING.md,
+    backgroundColor: Themes.COLORS.background,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    backgroundColor: "#F1F5F9",
+    borderRadius: 10,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  activeTab: {
+    backgroundColor: Themes.COLORS.primary,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  tabText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: 14,
+    color: "#64748B",
+    fontWeight: "600",
+  },
+  activeTabText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+  // --- Content Separator ---
+  contentDivider: {
+    height: 1,
+    backgroundColor: "#E2E8F0",
+    width: "100%",
+    marginBottom: Themes.SPACING.sm,
   },
   image: {
     width: 80,
@@ -210,9 +395,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Themes.COLORS.textFaded || "#888",
     textAlign: "center",
-    marginTop: 100, // Pushes it down so it's not hugging the top
+    marginTop: 100,
     paddingHorizontal: Themes.SPACING.lg,
     lineHeight: 22,
   },
-  scrollContet: { flexGrow: 1, padding: Themes.SPACING.md, paddingBottom: 50 },
+  scrollContet: {
+    flexGrow: 1,
+    paddingHorizontal: Themes.SPACING.md,
+    paddingBottom: 50,
+  },
 });

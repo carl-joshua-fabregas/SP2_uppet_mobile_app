@@ -92,29 +92,33 @@ export default function Index() {
     }
   };
 
-  const fetchBestMatchPets = async (lastPet, isRefreshing = false) => {
+  const fetchBestMatchPets = async (lastMatch, isRefreshing = false) => {
     setBestMatch((prev) => ({ ...prev, loading: true }));
     isFetchingRef.current.bestMatch = true;
     try {
       const limit = bestMatch.pets.length === 0 ? initialLimit : 10;
       // Note: adjust this endpoint or parameters if you have a specific best match route
+      console.log(lastMatch, limit, lastMatch?.score);
       const res = await api.get("/api/match/bestMatch", {
         params: {
-          lastPetID: lastPet ? lastPet._id : null,
+          lastCursorID: lastMatch ? lastMatch._id : null,
           limit: limit,
-          lastPetUpdate: lastPet ? lastPet.updatedAt : null,
+          lastCursorScore: lastMatch ? lastMatch.score : null,
         },
       });
-      const newPets = res.data.body;
+      const newMatches = res.data.body;
 
-      if (newPets?.length < 10) {
+      if (newMatches?.length < 10) {
         setBestMatch((prev) => ({ ...prev, hasMore: false }));
       }
+      const extractedPets = newMatches.map((match) => match.petID);
       setBestMatch((prev) => ({
         ...prev,
-        pets: isRefreshing ? newPets : [...prev.pets, ...newPets],
+        pets: isRefreshing ? extractedPets : [...prev.pets, ...extractedPets],
         tabCursorID:
-          newPets.length > 0 ? newPets[newPets.length - 1] : prev.tabCursorID,
+          newMatches.length > 0
+            ? newMatches[newMatches.length - 1]
+            : prev.tabCursorID,
       }));
     } catch (err) {
       console.error("Error fetching best match pets:", err);
@@ -124,27 +128,29 @@ export default function Index() {
     }
   };
 
-  const onRefreshAll = useCallback(async () => {
-    setAll({
+  const onRefreshAll = async () => {
+    setAll((prev) => ({
+      ...prev,
       pets: [],
       refreshing: true,
       hasMore: true,
       tabCursorID: null,
       loading: false,
-    });
+    }));
     await fetchAllPets(null, true);
-  }, []);
+  };
 
-  const onRefreshBestMatch = useCallback(async () => {
-    setBestMatch({
+  const onRefreshBestMatch = async () => {
+    setBestMatch((prev) => ({
+      ...prev,
       pets: [],
       refreshing: true,
       hasMore: true,
       tabCursorID: null,
       loading: false,
-    });
+    }));
     await fetchBestMatchPets(null, true);
-  }, []);
+  };
 
   const handleLoadMoreAll = () => {
     if (!all.loading && all.hasMore && !isFetchingRef.current.all) {
@@ -170,21 +176,19 @@ export default function Index() {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on("pet_created", (data) => {
-      // Add pet to All Tab
+    // 1. Define the handlers
+    const handlePetCreated = (data) => {
       setAll((prev) => {
         const isInArray = prev.pets.some((p) => p._id === data.pet._id);
         return isInArray ? prev : { ...prev, pets: [data.pet, ...prev.pets] };
       });
-
-      // Add pet to Best Match Tab
       setBestMatch((prev) => {
         const isInArray = prev.pets.some((p) => p._id === data.pet._id);
         return isInArray ? prev : { ...prev, pets: [data.pet, ...prev.pets] };
       });
-    });
+    };
 
-    socket.on("pet_deleted", (data) => {
+    const handlePetDeleted = (data) => {
       setAll((prev) => ({
         ...prev,
         pets: prev.pets.filter((pet) => pet._id !== data.petID),
@@ -193,9 +197,9 @@ export default function Index() {
         ...prev,
         pets: prev.pets.filter((pet) => pet._id !== data.petID),
       }));
-    });
+    };
 
-    socket.on("pet_updated", (data) => {
+    const handlePetUpdated = (data) => {
       setAll((prev) => ({
         ...prev,
         pets: prev.pets.map((p) => (p._id === data.pet._id ? data.pet : p)),
@@ -204,19 +208,20 @@ export default function Index() {
         ...prev,
         pets: prev.pets.map((p) => (p._id === data.pet._id ? data.pet : p)),
       }));
-    });
+    };
 
+    // 2. Attach handlers
+    socket.on("pet_created", handlePetCreated);
+    socket.on("pet_deleted", handlePetDeleted);
+    socket.on("pet_updated", handlePetUpdated);
+
+    // 3. Remove ONLY these specific handlers on unmount
     return () => {
-      socket.off("pet_created");
-      socket.off("pet_deleted");
-      socket.off("pet_updated");
+      socket.off("pet_created", handlePetCreated);
+      socket.off("pet_deleted", handlePetDeleted);
+      socket.off("pet_updated", handlePetUpdated);
     };
   }, [socket]);
-
-  const currentRefresh =
-    activeTab === "all" ? onRefreshAll : onRefreshBestMatch;
-  const currentLoadMore =
-    activeTab === "all" ? handleLoadMoreAll : handleLoadMoreBestMatch;
 
   return (
     <View style={styles.container}>
@@ -261,44 +266,77 @@ export default function Index() {
       {/* The separating layer for the contents */}
       <View style={styles.contentDivider} />
 
-      <FlatList
-        contentContainerStyle={styles.scrollContet}
-        data={currentData.pets}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => {
-          return (
-            <PetCardHome
-              pet={item}
-              onPress={() => {
-                setSelectedPet(item);
-              }}
+      {/* --- ALL PETS LIST --- */}
+      <View style={[styles.listWrapper, activeTab !== "all" && styles.hidden]}>
+        <FlatList
+          contentContainerStyle={styles.scrollContet}
+          data={all.pets}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => (
+            <PetCardHome pet={item} onPress={() => setSelectedPet(item)} />
+          )}
+          ListEmptyComponent={
+            !all.loading && (
+              <Text style={styles.emptyText}>No Available Pets Found</Text>
+            )
+          }
+          ListFooterComponent={
+            all.hasMore && all.pets.length > 0 ? (
+              <ActivityIndicator
+                size="large"
+                color={Themes.COLORS.primary}
+                style={{ marginVertical: 20 }}
+              />
+            ) : null
+          }
+          onEndReached={handleLoadMoreAll}
+          onEndReachedThreshold={0.4}
+          refreshControl={
+            <RefreshControl
+              refreshing={all.refreshing}
+              onRefresh={onRefreshAll}
+              tintColor={Themes.COLORS.primary}
             />
-          );
-        }}
-        ListEmptyComponent={
-          !currentData.loading && (
-            <Text style={styles.emptyText}>No Available Pets Found</Text>
-          )
-        }
-        ListFooterComponent={
-          currentData.hasMore && currentData.pets.length > 0 ? (
-            <ActivityIndicator
-              size="large"
-              color={Themes.COLORS.primary}
-              style={{ marginVertical: 20 }}
+          }
+        />
+      </View>
+
+      {/* --- BEST MATCH PETS LIST --- */}
+      <View
+        style={[styles.listWrapper, activeTab !== "bestMatch" && styles.hidden]}
+      >
+        <FlatList
+          contentContainerStyle={styles.scrollContet}
+          data={bestMatch.pets}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => (
+            <PetCardHome pet={item} onPress={() => setSelectedPet(item)} />
+          )}
+          ListEmptyComponent={
+            !bestMatch.loading && (
+              <Text style={styles.emptyText}>No Matches Found</Text>
+            )
+          }
+          ListFooterComponent={
+            bestMatch.hasMore && bestMatch.pets.length > 0 ? (
+              <ActivityIndicator
+                size="large"
+                color={Themes.COLORS.primary}
+                style={{ marginVertical: 20 }}
+              />
+            ) : null
+          }
+          onEndReached={handleLoadMoreBestMatch}
+          onEndReachedThreshold={0.4}
+          refreshControl={
+            <RefreshControl
+              refreshing={bestMatch.refreshing}
+              onRefresh={onRefreshBestMatch}
+              tintColor={Themes.COLORS.primary}
             />
-          ) : null
-        }
-        onEndReached={currentLoadMore}
-        onEndReachedThreshold={0.4}
-        refreshControl={
-          <RefreshControl
-            refreshing={currentData.refreshing}
-            onRefresh={currentRefresh}
-            tintColor={Themes.COLORS.primary}
-          />
-        }
-      />
+          }
+        />
+      </View>
 
       {/* Floating Action Button (FAB) */}
       <TouchableOpacity
@@ -403,5 +441,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: Themes.SPACING.md,
     paddingBottom: 50,
+  },
+  listWrapper: {
+    flex: 1, // Ensures the list takes up the remaining space
+  },
+  hidden: {
+    display: "none", // Hides the list without unmounting it
   },
 });

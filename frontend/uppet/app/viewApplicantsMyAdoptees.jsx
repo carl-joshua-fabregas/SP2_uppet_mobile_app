@@ -264,22 +264,6 @@ export default function ViewApplicantList(props) {
     fetchRejectedApplicants(null, true);
   }, []);
 
-  // Determine current active state for the FlatList
-  let currentData, currentRefresh, currentLoadMore;
-  if (activeTab === "pending") {
-    currentData = pending;
-    currentRefresh = onRefreshPending;
-    currentLoadMore = handleLoadMorePending;
-  } else if (activeTab === "approved") {
-    currentData = approved;
-    currentRefresh = onRefreshApproved;
-    currentLoadMore = handleLoadMoreApproved;
-  } else {
-    currentData = rejected;
-    currentRefresh = onRefreshRejected;
-    currentLoadMore = handleLoadMoreRejected;
-  }
-
   return (
     <View style={styles.cardContainer}>
       {/* Custom Tab UI - Smooth Boxes */}
@@ -344,40 +328,113 @@ export default function ViewApplicantList(props) {
       {/* The separating layer for the contents */}
       <View style={styles.contentDivider} />
 
-      {/* Dynamic FlatList based on active tab */}
-      <FlatList
-        data={currentData.applicants}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => <ViewApplicantsCard adoptionApp={item} />}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={currentData.refreshing}
-            onRefresh={currentRefresh}
-            tintColor={Themes.COLORS.primary}
-          />
-        }
-        ListEmptyComponent={
-          !currentData.loading && (
-            <Text style={styles.emptyText}>
-              No {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}{" "}
-              Applicants Found
-            </Text>
-          )
-        }
-        onEndReached={currentLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          currentData.hasMore && currentData.applicants.length > 0 ? (
-            <ActivityIndicator
-              size="large"
-              color={Themes.COLORS.primary}
-              style={{ marginVertical: 20 }}
+      {/* --- PENDING LIST --- */}
+      <View
+        style={[styles.listWrapper, activeTab !== "pending" && styles.hidden]}
+      >
+        <FlatList
+          data={pending.applicants}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => <ViewApplicantsCard adoptionApp={item} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={pending.refreshing}
+              onRefresh={onRefreshPending}
+              tintColor={Themes.COLORS.primary}
             />
-          ) : null
-        }
-      />
+          }
+          ListEmptyComponent={
+            !pending.loading && (
+              <Text style={styles.emptyText}>No Pending Applicants Found</Text>
+            )
+          }
+          onEndReached={handleLoadMorePending}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            pending.hasMore && pending.applicants.length > 0 ? (
+              <ActivityIndicator
+                size="large"
+                color={Themes.COLORS.primary}
+                style={{ marginVertical: 20 }}
+              />
+            ) : null
+          }
+        />
+      </View>
+
+      {/* --- APPROVED LIST --- */}
+      <View
+        style={[styles.listWrapper, activeTab !== "approved" && styles.hidden]}
+      >
+        <FlatList
+          data={approved.applicants}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => <ViewApplicantsCard adoptionApp={item} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={approved.refreshing}
+              onRefresh={onRefreshApproved}
+              tintColor={Themes.COLORS.primary}
+            />
+          }
+          ListEmptyComponent={
+            !approved.loading && (
+              <Text style={styles.emptyText}>No Approved Applicants Found</Text>
+            )
+          }
+          onEndReached={handleLoadMoreApproved}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            approved.hasMore && approved.applicants.length > 0 ? (
+              <ActivityIndicator
+                size="large"
+                color={Themes.COLORS.primary}
+                style={{ marginVertical: 20 }}
+              />
+            ) : null
+          }
+        />
+      </View>
+
+      {/* --- REJECTED LIST --- */}
+      <View
+        style={[styles.listWrapper, activeTab !== "rejected" && styles.hidden]}
+      >
+        <FlatList
+          data={rejected.applicants}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => <ViewApplicantsCard adoptionApp={item} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={rejected.refreshing}
+              onRefresh={onRefreshRejected}
+              tintColor={Themes.COLORS.primary}
+            />
+          }
+          ListEmptyComponent={
+            !rejected.loading && (
+              <Text style={styles.emptyText}>No Rejected Applicants Found</Text>
+            )
+          }
+          onEndReached={handleLoadMoreRejected}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            rejected.hasMore && rejected.applicants.length > 0 ? (
+              <ActivityIndicator
+                size="large"
+                color={Themes.COLORS.primary}
+                style={{ marginVertical: 20 }}
+              />
+            ) : null
+          }
+        />
+      </View>
     </View>
   );
 }
@@ -446,5 +503,11 @@ const styles = StyleSheet.create({
     marginTop: 100,
     paddingHorizontal: Themes.SPACING.lg,
     lineHeight: 22,
+  },
+  listWrapper: {
+    flex: 1,
+  },
+  hidden: {
+    display: "none",
   },
 });

@@ -59,7 +59,7 @@ export default function MyAdoptee() {
             : null,
         },
       });
-      const myAdoptees = res.data.body;
+      const myAdoptees = res.data?.body || [];
       if (myAdoptees.length < 10) {
         setPending((prev) => ({ ...prev, hasMore: false }));
       }
@@ -152,13 +152,6 @@ export default function MyAdoptee() {
     fetchAdoptedPets(null, true);
   }, []);
 
-  // Determine current active state for the FlatList
-  const currentData = activeTab === "pending" ? pending : adopted;
-  const currentRefresh =
-    activeTab === "pending" ? onRefreshAvailable : onRefreshAdopted;
-  const currentLoadMore =
-    activeTab === "pending" ? handleLoadMoreAvailable : handleLoadMoreAdopted;
-
   return (
     <View style={styles.cardContainer}>
       {/* Custom Tab UI - Smooth Boxes */}
@@ -204,41 +197,78 @@ export default function MyAdoptee() {
 
       {/* The separating layer for the contents */}
       <View style={styles.contentDivider} />
-
-      {/* Dynamic FlatList based on active tab */}
-      <FlatList
-        data={currentData.pets}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => <ViewAdopteesCard pet={item} />}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        refreshControl={
-          <RefreshControl
-            refreshing={currentData.refreshing}
-            onRefresh={currentRefresh}
-            tintColor={Themes.COLORS.primary}
-          />
-        }
-        ListEmptyComponent={
-          !currentData.loading && (
-            <Text style={styles.emptyText}>
-              No {activeTab === "pending" ? "Pending" : "Successful"} Adoptees
-              Found
-            </Text>
-          )
-        }
-        onEndReached={currentLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          currentData.hasMore && currentData.pets.length > 0 ? (
-            <ActivityIndicator
-              size="large"
-              color={Themes.COLORS.primary}
-              style={{ marginVertical: 20 }}
+      <View
+        style={[styles.listWrapper, activeTab !== "pending" && styles.hidden]}
+      >
+        <FlatList
+          data={pending.pets}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => <ViewAdopteesCard pet={item} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={pending.refreshing}
+              onRefresh={onRefreshAvailable} // 👈 explicitly pending
+              tintColor={Themes.COLORS.primary}
             />
-          ) : null
-        }
-      />
+          }
+          ListEmptyComponent={
+            !pending.loading && (
+              <Text style={styles.emptyText}>
+                No Pending Adoptees Found {/* 👈 Simplified */}
+              </Text>
+            )
+          }
+          onEndReached={handleLoadMoreAvailable} // 👈 explicitly pending
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            pending.hasMore && pending.pets.length > 0 ? (
+              <ActivityIndicator
+                size="large"
+                color={Themes.COLORS.primary}
+                style={{ marginVertical: 20 }}
+              />
+            ) : null
+          }
+        />
+      </View>
+      <View
+        style={[styles.listWrapper, activeTab !== "adopted" && styles.hidden]}
+      >
+        <FlatList
+          data={adopted.pets}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => <ViewAdopteesCard pet={item} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={adopted.refreshing}
+              onRefresh={onRefreshAdopted} // 👈 explicitly adopted
+              tintColor={Themes.COLORS.primary}
+            />
+          }
+          ListEmptyComponent={
+            !adopted.loading && (
+              <Text style={styles.emptyText}>
+                No Successful Adoptees Found {/* 👈 Simplified */}
+              </Text>
+            )
+          }
+          onEndReached={handleLoadMoreAdopted} // 👈 explicitly adopted
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            adopted.hasMore && adopted.pets.length > 0 ? (
+              <ActivityIndicator
+                size="large"
+                color={Themes.COLORS.primary}
+                style={{ marginVertical: 20 }}
+              />
+            ) : null
+          }
+        />
+      </View>
     </View>
   );
 }
@@ -308,5 +338,11 @@ const styles = StyleSheet.create({
     marginTop: 100,
     paddingHorizontal: Themes.SPACING.lg,
     lineHeight: 22,
+  },
+  listWrapper: {
+    flex: 1, // Ensures the list takes up the remaining space
+  },
+  hidden: {
+    display: "none", // Hides the list without unmounting it
   },
 });

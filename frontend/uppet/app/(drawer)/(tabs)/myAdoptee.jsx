@@ -12,8 +12,10 @@ import ViewAdopteesCard from "../../../component/ViewMyAdopteesCard";
 import { useState, useEffect, useCallback, useRef } from "react";
 import * as Themes from "../../../assets/themes/themes";
 import { api } from "../../../api/axios";
-
+import { useSocket } from "../../../context/SocketContext";
 export default function MyAdoptee() {
+  const socket = useSocket();
+
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.badgeText.fontSize,
   );
@@ -152,6 +154,46 @@ export default function MyAdoptee() {
     fetchAdoptedPets(null, true);
   }, []);
 
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleCreate = (data) => {
+      console.log("PET CREATED AND MESSAGE IS", data.message);
+      setPending((prev) => {
+        if (prev.pets.some((p) => p._id === data.pet._id)) return prev;
+        return { ...prev, pets: [data.pet, ...prev.pets] };
+      });
+    };
+
+    const handleUpdate = (data) => {
+      const updatelist = (prev) => ({
+        ...prev,
+        pets: prev.pets.map((p) => (p._id === data.pet._id ? data.pet : p)),
+      });
+
+      setPending(updatelist);
+      setAdopted(updatelist);
+    };
+
+    const handleDelete = (data) => {
+      const updatelist = (prev) => ({
+        ...prev,
+        pets: prev.pets.filter((p) => p._id !== data.pet),
+      });
+
+      setPending(updatelist);
+      setAdopted(updatelist);
+    };
+    socket.on("pet_created", handleCreate);
+    socket.on("pet_updated", handleUpdate);
+    socket.on("pet_deleted", handleDelete);
+
+    return () => {
+      socket.off("pet_created", handleCreate);
+      socket.off("pet_updated", handleUpdate);
+      socket.off("pet_deleted", handleDelete);
+    };
+  }, [socket]);
   return (
     <View style={styles.cardContainer}>
       {/* Custom Tab UI - Smooth Boxes */}
@@ -199,6 +241,7 @@ export default function MyAdoptee() {
       <View style={styles.contentDivider} />
       <View
         style={[styles.listWrapper, activeTab !== "pending" && styles.hidden]}
+        key={`pending-${activeTab}`}
       >
         <FlatList
           data={pending.pets}
@@ -235,6 +278,7 @@ export default function MyAdoptee() {
       </View>
       <View
         style={[styles.listWrapper, activeTab !== "adopted" && styles.hidden]}
+        key={`adopted-${activeTab}`}
       >
         <FlatList
           data={adopted.pets}

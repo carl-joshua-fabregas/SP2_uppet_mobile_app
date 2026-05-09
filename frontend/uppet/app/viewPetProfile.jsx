@@ -16,18 +16,18 @@ import PetProfileCardViewMore from "../component/PetProfileCard";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useUser } from "../context/UserContext";
-
+import { useSocket } from "../context/SocketContext";
 import ImageView from "react-native-image-viewing";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ViewPetProfile() {
+  const socket = useSocket();
   const { user } = useUser();
   const route = useRoute();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [showCancelModal, setShowCancelModal] = useState(false);
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isOwner, setIsOwner] = useState(
     route?.params?.pet?.ownerId === user._id,
@@ -35,7 +35,7 @@ export default function ViewPetProfile() {
   const [placeholderHeight, setPlaceholderHeight] = useState(70);
   const [adoptionApp, setAdoptionApp] = useState(null);
   const [loading, setLoading] = useState(false);
-  const pet = route.params.pet;
+  const [pet, setPet] = useState(route.params.pet);
   const [gallerySectionLayout, setGallerySectionLayout] = useState({
     y: 0,
     height: 0,
@@ -52,7 +52,7 @@ export default function ViewPetProfile() {
   const overlapAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
+  const [isDeleted, setIsDeleted] = useState(false);
   const fetchAdoptionApp = async () => {
     try {
       const res = await api.get(`/api/adoptionApp/${pet._id}/applied`, {});
@@ -103,6 +103,55 @@ export default function ViewPetProfile() {
       useNativeDriver: true,
     }).start();
   }, [showStickyButton]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleCreatePet = (data) => {
+      if (pet?._id === data.pet._id) {
+        setPet(data.pet);
+      }
+    };
+    const handleDeletePet = (data) => {
+      if (pet?._id === data.pet._id) {
+        setPet(null);
+        setIsDeleted(true);
+      }
+    };
+
+    const handleCancelApp = (data) => {
+      if (adoptionApp?._id === data.adoptionApp._id) {
+        setAdoptionApp(null);
+        setIsDeleted(true);
+      }
+    };
+
+    const handleCreateApp = (data) => {
+      if (adoptionApp?._id === data.adoptionApp._id) {
+        setAdoptionApp(data.adoptionApp);
+      }
+    };
+
+    socket.on("pet_created", handleCreatePet);
+    socket.on("pet_updated", handleCreatePet);
+    socket.on("pet_deleted", handleDeletePet);
+
+    socket.on("adoptionApp_created", handleCreateApp);
+    socket.on("adoptionApp_approved", handleCreateApp);
+    socket.on("adoptionApp_rejected", handleCreateApp);
+    socket.on("adoptionApp_cancelled", handleCancelApp);
+
+    return () => {
+      socket.off("pet_created", handleCreatePet);
+      socket.off("pet_updated", handleCreatePet);
+      socket.off("pet_deleted", handleDeletePet);
+
+      socket.off("adoptionApp_created", handleCreateApp);
+      socket.off("adoptionApp_approved", handleCreateApp);
+      socket.off("adoptionApp_rejected", handleCreateApp);
+      socket.off("adoptionApp_cancelled", handleCancelApp);
+    };
+  }, [socket]);
 
   // --- NEW HANDLER FOR IMAGE PRESS ---
   const handlePressImage = (image, index) => {

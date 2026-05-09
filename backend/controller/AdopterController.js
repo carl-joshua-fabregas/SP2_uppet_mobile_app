@@ -97,7 +97,7 @@ export async function createAdopter(req, res) {
     // const io = req.app.get("io");
 
     // //Console log tell notifications of the user
-    // io.to(newAdopter._id.toString()).emit("new_notification", saveNotif);
+    // io.to(newAdopter._id.toString()).emit("notification_created", saveNotif);
 
     return res.status(200).json({
       message: "Successfully added user",
@@ -224,10 +224,13 @@ export async function updateUser(req, res) {
         notifType: "ADOPTER_NEW",
       });
       const saveNotif = await notifcations.save();
-      io.emit("adopter_created", {
-        message: "A New Profile has been created",
-        adopter: newUser,
-      });
+      if (io) {
+        io.emit("adopter_created", {
+          message: "A New Profile has been created",
+          adopter: newUser,
+        });
+        io.to(newUser._id.toString()).emit("notification_created", saveNotif);
+      }
     } else {
       const notifcations = new Notification({
         recipient: newUser._id,
@@ -238,12 +241,14 @@ export async function updateUser(req, res) {
         notifType: "ADOPTER_UPDATED",
       });
       const saveNotif = await notifcations.save();
-      io.emit("adopter_updated", {
-        message: "A Profile has been updated",
-        adopter: newUser,
-      });
+      if (io) {
+        io.emit("adopter_updated", {
+          message: "A Profile has been updated",
+          adopter: newUser,
+        });
+        io.to(newUser._id.toString()).emit("notification_created", saveNotif);
+      }
     }
-    // io.to(newUser._id.toString()).emit("new_notification", saveNotif);
 
     res.status(200).json({
       message: "Successfully updated",
@@ -310,6 +315,7 @@ export async function deleteUser(req, res) {
     // }
 
     const ownedPets = await Pet.find({ ownerId: req.user.id });
+    const petIDs = ownedPets.map((pet) => pet._id);
     if (ownedPets && ownedPets.length > 0) {
       const deletedPetPhotos = await Promise.all(
         ownedPets.map(async (pet) => {
@@ -428,13 +434,15 @@ export async function deleteUser(req, res) {
       Pet.deleteMany({ ownerId: req.user.id }),
       AdoptionApplication.deleteMany({ applicant: req.user.id }),
       Adopter.findByIdAndDelete(req.user.id),
-      Match.deleteMany({ adopterID: req.user.id }),
+      Match.deleteMany({
+        $or: [{ adopterID: req.user.id }, { petID: { $in: petIDs } }],
+      }),
     ];
     const deletionStatus = await Promise.all(deletionTask);
     const io = req.app.get("io");
     io.emit("adopter_deleted", {
       message: "Adopter Successfully deleted",
-      adopterID: req.user.id,
+      adopter: req.user.id,
     });
     return res.status(200).json({
       message: "Successfully deleted user",

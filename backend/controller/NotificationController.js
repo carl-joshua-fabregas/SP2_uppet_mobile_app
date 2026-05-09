@@ -131,7 +131,48 @@ export async function deleteAllUserNotification(req, res) {
     });
   }
 }
+export async function markIsRead(req, res) {
+  try {
+    const notification = await Notification.findById(req.params.id);
 
+    if (!notification)
+      return res.status(404).json({
+        message: "Notification not found",
+      });
+    if (
+      req.user.id.toString() !== notification.recipient.toString() &&
+      req.user.role.toString() !== "admin"
+    ) {
+      return res.status(403).json({
+        message: "Forbidden",
+      });
+    }
+
+    if (notification.isRead) {
+      return res.status(409).json({
+        message: "Notification is already read",
+      });
+    }
+
+    const notifUpdate = await Notification.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: { isRead: true },
+      },
+      { new: true },
+    );
+    return res.status(200).json({
+      message: "Successful Marking",
+      body: notifUpdate,
+    });
+  } catch (err) {
+    console.log("Error marking is read in notification");
+    return res.status(500).json({
+      message: "Server Error in marking is read",
+      body: err.message,
+    });
+  }
+}
 export async function deleteUserNotification(req, res) {
   try {
     const user = await Notification.findById(req.params.id);

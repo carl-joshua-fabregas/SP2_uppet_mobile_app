@@ -3,9 +3,10 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 import { useNavigation } from "@react-navigation/native";
 import { api } from "../api/axios";
-
+import { useEffect } from "react";
 export default function NotificationCard(props) {
-  const { notification } = props;
+  // Added onLongPress to props
+  const { notification, onLongPress, markIsRead } = props;
   const navigation = useNavigation();
 
   // Provide defaults for notification fields
@@ -24,37 +25,38 @@ export default function NotificationCard(props) {
 
   const getTypeConfig = (type) => {
     switch (type) {
+      // 🐾 Pet-themed icon updates using standard Ionicons
       case "RATING_RECEIVED":
       case "RATING_UPDATED":
-        return { icon: "star", color: "#FFB300", bg: "#FFF8E1" }; // amber
+        return { icon: "ribbon", color: "#FFB300", bg: "#FFF8E1" }; // amber ribbon
       case "RATING_DELETED":
-        return { icon: "star-outline", color: "#9E9E9E", bg: "#F5F5F5" }; // grey
+        return { icon: "ribbon-outline", color: "#9E9E9E", bg: "#F5F5F5" };
       case "PET_LIVE":
       case "PET_UPDATED":
         return {
           icon: "paw",
           color: Themes.COLORS.primaryDark,
           bg: Themes.COLORS.soft,
-        }; // mint green
+        }; // mint green paw
       case "PET_DELETED":
-        return { icon: "paw-outline", color: "#F44336", bg: "#FFEBEE" }; // red
+        return { icon: "paw-outline", color: "#F44336", bg: "#FFEBEE" };
       case "ADOP_APP_RECEIVED":
-        return { icon: "document-text", color: "#2196F3", bg: "#E3F2FD" }; // blue
+        return { icon: "heart", color: "#E91E63", bg: "#FCE4EC" }; // pink heart (love for the pet)
       case "ADOP_APP_CANCELLED":
       case "ADOP_APP_DELETED":
-        return { icon: "alert-circle", color: "#FF9800", bg: "#FFF3E0" }; // orange
+        return { icon: "alert-circle", color: "#FF9800", bg: "#FFF3E0" };
       case "ADOP_APP_APPROVED":
-        return { icon: "checkmark-circle", color: "#4CAF50", bg: "#E8F5E9" }; // green
+        return { icon: "home", color: "#4CAF50", bg: "#E8F5E9" }; // green home (found a forever home!)
       case "ADOP_APP_REJECTED":
-        return { icon: "close-circle", color: "#F44336", bg: "#FFEBEE" }; // red
+        return { icon: "sad-outline", color: "#F44336", bg: "#FFEBEE" }; // sad face for rejection
       case "ADOPTER_NEW":
       case "ADOPTER_UPDATED":
-        return { icon: "person", color: "#9C27B0", bg: "#F3E5F5" }; // purple
+        return { icon: "people", color: "#9C27B0", bg: "#F3E5F5" }; // purple people (new family)
       default:
         // Fallback for old version
         if (type === "Approved")
           return {
-            icon: "checkmark-circle-sharp",
+            icon: "home",
             color: "#4CAF50",
             bg: "#E8F5E9",
           };
@@ -66,7 +68,7 @@ export default function NotificationCard(props) {
           };
         if (type === "Rejected")
           return {
-            icon: "close-circle-sharp",
+            icon: "sad-outline",
             color: "#F44336",
             bg: "#FFEBEE",
           };
@@ -86,6 +88,11 @@ export default function NotificationCard(props) {
   };
 
   const handlePress = async () => {
+    // 2. Only call the API if it's currently unread!
+    if (!isRead) {
+      markIsRead(notification._id);
+    }
+
     if (!notification?.relatedEntity) return;
 
     try {
@@ -118,6 +125,8 @@ export default function NotificationCard(props) {
     <TouchableOpacity
       style={[styles.notificationContainer, !isRead && styles.unreadContainer]}
       onPress={handlePress}
+      onLongPress={() => onLongPress && onLongPress(notification._id)} // <-- Added Trigger
+      delayLongPress={300}
     >
       <View style={[styles.iconContainer, { backgroundColor: config.bg }]}>
         <Ionicons name={config.icon} size={24} color={config.color} />
@@ -165,7 +174,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   unreadText: {
-    fontFamily: "Fredoka-SemiBold",
+    fontFamily: "Fredoka-SemiBold", // Assuming this exists in your fonts
     color: Themes.COLORS.textDark,
   },
   dateText: {

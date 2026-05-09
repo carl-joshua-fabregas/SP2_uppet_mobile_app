@@ -191,11 +191,11 @@ export default function Index() {
     const handlePetDeleted = (data) => {
       setAll((prev) => ({
         ...prev,
-        pets: prev.pets.filter((pet) => pet._id !== data.petID),
+        pets: prev.pets.filter((pet) => pet._id !== data.pet),
       }));
       setBestMatch((prev) => ({
         ...prev,
-        pets: prev.pets.filter((pet) => pet._id !== data.petID),
+        pets: prev.pets.filter((pet) => pet._id !== data.pet),
       }));
     };
 
@@ -267,7 +267,10 @@ export default function Index() {
       <View style={styles.contentDivider} />
 
       {/* --- ALL PETS LIST --- */}
-      <View style={[styles.listWrapper, activeTab !== "all" && styles.hidden]}>
+      <View
+        style={[styles.listWrapper, activeTab !== "all" && styles.hidden]}
+        key={`all pets ${activeTab}`}
+      >
         <FlatList
           contentContainerStyle={styles.scrollContet}
           data={all.pets}
@@ -304,6 +307,7 @@ export default function Index() {
       {/* --- BEST MATCH PETS LIST --- */}
       <View
         style={[styles.listWrapper, activeTab !== "bestMatch" && styles.hidden]}
+        key={`best matches ${activeTab}`}
       >
         <FlatList
           contentContainerStyle={styles.scrollContet}

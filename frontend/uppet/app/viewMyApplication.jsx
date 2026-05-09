@@ -322,6 +322,7 @@ export default function ViewMyApplication(props) {
       {/* --- PENDING LIST --- */}
       <View
         style={[styles.listWrapper, activeTab !== "pending" && styles.hidden]}
+        key={`pendingMyApplicants-${activeTab}`}
       >
         <FlatList
           data={pending.applicants}
@@ -360,6 +361,7 @@ export default function ViewMyApplication(props) {
       {/* --- APPROVED LIST --- */}
       <View
         style={[styles.listWrapper, activeTab !== "approved" && styles.hidden]}
+        key={`approvedMyApplicants-${activeTab}`}
       >
         <FlatList
           data={approved.applicants}
@@ -398,6 +400,7 @@ export default function ViewMyApplication(props) {
       {/* --- REJECTED LIST --- */}
       <View
         style={[styles.listWrapper, activeTab !== "rejected" && styles.hidden]}
+        key={`rejectedMyApplicants-${activeTab}`}
       >
         <FlatList
           data={rejected.applicants}

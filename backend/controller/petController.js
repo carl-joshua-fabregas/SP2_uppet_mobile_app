@@ -361,7 +361,7 @@ export async function deletePetByID(req, res) {
     const io = req.app.get("io");
     io.emit("pet_deleted", {
       message: "Pet deletion was successful",
-      petID: req.params.id,
+      pet: req.params.id,
     });
     res.status(200).json({
       message: "Successfully delete pet",

@@ -39,10 +39,6 @@ function NavigationStack() {
     return null;
   }
 
-  if (!socket) {
-    return null;
-  }
-
   return (
     <Stack
       screenOptions={{

@@ -112,8 +112,6 @@ export const UserProvider = ({ children }) => {
               console.log("USER IS AN OLD USER");
             }
           }
-        } else {
-          handleSignIn();
         }
       } catch (err) {
         console.error("SAVED TOKEN ERROR", err);

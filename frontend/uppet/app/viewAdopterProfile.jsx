@@ -239,25 +239,26 @@ export default function ViewAdopterProfile({}) {
 
   useEffect(() => {
     if (!socket) return;
-    console.log("socket in adopter profile connected: ", socket.connected);
-    socket.on("adopter_updated", (data) => {
-      console.log("adopter updated in view adopter profile", data.message);
+    const handleCreate = (data) => {
       if (adopter._id === data.adopter._id) {
         setAdopter(data.adopter);
       }
-    });
+    };
 
-    socket.on("adopter_deleted", (data) => {
-      console.log("adopter deleted in view adopter profile", data.message);
-      if (adopter._id === data.adopterID) {
+    const handleDelete = (data) => {
+      if (adopter._id === data.adopter) {
         setAdopter(null);
         setIsDeleted(true);
       }
-    });
+    };
+    socket.on("adopter_created", handleCreate);
+    socket.on("adopter_updated", handleCreate);
+    socket.on("adopter_deleted", handleDelete);
 
     return () => {
-      socket.off("adopter_updated");
-      socket.off("adopter_deleted");
+      socket.off("adopter_created", handleCreate);
+      socket.off("adopter_updated", handleCreate);
+      socket.off("adopter_deleted", handleDelete);
     };
   }, [socket, adopter]);
   const handleLoadMoreRating = async () => {

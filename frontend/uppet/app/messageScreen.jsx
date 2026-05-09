@@ -354,14 +354,16 @@ export default function messageScreen() {
             await fetch(url, {
               method: "PUT",
               body: blob,
-              contentType: media.type,
+              headers: {
+                "Content-Type": media.type,
+              },
             });
             const uploadetails = {
               key: key,
               url: finalUrl,
               type: media.type,
             };
-            const body = textInput ? textInput : "";
+            const body = textInput ? textInput : " ";
             handleSend(body, uploadetails);
             return true;
           }),

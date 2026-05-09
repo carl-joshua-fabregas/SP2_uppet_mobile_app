@@ -331,6 +331,7 @@ export default function ViewApplicantList(props) {
       {/* --- PENDING LIST --- */}
       <View
         style={[styles.listWrapper, activeTab !== "pending" && styles.hidden]}
+        key={`pendingApplicants-${activeTab}`}
       >
         <FlatList
           data={pending.applicants}
@@ -367,6 +368,7 @@ export default function ViewApplicantList(props) {
       {/* --- APPROVED LIST --- */}
       <View
         style={[styles.listWrapper, activeTab !== "approved" && styles.hidden]}
+        key={`adoptedApplicants-${activeTab}`}
       >
         <FlatList
           data={approved.applicants}
@@ -403,6 +405,7 @@ export default function ViewApplicantList(props) {
       {/* --- REJECTED LIST --- */}
       <View
         style={[styles.listWrapper, activeTab !== "rejected" && styles.hidden]}
+        key={`rejectedApplicants-${activeTab}`}
       >
         <FlatList
           data={rejected.applicants}

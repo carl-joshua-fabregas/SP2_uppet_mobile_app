@@ -49,7 +49,7 @@ export async function presignUploadURL(req, res) {
     });
   } catch (err) {
     console.log("ERROR IN GENERATING PRESIGNED URL:", err);
-    return res.status(505).json({
+    return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });

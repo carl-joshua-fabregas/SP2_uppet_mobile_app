@@ -224,7 +224,9 @@ export default function CreateProfile() {
             await fetch(url, {
               method: "PUT",
               body: blob,
-              contentType: photo.type,
+              headers: {
+                "Content-Type": photo.type,
+              },
             });
 
             return {
@@ -300,7 +302,9 @@ export default function CreateProfile() {
           await fetch(url, {
             method: "PUT",
             body: blob,
-            contentType: photo.type,
+            headers: {
+              "Content-Type": photo.type,
+            },
           });
 
           return {

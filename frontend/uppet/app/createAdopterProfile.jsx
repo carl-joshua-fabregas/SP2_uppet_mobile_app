@@ -153,7 +153,7 @@ export default function createAdopterProfile() {
 
     if (isFormUnchanged && !updatePhoto) {
       console.log("No changes detected. Skipping API calls.");
-      return;
+      return true;
     }
     try {
       setUploading(true);
@@ -222,7 +222,7 @@ export default function createAdopterProfile() {
       });
       console.log("ADOPTER IS CREATED IN THE DB");
       console.log("Getting Presign URL for profile upload");
-      login(adopterCreationRes.data.body, adopterCreationRes.data.token);
+      await login(adopterCreationRes.data.body, adopterCreationRes.data.token);
 
       const presignUrl = await api.post(`/api/user/presignUploadUrl`, {
         fileName: adopterForm.profilePhoto.name,
@@ -239,7 +239,9 @@ export default function createAdopterProfile() {
       await fetch(url, {
         method: "PUT",
         body: blob,
-        contentType: adopterForm.profilePhoto.fileType,
+        headers: {
+          "Content-Type": adopterForm.profilePhoto.fileType,
+        },
       });
 
       const finalPhotoDetails = {

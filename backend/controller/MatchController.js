@@ -19,6 +19,7 @@ export async function findUserMatchedPet(req, res) {
     const matchList = await Match.find({
       adopterID: req.user.id,
       ...paginationQuery,
+      score: { $gte: 50 },
     })
       .sort({ score: -1, _id: -1 })
       .limit(limit)

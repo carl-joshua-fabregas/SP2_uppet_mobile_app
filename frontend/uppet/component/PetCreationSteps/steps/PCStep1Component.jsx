@@ -9,63 +9,62 @@ import {
 import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../../../assets/themes/themes";
+const SelectionChip = ({ label, value, field, petData, onUpdate }) => (
+  <TouchableOpacity
+    style={[styles.chip, petData[field] === value && styles.chipActive]}
+    onPress={() => onUpdate(field, value)}
+  >
+    <Text
+      style={[
+        styles.chipText,
+        petData[field] === value && styles.chipTextActive,
+      ]}
+    >
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
+
+const FormInput = ({
+  label,
+  value,
+  onChange,
+  error,
+  placeholder,
+  multiline,
+  height,
+  keyboardType,
+  icon,
+}) => (
+  <View style={styles.field}>
+    <View style={styles.infoRow}>
+      <MaterialCommunityIcons
+        name={icon}
+        size={20}
+        color={Themes.COLORS.primary}
+      />
+      <Text style={styles.label}>{label}</Text>
+    </View>
+    <TextInput
+      placeholderTextColor="#A9A9A9"
+      style={[
+        styles.input,
+        error && styles.inputError,
+        multiline && { height, textAlignVertical: "top" },
+      ]}
+      value={value}
+      onChangeText={onChange}
+      placeholder={placeholder}
+      multiline={multiline}
+      keyboardType={keyboardType}
+    />
+    {error && <Text style={styles.errorText}>{error}</Text>}
+  </View>
+);
 
 export default function PCStep1Component({ petData, setPetData, errors }) {
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
-
-  const SelectionChip = ({ label, value, field }) => (
-    <TouchableOpacity
-      style={[styles.chip, petData[field] === value && styles.chipActive]}
-      onPress={() => update(field, value)}
-    >
-      <Text
-        style={[
-          styles.chipText,
-          petData[field] === value && styles.chipTextActive,
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const FormInput = ({
-    label,
-    value,
-    onChange,
-    error,
-    placeholder,
-    multiline,
-    height,
-    keyboardType,
-    icon,
-  }) => (
-    <View style={styles.field}>
-      <View style={styles.infoRow}>
-        <MaterialCommunityIcons
-          name={icon}
-          size={20}
-          color={Themes.COLORS.primary}
-        />
-        <Text style={styles.label}>{label}</Text>
-      </View>
-      <TextInput
-        placeholderTextColor="#A9A9A9"
-        style={[
-          styles.input,
-          error && styles.inputError,
-          multiline && { height, textAlignVertical: "top" },
-        ]}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        multiline={multiline}
-        keyboardType={keyboardType}
-      />
-      {error && <Text style={styles.errorText}>{error}</Text>}
-    </View>
-  );
 
   return (
     <View style={styles.PCStep1ComponentContainer}>
@@ -134,8 +133,20 @@ export default function PCStep1Component({ petData, setPetData, errors }) {
               <Text style={styles.label}>Sex</Text>
             </View>
             <View style={styles.chipRow}>
-              <SelectionChip label="Male" value="male" field="sex" />
-              <SelectionChip label="Female" value="female" field="sex" />
+              <SelectionChip
+                label="Male"
+                value="male"
+                field="sex"
+                petData={petData}
+                onUpdate={update}
+              />
+              <SelectionChip
+                label="Female"
+                value="female"
+                field="sex"
+                petData={petData}
+                onUpdate={update}
+              />
             </View>
             {errors.sex && <Text style={styles.errorText}>{errors.sex}</Text>}
           </View>

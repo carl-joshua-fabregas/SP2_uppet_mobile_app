@@ -13,12 +13,65 @@ import { useState } from "react";
 import * as Themes from "../../../assets/themes/themes";
 import * as ImagePicker from "expo-image-picker";
 
+const FormInput = ({
+  label,
+  value,
+  onChange,
+  error,
+  placeholder,
+  multiline,
+  height,
+  keyboardType,
+  icon,
+}) => (
+  <View style={styles.field}>
+    <View style={styles.infoRow}>
+      <MaterialCommunityIcons
+        name={icon}
+        size={20}
+        color={Themes.COLORS.primary}
+      />
+      <Text style={styles.label}>{label}</Text>
+    </View>
+    <TextInput
+      placeholderTextColor="#A9A9A9"
+      style={[
+        styles.input,
+        error && styles.inputError,
+        multiline && { height, textAlignVertical: "top" },
+      ]}
+      value={value}
+      onChangeText={onChange}
+      placeholder={placeholder}
+      multiline={multiline}
+      keyboardType={keyboardType}
+    />
+    {error && <Text style={styles.errorText}>{error}</Text>}
+  </View>
+);
+
+const SelectionChip = ({ label, value, field, adopterData, onUpdate }) => (
+  <TouchableOpacity
+    style={[styles.chip, adopterData[field] === value && styles.chipActive]}
+    onPress={() => onUpdate(field, value)}
+  >
+    <Text
+      style={[
+        styles.chipText,
+        adopterData[field] === value && styles.chipTextActive,
+      ]}
+    >
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function APCStep1Component({
   adopterData,
   setAdopterData,
   errors,
 }) {
-  // const [errors, setErrors] = useState({});
   const update = (key, value) =>
     setAdopterData((prev) => ({ ...prev, [key]: value }));
 
@@ -26,7 +79,6 @@ export default function APCStep1Component({
     try {
       console.log("Adding Adopter Profile Picture");
 
-      // Request media library permissions
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -41,11 +93,8 @@ export default function APCStep1Component({
               style: "cancel",
             },
             {
-              text: "Open Settings",
-              onPress: async () => {
-                // Note: On Android this would need Linking.openSettings()
-                // For iOS, you might want to use expo-linking
-              },
+              text: "Ok",
+              onPress: async () => {},
             },
           ],
         );
@@ -78,58 +127,7 @@ export default function APCStep1Component({
       Alert.alert("Error", "Failed to pick image. Please try again.");
     }
   };
-  const SelectionChip = ({ label, value, field }) => (
-    <TouchableOpacity
-      style={[styles.chip, adopterData[field] === value && styles.chipActive]}
-      onPress={() => update(field, value)}
-    >
-      <Text
-        style={[
-          styles.chipText,
-          adopterData[field] === value && styles.chipTextActive,
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-  const FormInput = ({
-    label,
-    value,
-    onChange,
-    error,
-    placeholder,
-    multiline,
-    height,
-    keyboardType,
-    icon,
-  }) => (
-    <View style={styles.field}>
-      <View style={styles.infoRow}>
-        <MaterialCommunityIcons
-          name={icon}
-          size={20}
-          color={Themes.COLORS.primary}
-        ></MaterialCommunityIcons>
 
-        <Text style={styles.label}>{label}</Text>
-      </View>
-      <TextInput
-        placeholderTextColor="#A9A9A9"
-        style={[
-          styles.input,
-          error && styles.inputError,
-          multiline && { height, textAlignVertical: "top" },
-        ]}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        multiline={multiline}
-        keyboardType={keyboardType}
-      />
-      {error && <Text style={styles.errorText}>{error}</Text>}
-    </View>
-  );
   return (
     <View style={styles.APCStep1ComponentContainer}>
       {/* PROFILE PICTURE UPLOAD */}
@@ -177,6 +175,7 @@ export default function APCStep1Component({
           </Text>
         </View>
       </View>
+
       {/* Personal Information */}
       <View style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
@@ -226,13 +225,31 @@ export default function APCStep1Component({
                 name="gender-male-female"
                 size={20}
                 color={Themes.COLORS.primary}
-              ></MaterialCommunityIcons>
+              />
               <Text style={styles.label}>Gender</Text>
             </View>
             <View style={styles.chipRow}>
-              <SelectionChip label="M" value="male" field="gender" />
-              <SelectionChip label="F" value="female" field="gender" />
-              <SelectionChip label="Other" value="other" field="gender" />
+              <SelectionChip
+                label="M"
+                value="male"
+                field="gender"
+                adopterData={adopterData}
+                onUpdate={update}
+              />
+              <SelectionChip
+                label="F"
+                value="female"
+                field="gender"
+                adopterData={adopterData}
+                onUpdate={update}
+              />
+              <SelectionChip
+                label="Other"
+                value="other"
+                field="gender"
+                adopterData={adopterData}
+                onUpdate={update}
+              />
             </View>
             {errors.gender && (
               <Text style={styles.errorText}> {errors.gender} </Text>
@@ -300,9 +317,8 @@ const styles = StyleSheet.create({
     backgroundColor: Themes.COLORS.background,
     padding: 8,
   },
-  scrollPadding: { padding: Themes.SPACING.lg, paddingBottom: 50 },
-  field: { marginBottom: Themes.SPACING.md },
   scrollPadding: { padding: 16, paddingBottom: 40 },
+  field: { marginBottom: Themes.SPACING.md },
   sectionCard: {
     backgroundColor: Themes.COLORS.card,
     borderRadius: Themes.RADIUS.md,
@@ -356,17 +372,15 @@ const styles = StyleSheet.create({
   inputError: { borderColor: "#FF6B6B" },
   errorText: {
     color: "#FF6B6B",
-    fontSize: 11, // 👈 Small but readable
+    fontSize: 11,
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
-    marginTop: 2, // 👈 Tight gap from the input
-    lineHeight: 12, // 👈 Force the container to be thin
+    marginTop: 2,
+    lineHeight: 12,
     marginLeft: 4,
   },
   content: {
     padding: Themes.SPACING.md,
   },
-
-  // Selection Chips
   chipRow: { flexDirection: "row", height: 50 },
   chip: {
     flex: 1,

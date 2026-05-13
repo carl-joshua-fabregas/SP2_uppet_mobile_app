@@ -183,7 +183,7 @@ export default function ViewPetProfile() {
       }
     } finally {
       const ownerIdString = pet.ownerId._id || pet.ownerId;
-      // Grab the name if it's populated!
+      console.log(pet, "this is it");
       const ownerName = pet.ownerId.firstName
         ? `${pet.ownerId.firstName} ${pet.ownerId.middleName} ${pet.ownerId.lastName}`
         : "Owner";

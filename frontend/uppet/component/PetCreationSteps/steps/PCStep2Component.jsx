@@ -9,64 +9,62 @@ import {
 import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../../../assets/themes/themes";
+const SelectionChip = ({ label, value, field, petData, onUpdate }) => (
+  <TouchableOpacity
+    style={[styles.chip, petData[field] === value && styles.chipActive]}
+    onPress={() => onUpdate(field, value)}
+  >
+    <Text
+      numberOfLines={1}
+      style={[
+        styles.chipText,
+        petData[field] === value && styles.chipTextActive,
+      ]}
+    >
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
 
+const FormInput = ({
+  label,
+  value,
+  onChange,
+  error,
+  placeholder,
+  multiline,
+  height,
+  keyboardType,
+  icon,
+}) => (
+  <View style={styles.field}>
+    <View style={styles.infoRow}>
+      <MaterialCommunityIcons
+        name={icon}
+        size={20}
+        color={Themes.COLORS.primary}
+      />
+      <Text style={styles.label}>{label}</Text>
+    </View>
+    <TextInput
+      placeholderTextColor="#A9A9A9"
+      style={[
+        styles.input,
+        error && styles.inputError,
+        multiline && { height, textAlignVertical: "top" },
+      ]}
+      value={value}
+      onChangeText={onChange}
+      placeholder={placeholder}
+      multiline={multiline}
+      keyboardType={keyboardType}
+    />
+    {error && <Text style={styles.errorText}>{error}</Text>}
+  </View>
+);
 export default function PCStep2Component({ petData, setPetData, errors }) {
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
-
-  const SelectionChip = ({ label, value, field }) => (
-    <TouchableOpacity
-      style={[styles.chip, petData[field] === value && styles.chipActive]}
-      onPress={() => update(field, value)}
-    >
-      <Text
-        numberOfLines={1}
-        style={[
-          styles.chipText,
-          petData[field] === value && styles.chipTextActive,
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-
-  const FormInput = ({
-    label,
-    value,
-    onChange,
-    error,
-    placeholder,
-    multiline,
-    height,
-    keyboardType,
-    icon,
-  }) => (
-    <View style={styles.field}>
-      <View style={styles.infoRow}>
-        <MaterialCommunityIcons
-          name={icon}
-          size={20}
-          color={Themes.COLORS.primary}
-        />
-        <Text style={styles.label}>{label}</Text>
-      </View>
-      <TextInput
-        placeholderTextColor="#A9A9A9"
-        style={[
-          styles.input,
-          error && styles.inputError,
-          multiline && { height, textAlignVertical: "top" },
-        ]}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        multiline={multiline}
-        keyboardType={keyboardType}
-      />
-      {error && <Text style={styles.errorText}>{error}</Text>}
-    </View>
-  );
 
   return (
     <View style={styles.PCStep2ComponentContainer}>
@@ -101,9 +99,27 @@ export default function PCStep2Component({ petData, setPetData, errors }) {
             <Text style={styles.label}>Size</Text>
           </View>
           <View style={styles.chipRow}>
-            <SelectionChip label="Small" value="Small" field="size" />
-            <SelectionChip label="Average" value="Average" field="size" />
-            <SelectionChip label="Big" value="Big" field="size" />
+            <SelectionChip
+              label="Small"
+              value="Small"
+              field="size"
+              petData={petData}
+              onUpdate={update}
+            />
+            <SelectionChip
+              label="Average"
+              value="Average"
+              field="size"
+              petData={petData}
+              onUpdate={update}
+            />
+            <SelectionChip
+              label="Big"
+              value="Big"
+              field="size"
+              petData={petData}
+              onUpdate={update}
+            />
           </View>
           {errors.size && <Text style={styles.errorText}>{errors.size}</Text>}
         </View>
@@ -134,16 +150,22 @@ export default function PCStep2Component({ petData, setPetData, errors }) {
               label="Not Vaccinated"
               value="Not Vaccinated"
               field="vaccination"
+              petData={petData}
+              onUpdate={update}
             />
             <SelectionChip
               label="Not Updated"
               value="Not Updated"
               field="vaccination"
+              petData={petData}
+              onUpdate={update}
             />
             <SelectionChip
               label="Up-to-Date"
               value="Up-to-Date"
               field="vaccination"
+              petData={petData}
+              onUpdate={update}
             />
           </View>
           {errors.vaccination && (
@@ -161,8 +183,20 @@ export default function PCStep2Component({ petData, setPetData, errors }) {
             <Text style={styles.label}>Spayed/Neutered</Text>
           </View>
           <View style={styles.chipRow}>
-            <SelectionChip label="Yes" value="yes" field="sn" />
-            <SelectionChip label="No" value="no" field="sn" />
+            <SelectionChip
+              label="Yes"
+              value="yes"
+              field="sn"
+              petData={petData}
+              onUpdate={update}
+            />
+            <SelectionChip
+              label="No"
+              value="no"
+              field="sn"
+              petData={petData}
+              onUpdate={update}
+            />
           </View>
           {errors.sn && <Text style={styles.errorText}>{errors.sn}</Text>}
         </View>

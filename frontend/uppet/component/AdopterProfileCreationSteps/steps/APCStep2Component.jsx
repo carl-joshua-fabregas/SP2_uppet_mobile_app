@@ -8,7 +8,59 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import * as Themes from "../../../assets/themes/themes";
+const FormInput = ({
+  label,
+  value,
+  onChange,
+  error,
+  placeholder,
+  multiline,
+  height,
+  keyboardType,
+  icon,
+}) => (
+  <View style={styles.field}>
+    <View style={styles.infoRow}>
+      <MaterialCommunityIcons
+        name={icon}
+        size={20}
+        color={Themes.COLORS.primary}
+      ></MaterialCommunityIcons>
 
+      <Text style={styles.label}>{label}</Text>
+    </View>
+    <TextInput
+      placeholderTextColor="#A9A9A9"
+      style={[
+        styles.input,
+        error && styles.inputError,
+        multiline && { height, textAlignVertical: "top" },
+      ]}
+      value={value}
+      onChangeText={onChange}
+      placeholder={placeholder}
+      multiline={multiline}
+      keyboardType={keyboardType}
+    />
+    {error && <Text style={styles.errorText}>{error}</Text>}
+  </View>
+);
+const SelectionChip = ({ label, value, field, adopterData, onUpdate }) => (
+  <TouchableOpacity
+    style={[styles.chip, adopterData[field] === value && styles.chipActive]}
+    onPress={() => onUpdate(field, value)}
+  >
+    <Text
+      numberOfLines={1}
+      style={[
+        styles.chipText,
+        adopterData[field] === value && styles.chipTextActive,
+      ]}
+    >
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
 export default function APCStep2Component({
   adopterData,
   setAdopterData,
@@ -48,59 +100,6 @@ export default function APCStep2Component({
       onNext();
     }
   };
-  const FormInput = ({
-    label,
-    value,
-    onChange,
-    error,
-    placeholder,
-    multiline,
-    height,
-    keyboardType,
-    icon,
-  }) => (
-    <View style={styles.field}>
-      <View style={styles.infoRow}>
-        <MaterialCommunityIcons
-          name={icon}
-          size={20}
-          color={Themes.COLORS.primary}
-        ></MaterialCommunityIcons>
-
-        <Text style={styles.label}>{label}</Text>
-      </View>
-      <TextInput
-        placeholderTextColor="#A9A9A9"
-        style={[
-          styles.input,
-          error && styles.inputError,
-          multiline && { height, textAlignVertical: "top" },
-        ]}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        multiline={multiline}
-        keyboardType={keyboardType}
-      />
-      {error && <Text style={styles.errorText}>{error}</Text>}
-    </View>
-  );
-  const SelectionChip = ({ label, value, field }) => (
-    <TouchableOpacity
-      style={[styles.chip, adopterData[field] === value && styles.chipActive]}
-      onPress={() => update(field, value)}
-    >
-      <Text
-        numberOfLines={1} // 👈 Allows wrapping to 2 lines first
-        style={[
-          styles.chipText,
-          adopterData[field] === value && styles.chipTextActive,
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
 
   return (
     <View style={styles.APCStep2ComponentContainer}>
@@ -155,13 +154,27 @@ export default function APCStep2Component({
             <Text style={styles.label}>Living Condition</Text>
           </View>
           <View style={styles.chipRow}>
-            <SelectionChip label="House" value="House" field="livingCon" />
+            <SelectionChip
+              label="House"
+              value="House"
+              field="livingCon"
+              adopterData={adopterData}
+              onUpdate={update}
+            />
             <SelectionChip
               label="Apartment"
               value="Apartment"
               field="livingCon"
+              adopterData={adopterData}
+              onUpdate={update}
             />
-            <SelectionChip label="Condo" value="Condo" field="livingCon" />
+            <SelectionChip
+              label="Condo"
+              value="Condo"
+              field="livingCon"
+              adopterData={adopterData}
+              onUpdate={update}
+            />
           </View>
           {errors.livingCon && (
             <Text style={styles.errorText}>{errors.livingCon}</Text>

@@ -11,7 +11,72 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
+const SelectionChip = ({
+  label,
+  value,
+  field,
+  adopterData,
+  onUpdate,
+  onPress,
+}) => (
+  <TouchableOpacity
+    style={[styles.chip, adopterData[field] === value && styles.chipActive]}
+    onPress={() => {
+      onUpdate(field, value);
+      onPress?.();
+    }}
+  >
+    <Text
+      numberOfLines={1}
+      style={[
+        styles.chipText,
+        adopterData[field] === value && styles.chipTextActive,
+      ]}
+    >
+      {label}
+    </Text>
+  </TouchableOpacity>
+);
+const FormInput = ({
+  label,
+  value,
+  onChange,
+  error,
+  placeholder,
+  multiline,
+  height,
+  keyboardType,
+  icon,
+  editable = true,
+}) => (
+  <View style={styles.field}>
+    <View style={styles.infoRow}>
+      <MaterialCommunityIcons
+        name={icon}
+        size={20}
+        color={Themes.COLORS.primary}
+      ></MaterialCommunityIcons>
 
+      <Text style={styles.label}>{label}</Text>
+    </View>
+    <TextInput
+      placeholderTextColor="#A9A9A9"
+      style={[
+        styles.input,
+        error && styles.inputError,
+        multiline && { height, textAlignVertical: "top" },
+        !editable && styles.inputDisabled,
+      ]}
+      value={value}
+      onChangeText={onChange}
+      placeholder={placeholder}
+      multiline={multiline}
+      keyboardType={keyboardType}
+      editable={editable}
+    />
+    {error && <Text style={styles.errorText}>{error}</Text>}
+  </View>
+);
 export default function APCStep3Component({
   adopterData,
   setAdopterData,
@@ -39,66 +104,6 @@ export default function APCStep3Component({
     }
   };
 
-  const SelectionChip = ({ label, value, field, onPress }) => (
-    <TouchableOpacity
-      style={[styles.chip, adopterData[field] === value && styles.chipActive]}
-      onPress={() => {
-        update(field, value);
-        onPress?.();
-      }}
-    >
-      <Text
-        numberOfLines={1} // 👈 Allows wrapping to 2 lines first
-        style={[
-          styles.chipText,
-          adopterData[field] === value && styles.chipTextActive,
-        ]}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-  const FormInput = ({
-    label,
-    value,
-    onChange,
-    error,
-    placeholder,
-    multiline,
-    height,
-    keyboardType,
-    icon,
-    editable = true,
-  }) => (
-    <View style={styles.field}>
-      <View style={styles.infoRow}>
-        <MaterialCommunityIcons
-          name={icon}
-          size={20}
-          color={Themes.COLORS.primary}
-        ></MaterialCommunityIcons>
-
-        <Text style={styles.label}>{label}</Text>
-      </View>
-      <TextInput
-        placeholderTextColor="#A9A9A9"
-        style={[
-          styles.input,
-          error && styles.inputError,
-          multiline && { height, textAlignVertical: "top" },
-          !editable && styles.inputDisabled,
-        ]}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        editable={editable}
-      />
-      {error && <Text style={styles.errorText}>{error}</Text>}
-    </View>
-  );
-
   return (
     <View style={styles.APCStep3ComponentContainer}>
       {/* SECTION 1: PET HISTORY */}
@@ -122,11 +127,19 @@ export default function APCStep3Component({
             <Text style={styles.label}>Has Owned a Pet Before?</Text>
           </View>
           <View style={styles.chipRow}>
-            <SelectionChip label="Yes, I have" value="yes" field="hadPets" />
+            <SelectionChip
+              label="Yes, I have"
+              value="yes"
+              field="hadPets"
+              adopterData={adopterData}
+              onUpdate={update}
+            />
             <SelectionChip
               label="No, first time"
               value="no"
               field="hadPets"
+              adopterData={adopterData}
+              onUpdate={update}
               onPress={() => update("currentOwnedPets", 0)}
             />
           </View>

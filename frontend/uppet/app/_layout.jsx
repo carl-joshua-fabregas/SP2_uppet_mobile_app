@@ -14,7 +14,8 @@ import {
   Fredoka_600SemiBold,
 } from "@expo-google-fonts/fredoka";
 import * as Themes from "../assets/themes/themes";
-
+import { AppState } from "react-native";
+import * as NavigationBar from "expo-navigation-bar";
 // 1. IMPORT NETINFO AND ICONS
 import { useNetInfo } from "@react-native-community/netinfo";
 import { View, Text, StyleSheet } from "react-native";
@@ -119,6 +120,28 @@ function NavigationStack() {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    const enforceHiddenNav = async () => {
+      // Hides the bar natively
+      await NavigationBar.setVisibilityAsync("hidden");
+
+      // Makes it only appear when swiped from the bottom edge
+      // instead of appearing on every single screen tap
+      await NavigationBar.setBehaviorAsync("inset-swipe");
+    };
+
+    // Run on application mount
+    enforceHiddenNav();
+
+    // Re-enforce whenever the user backgrounds the app and returns
+    const listener = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
+        enforceHiddenNav();
+      }
+    });
+
+    return () => listener.remove();
+  }, []);
   return (
     <UserProvider>
       <SocketProvider>

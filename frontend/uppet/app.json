@@ -32,6 +32,12 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-navigation-bar",
+        {
+          "visibility": "hidden"
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",

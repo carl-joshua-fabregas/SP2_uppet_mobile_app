@@ -364,7 +364,11 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: Themes.SPACING.sm,
   },
-  headerImage: { width: "100%", height: 300, resizeMode: "cover" },
+  headerImage: {
+    width: "100%",
+    resizeMode: "cover",
+    aspectRatio: 4 / 3,
+  },
   headerTextContainer: { padding: Themes.SPACING.lg },
   petName: {
     fontSize: 32,
@@ -547,8 +551,8 @@ const styles = StyleSheet.create({
   },
   photoFeedImage: {
     width: "100%",
-    height: 320,
     resizeMode: "cover",
+    aspectRatio: 4 / 3,
   },
   photoCardTitleRow: {
     flexDirection: "row",

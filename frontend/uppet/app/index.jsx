@@ -11,7 +11,7 @@ export default function Login() {
       {/* Logo circle */}
       <View style={styles.logoWrapper}>
         <Image
-          source={require("../assets/images/SplashScreen_white.png")}
+          source={require("../assets/images/SplashScreen-white.png")}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 120,
+    aspectRatio: 3 / 2,
   },
 
   // App name in dark forest green

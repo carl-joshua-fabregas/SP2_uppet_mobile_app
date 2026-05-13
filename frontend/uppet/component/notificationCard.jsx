@@ -3,11 +3,18 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 import { useNavigation } from "@react-navigation/native";
 import { api } from "../api/axios";
-import { useEffect } from "react";
+import { useState } from "react";
+
 export default function NotificationCard(props) {
-  // Added onLongPress to props
   const { notification, onLongPress, markIsRead } = props;
   const navigation = useNavigation();
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Validate notification object exists
+  if (!notification || !notification._id) {
+    console.warn("Invalid notification object:", notification);
+    return null;
+  }
 
   // Provide defaults for notification fields
   const type = notification?.notifType || "DEFAULT";
@@ -88,34 +95,104 @@ export default function NotificationCard(props) {
   };
 
   const handlePress = async () => {
-    // 2. Only call the API if it's currently unread!
+    // Only call the API if it's currently unread
     if (!isRead) {
       markIsRead(notification._id);
     }
 
-    if (!notification?.relatedEntity) return;
+    // Skip navigation if no related entity or if already navigating
+    if (!notification?.relatedEntity || isNavigating) {
+      console.log("No related entity or already navigating:", {
+        relatedEntity: notification?.relatedEntity,
+        isNavigating,
+      });
+      return;
+    }
+
+    setIsNavigating(true);
 
     try {
-      if (type.startsWith("ADOPTER_")) {
-        navigation.navigate("viewProfile");
-      } else if (type.startsWith("PET_") && type !== "PET_DELETED") {
-        const res = await api.get(`/api/pet/${notification.relatedEntity}`);
-        if (res.data?.body) {
-          navigation.navigate("viewPetProfile", { pet: res.data.body });
-        }
-      } else if (type.startsWith("ADOP_APP_")) {
-        const res = await api.get(
-          `/api/adoptionApp/${notification.relatedEntity}`,
-        );
-        const appData = res.data?.body;
-        if (appData?.petToAdopt) {
-          navigation.navigate("viewApplicantsMyAdoptees", {
-            petID: appData.petToAdopt,
-          });
-        }
+      const entityId = notification.relatedEntity;
+      const entityModel = notification?.entityModel;
+
+      console.log("Navigation triggered for notification type:", type, {
+        entityId,
+        entityModel,
+      });
+
+      // Handle different notification types with proper navigation
+      if (type.startsWith("RATING_")) {
+        // Ratings don't have a dedicated view, log and return
+        console.log("Rating notification - no dedicated view", type);
+        return;
       }
+
+      if (type.startsWith("ADOPTER_")) {
+        // Navigate to the adopter's profile
+        try {
+          navigation.navigate("viewAdopterProfile", {
+            adopterId: entityId,
+          });
+        } catch (navErr) {
+          console.error("Navigation error - trying viewProfile:", navErr);
+          navigation.navigate("viewProfile");
+        }
+        return;
+      }
+
+      if (type.startsWith("PET_")) {
+        // Don't navigate if pet was deleted
+        if (type === "PET_DELETED") {
+          console.log("Pet was deleted - skipping navigation");
+          return;
+        }
+
+        try {
+          const res = await api.get(`/api/pet/${entityId}`);
+          if (res.data?.body) {
+            navigation.navigate("viewPetProfile", { pet: res.data.body });
+          } else {
+            console.warn("Pet data not found in response");
+          }
+        } catch (err) {
+          console.error("Error fetching pet data:", err.message);
+          // Show error feedback to user
+        }
+        return;
+      }
+
+      if (type.startsWith("ADOP_APP_")) {
+        try {
+          const res = await api.get(`/api/adoptionApp/${entityId}`);
+          const appData = res.data?.body;
+
+          if (appData?.petToAdopt) {
+            navigation.navigate("viewApplicantsMyAdoptees", {
+              petID: appData.petToAdopt,
+            });
+          } else if (appData) {
+            // Fallback: navigate to my applications view
+            navigation.navigate("viewMyApplication");
+          } else {
+            console.warn("Adoption application data not found");
+          }
+        } catch (err) {
+          console.error("Error fetching adoption app data:", err.message);
+          // Fallback to my applications view
+          try {
+            navigation.navigate("viewMyApplication");
+          } catch (fallbackErr) {
+            console.error("Fallback navigation failed:", fallbackErr);
+          }
+        }
+        return;
+      }
+
+      console.warn("Unhandled notification type:", type);
     } catch (err) {
-      console.error("Navigation error from notification:", err);
+      console.error("Unexpected error in handlePress:", err);
+    } finally {
+      setIsNavigating(false);
     }
   };
 
@@ -125,8 +202,14 @@ export default function NotificationCard(props) {
     <TouchableOpacity
       style={[styles.notificationContainer, !isRead && styles.unreadContainer]}
       onPress={handlePress}
-      onLongPress={() => onLongPress && onLongPress(notification._id)} // <-- Added Trigger
+      onLongPress={() => {
+        if (onLongPress && typeof onLongPress === "function") {
+          onLongPress(notification._id);
+        }
+      }}
       delayLongPress={300}
+      disabled={isNavigating}
+      activeOpacity={0.7}
     >
       <View style={[styles.iconContainer, { backgroundColor: config.bg }]}>
         <Ionicons name={config.icon} size={24} color={config.color} />

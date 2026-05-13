@@ -34,7 +34,7 @@ export default function Notification() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchNotification = async (cursorID, isRefreshing = false) => {
-    console.log(`HEY THIS IS THE PAGE FOR NOTIFICATION PAGE`);
+    console.log(`Fetching notifications with cursor:`, cursorID);
     isFetchingRef.current = true;
     setLoading(true);
     try {
@@ -45,16 +45,36 @@ export default function Notification() {
           limit: limit,
         },
       });
-      const newNotification = res.data?.body;
+
+      // Validate response structure
+      if (!res.data) {
+        throw new Error("Invalid response structure from server");
+      }
+
+      const newNotification = res.data?.body || [];
+
+      // Validate that notifications are actual objects
+      if (!Array.isArray(newNotification)) {
+        console.error(
+          "Expected array of notifications, got:",
+          typeof newNotification,
+        );
+        setNotification(isRefreshing ? [] : (prev) => prev);
+        setHasMore(false);
+        return;
+      }
+
       setNotification((prev) => {
         if (isRefreshing) return newNotification;
         else return [...prev, ...newNotification];
       });
 
-      // Update cursor ID
+      // Update cursor ID only if we have notifications
       if (newNotification?.length > 0) {
         const lastNotification = newNotification[newNotification.length - 1];
-        setCursorID(lastNotification._id);
+        if (lastNotification?._id) {
+          setCursorID(lastNotification._id);
+        }
       }
 
       // Check if we've reached the end
@@ -62,7 +82,11 @@ export default function Notification() {
         setHasMore(false);
       }
     } catch (err) {
-      console.error("Error fetching pets:", err);
+      console.error("Error fetching notifications:", err);
+      // Keep existing notifications on error during load more
+      if (!isRefreshing) {
+        setNotification((prev) => prev); // Keep existing data
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -85,6 +109,11 @@ export default function Notification() {
 
   // Change your markIsRead function to this:
   const markIsRead = async (id) => {
+    if (!id) {
+      console.warn("markIsRead called with invalid id:", id);
+      return;
+    }
+
     try {
       // 1. Pass the exact ID to the API
       await api.patch(`/api/notification/${id}`);
@@ -95,8 +124,12 @@ export default function Notification() {
           item._id === id ? { ...item, isRead: true } : item,
         ),
       );
+
+      console.log("Notification marked as read:", id);
     } catch (err) {
-      console.log("Error in mark is read", err.message);
+      console.error("Error marking notification as read:", err.message);
+      // Don't throw - let the notification stay in unread state on error
+      // User can still interact with the notification
     }
   };
   // --- Delete Handlers ---
@@ -106,19 +139,27 @@ export default function Notification() {
   };
 
   const handleDeleteNotification = async () => {
-    if (!selectedNotifId) return;
+    if (!selectedNotifId) {
+      console.warn("Delete called with no selected notification");
+      return;
+    }
+
     setIsDeleting(true);
 
     try {
-      // Adjust the endpoint to match your actual backend delete route
+      // Call the backend delete endpoint
       await api.delete(`/api/notification/${selectedNotifId}`);
 
-      // Remove from UI
+      // Remove from UI immediately for better UX
       setNotification((prev) =>
         prev.filter((item) => item._id !== selectedNotifId),
       );
+
+      console.log("Notification deleted:", selectedNotifId);
     } catch (error) {
-      console.error("Failed to delete notification:", error);
+      console.error("Failed to delete notification:", error.message);
+      // Show error but don't close modal - let user retry
+      // Could add a toast notification here for better UX
     } finally {
       setIsDeleting(false);
       setModalVisible(false);
@@ -131,26 +172,55 @@ export default function Notification() {
   }, []);
 
   useEffect(() => {
-    if (!socket) return;
-    socket.on("notification_created", (data) => {
-      console.log("New notifcation created with message", data.message);
-      const isInArray = notification.some(
-        (notif) => notif._id === data.notification._id,
-      );
-      if (!isInArray) {
-        setNotification((prev) => [data.notification, ...prev]);
-      }
-    });
+    if (!socket) {
+      console.warn("Socket not available for real-time notifications");
+      return;
+    }
 
-    socket.on("notification_deleted", (data) => {
-      console.log("Notification is deleted with message", data.message);
+    const handleNotificationCreated = (data) => {
+      console.log("New notification received:", data?.notification?.message);
+
+      // Validate incoming notification
+      if (!data?.notification || !data.notification._id) {
+        console.warn("Invalid notification data received:", data);
+        return;
+      }
+
+      // Check if notification already exists in the list (avoid duplicates)
+      setNotification((prev) => {
+        const isDuplicate = prev.some(
+          (notif) => notif._id === data.notification._id,
+        );
+        if (isDuplicate) {
+          console.log("Duplicate notification detected, skipping");
+          return prev;
+        }
+        // Add new notification to the top
+        return [data.notification, ...prev];
+      });
+    };
+
+    const handleNotificationDeleted = (data) => {
+      console.log("Notification deleted event received:", data?.notification);
+
+      if (!data?.notification) {
+        console.warn("Delete event missing notification ID");
+        return;
+      }
+
       setNotification((prev) =>
         prev.filter((notif) => notif._id !== data.notification),
       );
-    });
+    };
+
+    // Register socket listeners
+    socket.on("notification_created", handleNotificationCreated);
+    socket.on("notification_deleted", handleNotificationDeleted);
+
+    // Cleanup listeners on unmount or socket change
     return () => {
-      socket.off("notification_created");
-      socket.off("notification_deleted");
+      socket.off("notification_created", handleNotificationCreated);
+      socket.off("notification_deleted", handleNotificationDeleted);
     };
   }, [socket]);
 

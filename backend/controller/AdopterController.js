@@ -15,7 +15,7 @@ import {
   Bucket$,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { generateSingleMatch } from "../services/matchingServices.js";
+import { generateBulkMatchForUser } from "../services/matchingServices.js";
 import Match from "../models/Match.js";
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
@@ -254,15 +254,9 @@ export async function updateUser(req, res) {
       message: "Successfully updated",
       body: newUser,
     });
-
-    const findAvailPets = await Pet.find({
-      adoptedStatus: { $eq: false },
-      ownerId: { $ne: req.user.id },
-    });
-
-    findAvailPets.map((pet) => {
-      generateSingleMatch(newUser, pet);
-    });
+    generateBulkMatchForUser(newUser).catch((err) =>
+      console.log("Background match failed:", err),
+    );
   } catch (err) {
     console.log("==========ERROR IN UPDATING=========");
     console.error(err);

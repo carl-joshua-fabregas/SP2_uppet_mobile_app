@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   imageStyle: {
     resizeMode: "cover",
     width: "100%",
-    height: 260, // Slightly taller to match header image feel
+    aspectRatio: 4 / 3,
   },
   petDetailsContainer: {
     padding: Themes.SPACING.lg, // increased padding to match profile

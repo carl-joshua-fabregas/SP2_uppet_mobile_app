@@ -264,6 +264,7 @@ export default function ViewApplicantList(props) {
     fetchApprovedApplicants(null, true);
     fetchRejectedApplicants(null, true);
   }, []);
+
   useEffect(() => {
     if (!socket) return;
 

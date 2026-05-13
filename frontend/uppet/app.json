@@ -4,10 +4,9 @@
     "slug": "uppet",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/SplashScreen_green.png",
+    "icon": "./assets/images/SplashScreen-green.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.uppet.mobile",
@@ -19,8 +18,8 @@
       "package": "com.uppet.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#A8E6CF",
-        "foregroundImage": "./assets/images/SplashScreen_white.png",
-        "monochromeImage": "./assets/images/SplashScreen_white.png"
+        "foregroundImage": "./assets/images/SplashScreen-white.png",
+        "monochromeImage": "./assets/images/SplashScreen-white.png"
       },
       "softwareKeyboardLayoutMode": "pan",
       "predictiveBackGestureEnabled": false
@@ -34,13 +33,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/SplashScreen_white.png",
+          "image": "./assets/images/SplashScreen-white.png",
           "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#A8E6CF",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "resizeMode": "cover",
+          "backgroundColor": "#A8E6CF"
         }
       ],
       [

@@ -9,7 +9,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import mongoose from "mongoose";
 import Adopter from "../models/Adopter.js";
 import Match from "../models/Match.js";
-import { generateSingleMatch } from "../services/matchingServices.js";
+import { generateBulkMatchForPet } from "../services/matchingServices.js";
 
 console.log("AWS REGION:", process.env.AWS_REGION);
 console.log("AWS ACCESS KEY ID:", process.env.AWS_ACCESS_KEY_ID);
@@ -366,11 +366,12 @@ export async function deletePetByID(req, res) {
       message: "Pet deletion was successful",
       pet: req.params.id,
     });
-    res.status(200).json({
-      message: "Successfully delete pet",
-    });
 
     await Match.deleteMany({ petID: pet._id });
+
+    return res.status(200).json({
+      message: "Successfully delete pet",
+    });
   } catch (err) {
     return res.status(500).json({
       message: "Server Error",
@@ -451,11 +452,9 @@ export async function updatePet(req, res) {
       body: updatedPet,
     });
 
-    const adopterList = await Adopter.find({ _id: { $ne: updatePet.ownerId } });
-
-    adopterList.map((adopter) => {
-      generateSingleMatch(adopter, updatedPet);
-    });
+    generateBulkMatchForPet(updatedPet).catch((err) =>
+      console.log("Background match failed:", err),
+    );
   } catch (err) {
     return res.status(500).json({
       message: "Server Error",

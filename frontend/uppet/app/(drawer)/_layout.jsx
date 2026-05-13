@@ -22,8 +22,13 @@ export default function Menu() {
         options={({ navigation }) => ({
           headerTitle: () => (
             <Image
-              source={require("../../assets/images/SplashScreen_green.png")}
-              style={{ width: 150, height: 150, resizeMode: "contain" }}
+              source={require("../../assets/images/SplashScreen-green.png")}
+              style={{
+                width: 150,
+                height: 150,
+                resizeMode: "contain",
+                aspectRatio: 3 / 2,
+              }}
             />
           ),
           headerTitleAlign: "left",

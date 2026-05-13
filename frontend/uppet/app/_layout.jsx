@@ -65,7 +65,7 @@ function NavigationStack() {
 
         <Stack.Screen
           name="viewApplicantsMyAdoptees"
-          options={{ headerShown: true, title: "Profile" }}
+          options={{ headerShown: true, title: "Applicants" }}
         ></Stack.Screen>
         <Stack.Screen
           name="viewAdopterProfile"

@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginHorizontal: 2, // Helps prevent clipping the drop shadow
   },
-  photoPreview: { width: "100%", height: 250 },
+  photoPreview: { width: "100%", aspectRatio: 4 / 3 },
   deleteIcon: {
     position: "absolute",
     top: Themes.SPACING.sm,

@@ -10,7 +10,7 @@ import {
   ActivityIndicator, // <-- Add this
 } from "react-native";
 import Tombstone from "../component/Tombstone";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import ProfileCard from "../component/AdopterProfileCard";
 import { api } from "../api/axios";
@@ -501,6 +501,21 @@ export default function ViewAdopterProfile({}) {
     extrapolateLeft: "clamp",
     extrapolateRight: "extend",
   });
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: adopter?.firstName
+        ? `${adopter.firstName}'s Profile`
+        : "Adopter Profile",
+
+      headerTitleStyle: {
+        fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+      },
+      headerStyle: {
+        backgroundColor: Themes.COLORS.background,
+      },
+      headerShadowVisible: false, // Removes the bottom border line
+    });
+  }, [navigation, adopter]);
   return (
     <View style={{ flex: 1 }}>
       <ViewRatingModal

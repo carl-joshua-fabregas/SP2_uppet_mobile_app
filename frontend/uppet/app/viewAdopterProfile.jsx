@@ -142,7 +142,6 @@ export default function ViewAdopterProfile({}) {
     setUploading(true);
     try {
       const isEditMode = myRating ? true : false;
-      console.log(isEditMode);
       const res = isEditMode
         ? await api.patch(`/api/rating/${selectedReview._id}`, {
             score,
@@ -160,6 +159,18 @@ export default function ViewAdopterProfile({}) {
         console.log("success in rating");
         setMyRating(res.data.body);
         setSelectedReview(res.data.body);
+
+        setAdopterRating((prev) => {
+          if (isEditMode) {
+            return prev.map((r) =>
+              r._id === res.data.body._id ? res.data.body : r,
+            );
+          } else {
+            const exists = prev.find((r) => r._id === res.data.body._id);
+            if (exists) return prev;
+            return [res.data.body, ...prev]; // Prepend new review
+          }
+        });
       }
     } catch (err) {
       console.log(err, err.message);

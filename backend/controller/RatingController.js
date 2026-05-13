@@ -227,7 +227,7 @@ export async function updateRating(req, res) {
       req.params.ratingID,
       { $set: req.body },
       options,
-    );
+    ).populate("reviewer");
 
     const updateRatingNotification = new Notification({
       recipient: newRating.ratedUser._id,

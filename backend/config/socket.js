@@ -5,7 +5,7 @@ let io;
 export const socketConfig = {
   init: (httpServer, corsOption) => {
     io = new Server(httpServer, {
-      corsOption,
+      cors: corsOption,
     });
     return io;
   },

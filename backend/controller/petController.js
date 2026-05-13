@@ -234,6 +234,32 @@ export async function findMyPetsAvailable(req, res) {
       { $limit: 10 },
       {
         $lookup: {
+          from: "adopters",
+          localField: "ownerId",
+          foreignField: "_id",
+          as: "ownerDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$ownerDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          ownerId: {
+            _id: "$ownerDetails._id",
+            firstName: "$ownerDetails.firstName",
+            middleName: "$ownerDetails.middleName",
+            lastName: "$ownerDetails.lastName",
+            profilePhoto: "$ownerDetails.profilePhoto",
+          },
+        },
+      },
+      { $project: { ownerDetails: 0 } },
+      {
+        $lookup: {
           from: "adoptionapplications",
           localField: "_id",
           foreignField: "petToAdopt",
@@ -297,6 +323,32 @@ export async function findMyPetsAdopted(req, res) {
       },
       { $sort: { updatedAt: -1, _id: -1 } },
       { $limit: 10 },
+      {
+        $lookup: {
+          from: "adopters",
+          localField: "ownerId",
+          foreignField: "_id",
+          as: "ownerDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$ownerDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          ownerId: {
+            _id: "$ownerDetails._id",
+            firstName: "$ownerDetails.firstName",
+            middleName: "$ownerDetails.middleName",
+            lastName: "$ownerDetails.lastName",
+            profilePhoto: "$ownerDetails.profilePhoto",
+          },
+        },
+      },
+      { $project: { ownerDetails: 0 } },
       {
         $lookup: {
           from: "adoptionapplications",
@@ -431,7 +483,7 @@ export async function updatePet(req, res) {
       req.params.id,
       { $set: updateData },
       options,
-    );
+    ).populate("ownerId", "firstName middleName lastName");
 
     const io = req.app.get("io");
     if (initialCreation) {
@@ -538,7 +590,10 @@ export async function uploadPetPhoto(req, res) {
   try {
     console.log("PET ID IN UPLOAD PET PHOTO CONTROLLER", req.params.id);
 
-    const pet = await Pet.findById(req.params.id);
+    const pet = await Pet.findById(req.params.id).populate(
+      "ownerId",
+      "firstName middleName lastName",
+    );
     if (!pet) {
       return res.status(404).json({
         message: "Not found",

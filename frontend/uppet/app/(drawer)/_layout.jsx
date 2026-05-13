@@ -22,16 +22,18 @@ export default function Menu() {
         options={({ navigation }) => ({
           headerTitle: () => (
             <Image
-              source={require("../../assets/images/SplashScreen-green.png")}
+              source={require("../../assets/images/home_logo.png")}
               style={{
-                width: 150,
-                height: 150,
+                width: 120,
+                height: 120,
+                marginLeft: -28,
                 resizeMode: "contain",
                 aspectRatio: 3 / 2,
               }}
             />
           ),
           headerTitleAlign: "left",
+          headerLeft: () => null,
           drawerLabel: "Dashboard",
 
           // This overrides the default hamburger menu on the right

@@ -30,7 +30,8 @@ export default function ViewPetProfile() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isOwner, setIsOwner] = useState(
-    route?.params?.pet?.ownerId._id === user._id,
+    (route?.params?.pet?.ownerId?._id || route?.params?.pet?.ownerId) ===
+      user._id,
   );
   const [placeholderHeight, setPlaceholderHeight] = useState(70);
   const [adoptionApp, setAdoptionApp] = useState(null);

@@ -7,7 +7,6 @@ import {
   Image,
 } from "react-native";
 import * as Themes from "../../../assets/themes/themes";
-import { launchImageLibrary } from "react-native-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 
 import { MaterialCommunityIcons } from "@expo/vector-icons";

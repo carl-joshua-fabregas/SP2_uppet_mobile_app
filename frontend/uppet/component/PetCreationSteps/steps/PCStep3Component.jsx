@@ -6,9 +6,10 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import * as Themes from "../../../assets/themes/themes";
-import { launchImageLibrary } from "react-native-image-picker";
+import * as ImagePicker from "expo-image-picker";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
 
@@ -72,30 +73,56 @@ export default function PCStep3Component({ petData, setPetData, errors }) {
     );
   };
 
-  const handleAddPhoto = () => {
-    launchImageLibrary(
-      {
-        mediaType: "photo",
+  const handleAddPhoto = async () => {
+    try {
+      // Request media library permissions
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== ImagePicker.PermissionStatus.GRANTED) {
+        Alert.alert(
+          "Permission Required",
+          "This app needs access to your photo library to select pet photos.",
+          [
+            {
+              text: "Cancel",
+              onPress: () => console.log("Permission denied"),
+              style: "cancel",
+            },
+            {
+              text: "OK",
+              onPress: () => {},
+            },
+          ],
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
         quality: 1,
-        selectionLimit: 0,
-      },
-      async (response) => {
-        if (!response.didCancel && !response.errorCode) {
-          const newPhotos = response.assets.map((asset, index) => ({
-            url: asset.uri,
-            name: asset.fileName,
-            type: asset.type,
-            caption: "",
-            size: asset.fileSize,
-            id: `pets/${petData._id ?? Date.now()}/${asset.fileSize}_${asset.fileName}`,
-            key: `pets/${petData._id ?? Date.now()}/${asset.fileSize}_${asset.fileName}`,
-            isProfile:
-              petData.photos.length === 0 && index === 0 ? true : false,
-          }));
-          update("photos", [...petData.photos, ...newPhotos]);
-        }
-      },
-    );
+        allowsMultipleSelection: true,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        const newPhotos = result.assets.map((asset, index) => ({
+          url: asset.uri,
+          name: asset.fileName || `photo_${Date.now()}_${index}.jpg`,
+          type: asset.type || "image/jpeg",
+          caption: "",
+          size: asset.fileSize || 0,
+          id: `pets/${petData._id ?? Date.now()}/${asset.fileSize}_${asset.fileName}`,
+          key: `pets/${petData._id ?? Date.now()}/${asset.fileSize}_${asset.fileName}`,
+          isProfile: petData.photos.length === 0 && index === 0 ? true : false,
+        }));
+        update("photos", [...petData.photos, ...newPhotos]);
+      } else {
+        console.log("Photo selection cancelled");
+      }
+    } catch (error) {
+      console.error("Error picking photos:", error);
+      Alert.alert("Error", "Failed to pick photos. Please try again.");
+    }
   };
 
   const handleCaptionChange = (text, photoKey) => {

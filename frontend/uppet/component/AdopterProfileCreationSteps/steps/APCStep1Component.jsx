@@ -6,11 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import * as Themes from "../../../assets/themes/themes";
-import { launchImageLibrary } from "react-native-image-picker";
+import * as ImagePicker from "expo-image-picker";
 
 export default function APCStep1Component({
   adopterData,
@@ -21,37 +22,61 @@ export default function APCStep1Component({
   const update = (key, value) =>
     setAdopterData((prev) => ({ ...prev, [key]: value }));
 
-  const handleAddPhoto = () => {
-    console.log("Adding Adopter Profile Picture");
-    launchImageLibrary(
-      {
-        mediaType: "photo",
+  const handleAddPhoto = async () => {
+    try {
+      console.log("Adding Adopter Profile Picture");
+
+      // Request media library permissions
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== ImagePicker.PermissionStatus.GRANTED) {
+        Alert.alert(
+          "Permission Required",
+          "This app needs access to your photo library to select profile pictures.",
+          [
+            {
+              text: "Cancel",
+              onPress: () => console.log("Permission denied"),
+              style: "cancel",
+            },
+            {
+              text: "Open Settings",
+              onPress: async () => {
+                // Note: On Android this would need Linking.openSettings()
+                // For iOS, you might want to use expo-linking
+              },
+            },
+          ],
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
         quality: 1,
-        selectionLimit: 1,
-      },
-      async (response) => {
-        if (response.didCancel) {
-          console.log("The user has cancelled selection");
-        } else if (response.errorCode) {
-          console.log(
-            "I have issues and one of them is you",
-            response.errorCode,
-          );
-        } else {
-          const asset = response.assets;
-          const newProfilePicture = {
-            url: asset[0].uri,
-            name: asset[0].fileName,
-            type: asset[0].type,
-            size: asset[0].fileSize,
-            key: `user/${adopterData._id}/${asset[0].fileSize}_${asset[0].fileName}`,
-          };
-          console.log("Selected zucc", newProfilePicture);
-          update("profilePhoto", newProfilePicture);
-          console.log("Update zucc", adopterData);
-        }
-      },
-    );
+        allowsMultipleSelection: false,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const newProfilePicture = {
+          url: asset.uri,
+          name: asset.fileName || `photo_${Date.now()}.jpg`,
+          type: asset.type || "image/jpeg",
+          size: asset.fileSize || 0,
+          key: `user/${adopterData._id}/${asset.fileSize}_${asset.fileName}`,
+        };
+        console.log("Selected zucc", newProfilePicture);
+        update("profilePhoto", newProfilePicture);
+        console.log("Update zucc", adopterData);
+      } else {
+        console.log("The user has cancelled selection");
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to pick image. Please try again.");
+    }
   };
   const SelectionChip = ({ label, value, field }) => (
     <TouchableOpacity

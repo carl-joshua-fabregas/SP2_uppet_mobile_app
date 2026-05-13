@@ -35,7 +35,7 @@
         {
           "image": "./assets/images/SplashScreen-white.png",
           "imageWidth": 200,
-          "resizeMode": "cover",
+          "resizeMode": "contain",
           "backgroundColor": "#A8E6CF"
         }
       ],
@@ -43,6 +43,13 @@
         "@react-native-google-signin/google-signin",
         {
           "iosUrlScheme": "com.googleusercontent.apps.6734110788-9lbc61k9u8dg4tebk8uppo4ve75ju28b"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera"
         }
       ],
       "expo-web-browser",

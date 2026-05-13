@@ -23,7 +23,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { api } from "../api/axios";
 
 export default function createAdopterProfile() {
-  const { user, setNewUser, login, setUser, newUser } = useUser();
+  const { user, setNewUser, login, logout, setUser, newUser } = useUser();
   // const { adopterData } = route.params;
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
@@ -32,6 +32,7 @@ export default function createAdopterProfile() {
   const [errors, setErrors] = useState({});
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight() || 0;
+
   const validators = () => {
     const newErrors = {};
     switch (currentStep) {
@@ -115,7 +116,10 @@ export default function createAdopterProfile() {
       return true;
     }
   };
-
+  const onChangeAccount = async () => {
+    await logout();
+    navigation.navigate(`index`);
+  };
   const onFinish = (newUser) => {
     console.log("I AM FINISH UP, VAL OF NEW USER : ", newUser);
     if (!newUser) {
@@ -338,7 +342,12 @@ export default function createAdopterProfile() {
       keyboardVerticalOffset={headerHeight}
     >
       <View style={styles.createProfileContainer}>
-        <APCProgressTracker currentStep={currentStep} STEPS={STEPS} />
+        <APCProgressTracker
+          currentStep={currentStep}
+          STEPS={STEPS}
+          newUser={newUser}
+          onChangeAccount={onChangeAccount}
+        />
         <View style={styles.headerContainer}>
           <Text style={styles.stepHeaderCount}>
             Step{currentStep + 1} of {STEPS.length}

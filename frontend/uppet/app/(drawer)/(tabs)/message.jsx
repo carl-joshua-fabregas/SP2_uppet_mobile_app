@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "../../../api/axios";
 import * as Themes from "../../../assets/themes/themes";
 import { useSocket } from "../../../context/SocketContext";
@@ -20,16 +20,28 @@ export default function ChatList() {
   const [chatlist, setChatlist] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
   const [refreshing, setRefreshing] = useState(false);
-  const { socket } = useSocket();
+  const socket = useSocket();
   const { user } = useUser();
-
-  const fetchChatList = async (pageNum = 1, isRefreshing = false) => {
+  const [cursorUpdatedAt, setCursorUpdatedAt] = useState(null);
+  const [cursorId, setCursorId] = useState(null);
+  const isFetchingRef = useRef(false);
+  const fetchChatList = async (
+    currentCursorDate = null,
+    currentCursorId = null,
+    isRefreshing = false,
+  ) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     setLoading(true);
+
     try {
       const res = await api.get("/api/chatlist/get", {
-        params: { page: pageNum },
+        params: {
+          limit: 10,
+          cursorUpdatedAt: currentCursorDate,
+          cursorId: currentCursorId,
+        },
       });
 
       const newChatList = res?.data?.body || [];
@@ -37,34 +49,49 @@ export default function ChatList() {
       if (newChatList.length < 10) {
         setHasMore(false);
       }
+
+      if (newChatList.length > 0) {
+        const lastItem = newChatList[newChatList.length - 1];
+        setCursorUpdatedAt(lastItem.updatedAt);
+        setCursorId(lastItem._id);
+      }
+
       setChatlist((prev) => {
         if (isRefreshing) return newChatList;
-        return [...prev, ...newChatList];
+
+        // Filter out duplicates (the fix from the previous step)
+        const uniqueNewChats = newChatList.filter(
+          (newChat) =>
+            !prev.some((existingChat) => existingChat._id === newChat._id),
+        );
+
+        return [...prev, ...uniqueNewChats];
       });
     } catch (err) {
       console.log("Error fetching chatlist:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);
+      isFetchingRef.current = false; // ADD THIS to unlock the fetch
     }
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    setPage(1);
     setHasMore(true);
-    await fetchChatList(1, true);
+    setCursorUpdatedAt(null); // Reset cursor on refresh
+    setCursorId(null); // Reset cursor on refresh
+    await fetchChatList(null, null, true);
   }, []);
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {
-      fetchChatList(page + 1);
-      setPage((prev) => prev + 1);
+      fetchChatList(cursorUpdatedAt, cursorId);
     }
   };
 
   useEffect(() => {
-    fetchChatList(page);
+    fetchChatList(null, null);
   }, []);
 
   useEffect(() => {

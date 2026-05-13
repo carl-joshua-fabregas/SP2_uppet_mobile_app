@@ -13,9 +13,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
+import { useSocket } from "../context/SocketContext";
 
 export default function ViewMyApplication(props) {
   const router = useRoute();
+  const socket = useSocket();
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("pending");
   const initialLimit = Math.ceil(
@@ -254,6 +256,82 @@ export default function ViewMyApplication(props) {
     fetchApprovedApplicants(null, true);
     fetchRejectedApplicants(null, true);
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleAppUpdate = (data) => {
+      const app = data.adoptionApp;
+
+      // Helper function just to filter out the app from lists it doesn't belong in
+      const filterApp = (prev) => ({
+        ...prev,
+        applicants: prev.applicants.filter((a) => a._id !== app._id),
+      });
+
+      if (app.status === "Pending") {
+        // 1. Target list: Filter old version out, put new version at the top
+        setPending((prev) => ({
+          ...prev,
+          applicants: [
+            app,
+            ...prev.applicants.filter((a) => a._id !== app._id),
+          ],
+        }));
+        // 2. Other lists: Just filter it out
+        setApproved(filterApp);
+        setRejected(filterApp);
+      } else if (app.status === "Approved") {
+        setApproved((prev) => ({
+          ...prev,
+          applicants: [
+            app,
+            ...prev.applicants.filter((a) => a._id !== app._id),
+          ],
+        }));
+        setPending(filterApp);
+        setRejected(filterApp);
+      } else if (app.status === "Rejected") {
+        setRejected((prev) => ({
+          ...prev,
+          applicants: [
+            app,
+            ...prev.applicants.filter((a) => a._id !== app._id),
+          ],
+        }));
+        setPending(filterApp);
+        setApproved(filterApp);
+      }
+    };
+
+    const handleAppCancelled = (data) => {
+      // For pure deletions/cancellations where it should vanish entirely
+      const filterOutApp = (prev) => ({
+        ...prev,
+        applicants: prev.applicants.filter(
+          (app) => app._id !== (data.adoptionApp._id || data.adoptionApp),
+        ),
+      });
+
+      setPending(filterOutApp);
+      setApproved(filterOutApp);
+      setRejected(filterOutApp);
+    };
+
+    socket.on("adoptionApp_created", handleAppUpdate);
+    socket.on("adoptionApp_updated", handleAppUpdate);
+    socket.on("adoptionApp_approved", handleAppUpdate);
+    socket.on("adoptionApp_rejected", handleAppUpdate);
+    socket.on("adoptionApp_cancelled", handleAppCancelled);
+
+    return () => {
+      socket.off("adoptionApp_created", handleAppUpdate);
+      socket.off("adoptionApp_updated", handleAppUpdate);
+      socket.off("adoptionApp_approved", handleAppUpdate);
+      socket.off("adoptionApp_rejected", handleAppUpdate);
+      socket.off("adoptionApp_cancelled", handleAppCancelled);
+    };
+  }, [socket]);
 
   return (
     <View style={styles.cardContainer}>

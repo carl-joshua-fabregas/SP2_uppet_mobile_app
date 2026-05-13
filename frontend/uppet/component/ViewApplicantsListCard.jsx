@@ -7,7 +7,7 @@ import * as Themes from "../assets/themes/themes";
 export default function ViewApplicantsCard({ adoptionApp }) {
   const navigator = useNavigation();
   const applicant = adoptionApp.applicant;
-
+  console.log("This is the adoption app", adoptionApp);
   const onViewApplicantPress = () => {
     navigator.navigate("viewAdopterProfile", {
       id: applicant._id,
@@ -50,8 +50,8 @@ export default function ViewApplicantsCard({ adoptionApp }) {
       {/* Applicant Thumbnail */}
       <Image
         source={
-          applicant.profilePicture
-            ? { uri: applicant.profilePicture }
+          applicant.profilePhoto
+            ? { uri: applicant.profilePhoto.url }
             : require("../assets/images/doggoe.jpg")
         }
         style={styles.profileImage}

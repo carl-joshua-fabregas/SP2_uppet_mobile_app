@@ -8,7 +8,7 @@ export default function ViewMyApplicationCard({ adoptionApp }) {
   const navigator = useNavigation();
 
   // Assuming your backend populates the pet object in either .pet or .petID
-  const pet = adoptionApp.petToAdopt || adoptionApp.petToAdopt;
+  const pet = adoptionApp.petToAdopt;
 
   // Find the profile photo or fallback to the first one
   const profilePhoto =

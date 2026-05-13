@@ -1,162 +1,138 @@
-import { View, StyleSheet, Image, Platform, Button } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
-import { GoogleSigninButton } from "@react-native-google-signin/google-signin";
+import { View, StyleSheet, Image, Text, TouchableOpacity } from "react-native";
 import { useUser } from "../context/UserContext";
-import { api } from "../api/axios";
-
-// WebBrowser.maybeCompleteAuthSession();
-// https://expo.dev/accounts/seafret/projects/uppet/builds/bbc888c4-30ba-4995-ae01-c564006f8b7b
-
-// iosClientId:
-//   "6734110788-9lbc61k9u8dg4tebk8uppo4ve75ju28b.apps.googleusercontent.com",
-// androidClientId:
-//   "6734110788-dsgk74dm16ddm73bsuce679vcqif92pe.apps.googleusercontent.com",
+import * as Themes from "../assets/themes/themes";
+import { AntDesign } from "@expo/vector-icons";
 
 export default function Login() {
-  // const initialForm = {
-  //   firstName: "",
-  //   middleName: "",
-  //   lastName: "",
-  //   bio: "",
-  //   age: "",
-  //   occupation: "",
-  //   income: "",
-  //   address: "",
-  //   contactInfo: "",
-  //   livingCon: "",
-  //   lifeStyle: "",
-  //   householdMem: "",
-  //   currentOwnedPets: "",
-  //   hobbies: "",
-  //   gender: "",
-  //   googleId: "",
-  //   hadPets: "",
-  // };
-
   const { handleSignIn } = useUser();
-  // const handleSignIn = async () => {
-  //   if (isSigningIn) return;
-
-  //   setIsSigningIn(true);
-
-  //   try {
-  //     if (Platform.OS === "android") {
-  //       await GoogleSignin.hasPlayServices();
-  //     }
-  //     const resGoogle = await GoogleSignin.signIn();
-
-  //     if (resGoogle && resGoogle.data) {
-  //       console.log(resGoogle.data);
-
-  //       const { idToken } = resGoogle.data;
-  //       // const { email } = resGoogle.data.user;
-  //       // await SecureStore.setItemAsync("email", JSON.stringify(email));
-
-  //       const res = await api.post("/api/auth/google", {
-  //         token: {
-  //           idToken: idToken,
-  //         },
-  //       });
-
-  //       console.log(res.data.message);
-
-  //       if (res.data.status.toString() === "new_user") {
-  //         console.log("HERE IN NEW USER");
-  //         const adopterData = {
-  //           ...initialForm,
-  //           googleId: res.data.googleData.googleId,
-  //         };
-
-  //         router.replace("createAdopterProfile", {
-  //           type: "new_user",
-  //           adopterData: adopterData,
-  //         });
-  //       } else {
-  //         console.log("HERE IN ELSE LOGIN", res.data.body);
-  //         await login(res.data.body, res.data.token);
-  //         router.replace("(drawer)");
-  //       }
-  //     }
-
-  //     console.log("Success");
-  //   } catch (err) {
-  //     if (err.code === statusCodes.SIGN_IN_CANCELLED) {
-  //       console.log("CANCELLED");
-  //     } else if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-  //       console.log("PLAY SERVICE UNAVAILALE");
-  //     } else {
-  //       console.error(err);
-  //     }
-  //     GoogleSignin.signOut();
-  //   } finally {
-  //     setIsSigningIn(false);
-  //   }
-  // };
-
-  const CrossSignInButton = () => {
-    if (Platform.OS === "web") {
-      return (
-        <Button title="Sign In With Google" onPress={handleSignIn}></Button>
-      );
-    } else {
-      return (
-        <GoogleSigninButton
-          onPress={handleSignIn}
-          title="Sign In with Google"
-        ></GoogleSigninButton>
-      );
-    }
-  };
 
   return (
     <View style={styles.fullScreenContainer}>
-      <View style={styles.logoContainer}>
-        <Image source={require("../assets/images/react-logo.png")}></Image>
+      {/* Logo circle */}
+      <View style={styles.logoWrapper}>
+        <Image
+          source={require("../assets/images/SplashScreen_white.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
       </View>
-      <View style={styles.googleContainer}>
-        <CrossSignInButton></CrossSignInButton>
-      </View>
+
+      {/* App name */}
+      <Text style={styles.appName}>UPPET</Text>
+
+      {/* Tagline */}
+      <Text style={styles.slogan}>
+        Helping companion animals find their forever home
+      </Text>
+
+      {/* Google Sign-In Button */}
+      <TouchableOpacity
+        style={styles.googleButton}
+        onPress={handleSignIn}
+        activeOpacity={0.8}
+      >
+        <AntDesign
+          name="google"
+          size={20}
+          color="#FFFFFF"
+          style={styles.googleIcon}
+        />
+        <Text style={styles.buttonText}>Sign in with Google</Text>
+      </TouchableOpacity>
+
+      {/* Terms */}
+      <Text style={styles.terms}>
+        By signing in, you agree to our Terms &amp; Privacy Policy
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  myprofile: {
-    justifyContent: "center",
-    alignItems: "center",
-    display: "flex",
-    margin: 0,
-  },
-  logoContainer: {
-    display: "flex",
-    alignContent: "center",
-    justifyContent: "space-around",
-    alignItems: "center",
-    margin: 2,
-    padding: 10,
-    height: "100%",
-    width: "100%",
-    borderColor: "blue",
-    borderWidth: 2,
-    flex: 1,
-  },
   fullScreenContainer: {
+    flex: 1,
+    backgroundColor: Themes.COLORS.primary, // #A8E6CF mint green
     justifyContent: "center",
     alignItems: "center",
-    flex: 1,
-    borderColor: "red",
-    borderWidth: 2,
-    backgroundColor: "#efb07d",
+    paddingHorizontal: Themes.SPACING.lg,
   },
-  googleContainer: {
-    flex: 1,
-    height: "100%",
-    width: "100%",
+
+  // Frosted circle frame around the logo
+  logoWrapper: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
     borderWidth: 2,
-    borderColor: "yellow",
+    borderColor: "rgba(255, 255, 255, 0.5)",
     alignItems: "center",
-    display: "flex",
-    justifyContent: "Center",
+    justifyContent: "center",
+    marginBottom: Themes.SPACING.lg,
+  },
+
+  logo: {
+    width: 120,
+    height: 120,
+  },
+
+  // App name in dark forest green
+  appName: {
+    fontFamily: "Fredoka-SemiBold",
+    fontSize: 32,
+    color: Themes.COLORS.textDark,
+    letterSpacing: -0.5,
+    marginBottom: Themes.SPACING.xs,
+  },
+
+  slogan: {
+    fontFamily: "Fredoka-Regular",
+    fontSize: 16,
+    textAlign: "center",
+    color: Themes.COLORS.textDark,
+    opacity: 0.7,
+    marginBottom: Themes.SPACING.xxl,
+    paddingHorizontal: Themes.SPACING.lg,
+    lineHeight: 22,
+  },
+
+  // Dark pill button — matches background palette, white text
+  googleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Themes.COLORS.textDark, // #1D3B2E dark forest green
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.22)",
+    borderRadius: Themes.RADIUS.pill,
+    paddingVertical: 15,
+    paddingHorizontal: Themes.SPACING.xl,
+    width: "85%",
+    // Subtle shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  googleIcon: {
+    marginRight: Themes.SPACING.sm,
+  },
+
+  buttonText: {
+    fontFamily: "Fredoka-Medium",
+    fontSize: 17,
+    color: "#FFFFFF",
+    letterSpacing: 0.2,
+  },
+
+  terms: {
+    fontFamily: "Fredoka-Regular",
+    fontSize: 12,
+    color: Themes.COLORS.textDark,
+    opacity: 0.45,
+    textAlign: "center",
+    marginTop: Themes.SPACING.lg,
+    paddingHorizontal: Themes.SPACING.xl,
   },
 });

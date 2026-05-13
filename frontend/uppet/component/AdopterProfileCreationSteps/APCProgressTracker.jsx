@@ -1,56 +1,79 @@
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import * as Themes from "../../assets/themes/themes";
 import { Ionicons } from "@expo/vector-icons";
+import { useUser } from "../../context/UserContext";
 
-export default function APCProgressTracker({ currentStep, STEPS }) {
+export default function APCProgressTracker({
+  currentStep,
+  STEPS,
+  onChangeAccount,
+  newUser,
+}) {
   return (
-    <View style={styles.trackerRow}>
-      {STEPS.map((steps, index) => {
-        const isCompleted = index < currentStep;
-        const isActive = index === currentStep;
+    <View style={styles.container}>
+      <View style={styles.trackerRow}>
+        {STEPS.map((steps, index) => {
+          const isCompleted = index < currentStep;
+          const isActive = index === currentStep;
 
-        return (
-          <View key={index} style={styles.stepWrapper}>
-            <View
-              style={[
-                styles.circle,
-                isCompleted && styles.circleCompleted,
-                isActive && styles.circleActive,
-              ]}
-            >
-              {isCompleted ? (
-                <Ionicons
-                  name={"checkmark-sharp"}
-                  color={Themes.COLORS.badge}
-                  size={20}
-                ></Ionicons>
-              ) : (
-                <Text
-                  style={[styles.stepNum, isActive && styles.stepNumActive]}
-                >
-                  {index + 1}
-                </Text>
+          return (
+            <View key={index} style={styles.stepWrapper}>
+              <View
+                style={[
+                  styles.circle,
+                  isCompleted && styles.circleCompleted,
+                  isActive && styles.circleActive,
+                ]}
+              >
+                {isCompleted ? (
+                  <Ionicons
+                    name={"checkmark-sharp"}
+                    color={Themes.COLORS.badge}
+                    size={20}
+                  ></Ionicons>
+                ) : (
+                  <Text
+                    style={[styles.stepNum, isActive && styles.stepNumActive]}
+                  >
+                    {index + 1}
+                  </Text>
+                )}
+              </View>
+              {index < STEPS.length - 1 && (
+                <View
+                  style={[styles.line, isCompleted && styles.lineCompleted]}
+                />
               )}
             </View>
-            {index < STEPS.length - 1 && (
-              <View
-                style={[styles.line, isCompleted && styles.lineCompleted]}
-              />
-            )}
-          </View>
-        );
-      })}
+          );
+        })}
+      </View>
+
+      {newUser && (
+        <TouchableOpacity
+          onPress={onChangeAccount}
+          style={styles.changeAccountRow}
+        >
+          <Text style={styles.changeAccountText}>
+            Not you?{" "}
+            <Text style={styles.changeAccountLink}>Change account</Text>
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: Themes.COLORS.background,
+    alignItems: "center",
+  },
   trackerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 20,
-    backgroundColor: Themes.COLORS.background,
   },
   stepWrapper: {
     flexDirection: "row",
@@ -66,7 +89,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   circleCompleted: {
-    backgroundColor: Themes.COLORS.primary, // Forest Green
+    backgroundColor: Themes.COLORS.primary,
   },
   circleActive: {
     backgroundColor: "white",
@@ -83,13 +106,25 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   line: {
-    width: 40, // Length of the connector
+    width: 40,
     height: 2,
     backgroundColor: "#E0E0E0",
-    marginHorizontal: -2, // Pulls the circles closer to the line
+    marginHorizontal: -2,
     zIndex: 1,
   },
   lineCompleted: {
     backgroundColor: Themes.COLORS.primary,
+  },
+  changeAccountRow: {
+    paddingBottom: 12,
+  },
+  changeAccountText: {
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    fontSize: 13,
+    color: "#888",
+  },
+  changeAccountLink: {
+    color: Themes.COLORS.primary,
+    fontWeight: "600",
   },
 });

@@ -16,7 +16,7 @@ import { useUser } from "../context/UserContext";
 export default function PetModal({ pet, onClose }) {
   const { user } = useUser();
   const navigator = useNavigation();
-  const isOwner = user._id === pet.ownerId;
+  const isOwner = user._id === pet.ownerId._id;
 
   const petProfilePhoto = pet?.photos?.find((photo) => photo.isProfile);
 

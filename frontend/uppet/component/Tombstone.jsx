@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "./themes";
-
+import * as Themes from "../assets/themes/themes.js";
 export default function Tombstone({ page = "Page" }) {
   return (
     <View style={styles.container}>
@@ -30,22 +29,22 @@ export default function Tombstone({ page = "Page" }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: Themes.COLORS.background,
     justifyContent: "center",
     alignItems: "center",
-    padding: SPACING.lg,
+    padding: Themes.SPACING.lg,
   },
   card: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.xl,
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: Themes.RADIUS.lg,
+    padding: Themes.SPACING.xl,
     alignItems: "center",
     width: "100%",
     // Subtle border using your soft color
     borderWidth: 2,
-    borderColor: COLORS.soft,
+    borderColor: Themes.COLORS.soft,
     // Soft shadow to lift the card off the background
-    shadowColor: COLORS.textDark,
+    shadowColor: Themes.COLORS.textDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,
@@ -54,34 +53,34 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 80,
     height: 80,
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.soft,
+    borderRadius: Themes.RADIUS.pill,
+    backgroundColor: Themes.COLORS.soft,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: SPACING.md,
+    marginBottom: Themes.SPACING.md,
   },
   icon: {
     fontSize: 32,
   },
   title: {
-    ...TYPOGRAPHY.heading,
-    marginBottom: SPACING.sm,
+    ...Themes.TYPOGRAPHY.heading,
+    marginBottom: Themes.SPACING.sm,
     textAlign: "center",
   },
   message: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textMuted, // Using muted text so it doesn't overpower the heading
+    ...Themes.TYPOGRAPHY.body,
+    color: Themes.COLORS.textMuted, // Using muted text so it doesn't overpower the heading
     textAlign: "center",
-    marginBottom: SPACING.lg,
+    marginBottom: Themes.SPACING.lg,
     lineHeight: 20,
   },
   badge: {
-    backgroundColor: COLORS.badge,
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: RADIUS.pill,
+    backgroundColor: Themes.COLORS.badge,
+    paddingVertical: Themes.SPACING.xs,
+    paddingHorizontal: Themes.SPACING.sm,
+    borderRadius: Themes.RADIUS.pill,
   },
   badgeText: {
-    ...TYPOGRAPHY.badgeText,
+    ...Themes.TYPOGRAPHY.badgeText,
   },
 });

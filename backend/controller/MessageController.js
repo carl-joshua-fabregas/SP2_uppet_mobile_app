@@ -274,7 +274,14 @@ export async function deleteAMessage(req, res) {
     }
 
     await Message.findByIdAndDelete(req.params.id);
-
+    const io = req.app.get("io");
+    if (io) {
+      const roomID = [message.sender, req.user.id].sort().join("_");
+      io.to(roomID).emit("message_deleted", {
+        message: "Updated a Message",
+        deletedID: updatedMessage,
+      });
+    }
     return res.status(200).json({
       message: "Successfully deleted user message",
     });

@@ -35,7 +35,6 @@ export default function messageScreen() {
   const navigation = useNavigation();
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageViewer, setShowImageViewer] = useState(false);
-
   const [selectedMessageID, setSelectedMessageID] = useState(null);
 
   const insets = useSafeAreaInsets();
@@ -65,6 +64,7 @@ export default function messageScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMessageOptions, setSelectedMessageOptions] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const messageRef = useRef(messages);
 
   // NEW STATE: Tracks the message currently being edited
   const [editingMessage, setEditingMessage] = useState(null);
@@ -159,7 +159,9 @@ export default function messageScreen() {
       setIsModalVisible(false);
     }
   };
-
+  useEffect(() => {
+    messageRef.current = messages;
+  }, [messages]);
   useEffect(() => {
     if (!socket) return;
 
@@ -172,6 +174,13 @@ export default function messageScreen() {
         roomID,
       });
     }
+    socket.on("message_deleted", (data) => {
+      const deletedMessageId = data.deletedID;
+
+      setMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg._id !== deletedMessageId),
+      );
+    });
 
     socket.on("receive_message", (newMessage) => {
       if (newMessage.sender === user._id) return;
@@ -214,63 +223,64 @@ export default function messageScreen() {
         );
       },
     );
-
     socket.on("message_updated", (data) => {
-      console.log(
-        "A message is updated with message",
-        data.message,
-        data,
-        messages,
+      const isInArray = messageRef.current.some(
+        (msg) => msg._id === data.updmessage._id,
       );
-      const isInArray = messages.some((msg) => {
-        console.log(msg._id, data.updmessage._id);
-        return data.updmessage._id === msg._id;
-      });
-      console.log("IS IT IN THE ARRAY", isInArray);
       if (isInArray) {
-        setMessages((prev) => {
-          return prev.map((m) =>
+        setMessages((prev) =>
+          prev.map((m) =>
             m._id === data.updmessage._id ? data.updmessage : m,
-          );
-        });
+          ),
+        );
       }
     });
+
     return () => {
       socket.emit("leave_chat", roomID);
       socket.off("receive_message");
       socket.off("message_receipt");
       socket.off("message_updated");
+      socket.off("message_deleted");
     };
-  }, [socket, messages]);
+  }, [socket]);
 
-  const retrieveChatThread = async () => {
-    try {
-      const res = await api.get(`/api/chatlist/get/${receiverID}`);
-      const thread = res.data.body;
-      setChatThreadOrigin(thread);
-    } catch (err) {
-      console.log("Error retrieving chat thread:", err.message);
-    }
-  };
   useEffect(() => {
     const initialMount = async () => {
+      let thread = chatThreadOrigin;
       if (!chatThreadOrigin) {
-        await retrieveChatThread();
+        try {
+          const res = await api.get(`/api/chatlist/get/${receiverID}`);
+          if (res.data.body) {
+            setChatThreadOrigin(res.data.body);
+            thread = res.data.body;
+          } else {
+            return;
+          }
+        } catch (err) {
+          console.log("No existing thread found. Waiting for first message.");
+          setLoading(false);
+          return;
+        }
       }
-      await fetchMessages(null, false);
+
+      await fetchMessages(thread, null, false);
     };
+
     initialMount();
+
     navigation.setOptions({
       headerTitle: `${router.params.receiverName || "User"}`,
     });
-  }, [chatThreadOrigin]);
+  }, []);
 
-  const fetchMessages = async (lastMessageId, isRefreshing = false) => {
+  const fetchMessages = async (thread, lastMessageId, isRefreshing = false) => {
+    if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     setLoading(true);
     try {
       const limit = messages.length > 0 ? 15 : initialLimit;
-      const res = await api.get(`/api/message/${chatThreadOrigin._id}`, {
+      const res = await api.get(`/api/message/${thread._id}`, {
         params: { lastMessageId: lastMessageId, limit: limit },
       });
       const moreMessages = res.data.body || [];
@@ -295,7 +305,7 @@ export default function messageScreen() {
 
   const handleLoadMore = async () => {
     if (!loading && hasMore && !isFetchingRef.current) {
-      await fetchMessages(cursorID);
+      await fetchMessages(chatThreadOrigin, cursorID);
     }
     return;
   };
@@ -304,8 +314,8 @@ export default function messageScreen() {
     setRefreshing(true);
     setHasMore(true);
     setCursorID(null);
-    await fetchMessages(null, true);
-  }, []);
+    await fetchMessages(chatThreadOrigin, null, true);
+  }, [chatThreadOrigin]);
 
   const handleMediaPicker = async () => {
     try {
@@ -364,7 +374,7 @@ export default function messageScreen() {
               type: media.type,
             };
             const body = textInput ? textInput : " ";
-            handleSend(body, uploadetails);
+            handleSend(body, uploadetails, true);
             return true;
           }),
         );
@@ -426,9 +436,9 @@ export default function messageScreen() {
     setTextInput(text);
   };
 
-  const handleSend = async (body, media) => {
-    if (isSending.current === true) return;
-    isSending.current = true;
+  const handleSend = async (body, media, isBatch = false) => {
+    if (!isBatch && isSending.current === true) return;
+    if (!isBatch) isSending.current = true;
     if (editingMessage) {
       try {
         const res = await api.patch(`/api/message/edit/${editingMessage._id}`, {
@@ -464,7 +474,7 @@ export default function messageScreen() {
     }
 
     const tempMessage = {
-      _id: `temp-${Date.now()}`,
+      _id: `temp-${Math.random().toString(36).substr(2, 9)}`,
       body: body,
       media: media,
       sender: user._id,
@@ -520,7 +530,9 @@ export default function messageScreen() {
         keyboardDismissMode="on-drag"
         data={messages}
         renderItem={renderMessages}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item, index) =>
+          item._id ? item._id.toString() : index.toString()
+        }
         contentContainerStyle={styles.flatListContents}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}

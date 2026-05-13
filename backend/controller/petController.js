@@ -166,7 +166,8 @@ export async function findAllAvailPets(req, res) {
       console.log("I am here");
       const avail = await Pet.find({ adoptedStatus: { $ne: true } })
         .sort({ updatedAt: -1 })
-        .limit(limit);
+        .limit(limit)
+        .populate("ownerId", "firstName middleName lastName");
       return res.status(200).json({
         message: "Successfully found available pets",
         body: avail,
@@ -183,7 +184,9 @@ export async function findAllAvailPets(req, res) {
           _id: { $lt: lastPetID },
         },
       ],
-    }).sort({ updatedAt: -1, createdAt: -1 });
+    })
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .populate("ownerId", "firstName middleName lastName");
     console.log("Found pets:", avail.length);
 
     if (avail.length === 0) {

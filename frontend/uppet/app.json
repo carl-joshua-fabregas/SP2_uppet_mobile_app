@@ -19,11 +19,10 @@
       "package": "com.uppet.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#A8E6CF",
-        "foregroundImage": "./assets/images/SpashScreen_white.png",
-        "monochromeImage": "./assets/images/SpashScreen_white.png"
+        "foregroundImage": "./assets/images/SplashScreen_white.png",
+        "monochromeImage": "./assets/images/SplashScreen_white.png"
       },
       "softwareKeyboardLayoutMode": "pan",
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -35,7 +34,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/SpashScreen_white.png",
+          "image": "./assets/images/SplashScreen_white.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#A8E6CF",

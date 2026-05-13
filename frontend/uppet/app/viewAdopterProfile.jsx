@@ -6,7 +6,10 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
+  Modal, // <-- Add this
+  ActivityIndicator, // <-- Add this
 } from "react-native";
+import Tombstone from "../component/Tombstone";
 import { useState, useEffect, useRef } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import ProfileCard from "../component/AdopterProfileCard";
@@ -38,7 +41,9 @@ export default function ViewAdopterProfile({}) {
   const insets = useSafeAreaInsets(); // <-- ADDED
 
   const [showImageViewer, setShowImageViewer] = useState(false);
-
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [isProcessingApp, setIsProcessingApp] = useState(false);
   const [showStickyButton, setShowStickyButton] = useState(false);
   const [ratingSectionLayout, setRatingSectionLayout] = useState({
     y: 0,
@@ -85,11 +90,7 @@ export default function ViewAdopterProfile({}) {
   const [isDeleted, setIsDeleted] = useState(false);
 
   if (isDeleted) {
-    return (
-      <View style={{ flex: 1 }}>
-        <Text> This is a placeholder for a tombstone</Text>
-      </View>
-    );
+    return <Tombstone page="Adopter Profile"></Tombstone>;
   }
   const [adopterRating, setAdopterRating] = useState([]);
 
@@ -171,11 +172,20 @@ export default function ViewAdopterProfile({}) {
   const fetchProfile = async () => {
     try {
       const res = await api.get(`/api/user/${router.params.id}`);
+      if (!res.data.body) {
+        setIsDeleted(true);
+        return;
+      }
       const userData = res.data.body;
       setAdopter(userData);
       console.log("Successfully obtained Adopter Profile");
     } catch (err) {
-      console.log("Error in getting Profile", err);
+      // ONLY show the tombstone if the server explicitly says "Not Found"
+      if (err.response && err.response.status === 404) {
+        setIsDeleted(true);
+      } else {
+        console.log("Error in getting Profile", err);
+      }
     }
   };
 
@@ -187,7 +197,11 @@ export default function ViewAdopterProfile({}) {
       const rating = myRatingRes.data.body;
       setMyRating(rating && rating._id ? rating : null);
     } catch (err) {
-      console.log("Error fetching my rating", err);
+      if (err.response && err.response.status === 404) {
+        setMyRating(null);
+      } else {
+        console.log("Error fetching my rating", err);
+      }
     }
   };
 
@@ -216,7 +230,12 @@ export default function ViewAdopterProfile({}) {
         setCursorID(otherRating[otherRating.length - 1]._id);
       }
     } catch (err) {
-      console.log("Error in fetching Rating", err);
+      if (err.response && err.response.status === 404) {
+        // No more ratings to load
+        setHasMore(false);
+      } else {
+        console.log("Error in fetching Rating", err);
+      }
     } finally {
       isFetching.current = false;
       setLoading(false);
@@ -247,18 +266,65 @@ export default function ViewAdopterProfile({}) {
 
     const handleDelete = (data) => {
       if (adopter._id === data.adopter) {
-        setAdopter(null);
         setIsDeleted(true);
       }
     };
+
+    const handleRatingCreated = (data) => {
+      // Check if the new rating belongs to the profile currently being viewed
+      if (
+        data.rating.ratedUser === adopter._id ||
+        data.rating.ratedUser._id === adopter._id
+      ) {
+        setAdopterRating((prev) => [data.rating, ...prev]);
+      }
+    };
+
+    const handleRatingUpdated = (data) => {
+      // Update the text/score of an existing review without refreshing
+      setAdopterRating((prev) =>
+        prev.map((rating) =>
+          rating._id === data.rating._id ? data.rating : rating,
+        ),
+      );
+    };
+
+    const handleRatingDeleted = (data) => {
+      // Magically make the rating vanish from the list
+      const deletedRatingId = data.rating._id || data.rating;
+
+      setAdopterRating((prev) =>
+        prev.filter((rating) => rating._id !== deletedRatingId),
+      );
+
+      // PRO-TIP FIX: Use the functional updater to check the current state safely!
+      setMyRating((prevMyRating) => {
+        // If the user's rating was the one that got deleted, set it to null
+        if (prevMyRating && prevMyRating._id === deletedRatingId) {
+          return null;
+        }
+        // Otherwise, return it exactly as it was (do nothing)
+        return prevMyRating;
+      });
+    };
+
     socket.on("adopter_created", handleCreate);
     socket.on("adopter_updated", handleCreate);
     socket.on("adopter_deleted", handleDelete);
 
+    socket.on("rating_created", handleRatingCreated);
+    socket.on("rating_updated", handleRatingUpdated);
+    socket.on("rating_deleted", handleRatingDeleted);
+
     return () => {
+      // Clean up listeners
       socket.off("adopter_created", handleCreate);
       socket.off("adopter_updated", handleCreate);
       socket.off("adopter_deleted", handleDelete);
+
+      socket.off("rating_created", handleRatingCreated);
+      socket.off("rating_updated", handleRatingUpdated);
+      socket.off("rating_deleted", handleRatingDeleted);
     };
   }, [socket, adopter]);
   const handleLoadMoreRating = async () => {
@@ -335,19 +401,34 @@ export default function ViewAdopterProfile({}) {
   //     });
   //   };
 
-  const handleAccept = async () => {
+  // 1. These just open the modals
+  const handleAccept = () => setShowApproveModal(true);
+  const handleReject = () => setShowRejectModal(true);
+
+  // 2. These actually hit the API
+  const confirmAccept = async () => {
+    setIsProcessingApp(true);
     try {
-      const res = await api.post(`api/adoptionApp/${adoptionApp._id}/approve`);
+      await api.post(`api/adoptionApp/${adoptionApp._id}/approve`);
+      setShowApproveModal(false);
+      navigation.goBack(); // Sends them back to the applicants list to see it move!
     } catch (err) {
       console.log(err);
+    } finally {
+      setIsProcessingApp(false);
     }
   };
 
-  const handleReject = async () => {
+  const confirmReject = async () => {
+    setIsProcessingApp(true);
     try {
-      const res = await api.patch(`api/adoptionApp/${adoptionApp._id}/reject`);
+      await api.patch(`api/adoptionApp/${adoptionApp._id}/reject`);
+      setShowRejectModal(false);
+      navigation.goBack(); // Sends them back to the applicants list
     } catch (err) {
       console.log(err);
+    } finally {
+      setIsProcessingApp(false);
     }
   };
 
@@ -549,6 +630,124 @@ export default function ViewAdopterProfile({}) {
           </View>
         )}
       />
+      {/* APPROVE CONFIRMATION MODAL */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showApproveModal}
+        onRequestClose={() => {
+          if (!isProcessingApp) setShowApproveModal(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.cuteModalCard}>
+            {isProcessingApp ? (
+              <View style={{ alignItems: "center", paddingVertical: 20 }}>
+                <ActivityIndicator size="large" color={Themes.COLORS.primary} />
+                <Text style={[styles.modalTitle, { marginTop: 16 }]}>
+                  Approving...
+                </Text>
+                <Text style={styles.modalText}>
+                  Making it official! Please wait.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.modalIconContainer}>
+                  <MaterialCommunityIcons
+                    name="check-decagram"
+                    size={50}
+                    color={Themes.COLORS.primary}
+                  />
+                </View>
+
+                <Text style={styles.modalTitle}>Approve Application?</Text>
+                <Text style={styles.modalText}>
+                  Are you sure you want to approve this applicant? They will be
+                  granted ownership!
+                </Text>
+
+                <View style={styles.modalButtonRow}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalCancelBtn]}
+                    onPress={() => setShowApproveModal(false)}
+                  >
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.modalButton,
+                      { backgroundColor: Themes.COLORS.primary },
+                    ]}
+                    onPress={confirmAccept}
+                  >
+                    <Text style={styles.modalDeleteText}>Approve</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* REJECT CONFIRMATION MODAL */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showRejectModal}
+        onRequestClose={() => {
+          if (!isProcessingApp) setShowRejectModal(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.cuteModalCard}>
+            {isProcessingApp ? (
+              <View style={{ alignItems: "center", paddingVertical: 20 }}>
+                <ActivityIndicator size="large" color="#f37270" />
+                <Text style={[styles.modalTitle, { marginTop: 16 }]}>
+                  Rejecting...
+                </Text>
+                <Text style={styles.modalText}>
+                  Please wait while we process this.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.modalIconContainer}>
+                  <MaterialCommunityIcons
+                    name="close-octagon-outline"
+                    size={50}
+                    color="#f37270"
+                  />
+                </View>
+
+                <Text style={styles.modalTitle}>Reject Application?</Text>
+                <Text style={styles.modalText}>
+                  Are you sure you want to reject this application? You can
+                  always reconsider later.
+                </Text>
+
+                <View style={styles.modalButtonRow}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalCancelBtn]}
+                    onPress={() => setShowRejectModal(false)}
+                  >
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.modalDeleteBtn]}
+                    onPress={confirmReject}
+                  >
+                    <Text style={styles.modalDeleteText}>Reject</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -657,5 +856,75 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     padding: 10,
     borderRadius: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  cuteModalCard: {
+    backgroundColor: Themes.COLORS.card,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: "center",
+    width: "85%",
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+  },
+  modalIconContainer: {
+    flexDirection: "row",
+    marginBottom: 16,
+    alignItems: "flex-start",
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
+    color: Themes.COLORS.textDark,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  modalText: {
+    fontSize: 15,
+    fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
+    color: Themes.COLORS.textMuted,
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  modalButtonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCancelBtn: {
+    backgroundColor: Themes.COLORS.soft,
+  },
+  modalCancelText: {
+    color: Themes.COLORS.textDark,
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  modalDeleteBtn: {
+    backgroundColor: "#f37270",
+  },
+  modalDeleteText: {
+    color: "#fff",
+    fontFamily: Themes.TYPOGRAPHY.subheading.fontFamily,
+    fontWeight: "600",
+    fontSize: 16,
   },
 });

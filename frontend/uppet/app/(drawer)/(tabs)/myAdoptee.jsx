@@ -184,6 +184,38 @@ export default function MyAdoptee() {
       setPending(updatelist);
       setAdopted(updatelist);
     };
+    // Inside myAdoptee.jsx socket useEffect
+    const handleAppApproved = (data) => {
+      // When an app is approved, it means the pet is adopted.
+      // We need to move the pet from the 'pending' list to the 'adopted' list.
+      const petId =
+        data.adoptionApp.petToAdopt._id || data.adoptionApp.petToAdopt;
+
+      // 1. First, find the pet in the pending list
+      let adoptedPet = null;
+      setPending((prev) => {
+        adoptedPet = prev.pets.find((p) => p._id === petId);
+        if (!adoptedPet) return prev; // If not found, do nothing
+
+        // Return a new list without the newly adopted pet
+        return {
+          ...prev,
+          pets: prev.pets.filter((p) => p._id !== petId),
+        };
+      });
+
+      // 2. If we found it, move it to the adopted list
+      if (adoptedPet) {
+        setAdopted((prev) => ({
+          ...prev,
+          pets: [adoptedPet, ...prev.pets], // Or update its status if needed before adding
+        }));
+      }
+    };
+
+    socket.on("adoptionApp_approved", handleAppApproved);
+
+    // Don't forget to add it to the cleanup return!
     socket.on("pet_created", handleCreate);
     socket.on("pet_updated", handleUpdate);
     socket.on("pet_deleted", handleDelete);
@@ -192,6 +224,7 @@ export default function MyAdoptee() {
       socket.off("pet_created", handleCreate);
       socket.off("pet_updated", handleUpdate);
       socket.off("pet_deleted", handleDelete);
+      socket.off("adoptionApp_approved", handleAppApproved);
     };
   }, [socket]);
   return (

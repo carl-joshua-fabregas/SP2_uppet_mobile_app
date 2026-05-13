@@ -110,11 +110,30 @@ export async function findChatThreadByID(req, res) {
 }
 
 export async function findAllUserChatThread(req, res) {
-  console.log("FINDING THE CHAT THREAD OF USER___________________");
+  console.log(
+    "FINDING THE CHAT THREAD OF USER (CURSOR BASED)___________________",
+  );
   try {
-    const chatThread = await ChatThread.find({
-      members: { $in: req.user.id },
-    })
+    const limit = parseInt(req.query.limit) || 10;
+    const { cursorUpdatedAt, cursorId } = req.query;
+
+    // Base query: User must be a member
+    let query = { members: { $in: req.user.id } };
+
+    // If cursors are provided, fetch threads older than the cursor
+    if (cursorUpdatedAt && cursorId) {
+      query.$or = [
+        { updatedAt: { $lt: new Date(cursorUpdatedAt) } },
+        {
+          updatedAt: new Date(cursorUpdatedAt),
+          _id: { $lt: cursorId }, // Tie-breaker just in case timestamps are identical
+        },
+      ];
+    }
+
+    const chatThread = await ChatThread.find(query)
+      .sort({ updatedAt: -1, _id: -1 }) // Sort by latest first
+      .limit(limit)
       .populate({
         path: "members",
         match: { _id: { $ne: req.user.id } },
@@ -123,22 +142,13 @@ export async function findAllUserChatThread(req, res) {
       .populate({
         path: "lastMessage",
       });
-    console.log(
-      "CHAT THREAD ISSSSSSSSSSSSSSSSSSSSSSSSS____________ ",
-      chatThread,
-    );
-    if (chatThread.length === 0) {
-      return res.status(200).json({
-        message: "Not Found",
-        body: [],
-      });
-    }
 
     return res.status(200).json({
-      message: "Succesfully obtained chat thread",
+      message: "Successfully obtained chat threads",
       body: chatThread,
     });
   } catch (err) {
+    console.log("Error in fetching chat threads:", err.message);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,

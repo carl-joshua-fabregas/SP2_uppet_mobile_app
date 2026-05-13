@@ -18,8 +18,9 @@ import ViewRatingModal from "../component/viewRatingModal";
 import ImageView from "react-native-image-viewing";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-
+import { useSocket } from "../context/SocketContext.js";
 export default function AdopterProfile() {
+  const socket = useSocket();
   const { user, logout } = useUser();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -185,7 +186,46 @@ export default function AdopterProfile() {
       headerTitleAlign: "center",
     });
   }, [user?._id]);
+  useEffect(() => {
+    if (!socket || !user?._id) return;
 
+    const handleRatingCreated = (data) => {
+      // Check if the new rating belongs to the logged-in user
+      if (
+        data.rating.ratedUser === user._id ||
+        data.rating.ratedUser._id === user._id
+      ) {
+        setAdopterRating((prev) => [data.rating, ...prev]);
+      }
+    };
+
+    const handleRatingUpdated = (data) => {
+      setAdopterRating((prev) =>
+        prev.map((rating) =>
+          rating._id === data.rating._id ? data.rating : rating,
+        ),
+      );
+    };
+
+    const handleRatingDeleted = (data) => {
+      const deletedRatingId = data.rating._id || data.rating;
+      setAdopterRating((prev) =>
+        prev.filter((rating) => rating._id !== deletedRatingId),
+      );
+    };
+
+    // Attach listeners
+    socket.on("rating_created", handleRatingCreated);
+    socket.on("rating_updated", handleRatingUpdated);
+    socket.on("rating_deleted", handleRatingDeleted);
+
+    return () => {
+      // Clean up listeners
+      socket.off("rating_created", handleRatingCreated);
+      socket.off("rating_updated", handleRatingUpdated);
+      socket.off("rating_deleted", handleRatingDeleted);
+    };
+  }, [socket, user?._id]);
   const handleLoadMoreRating = async () => {
     if (!loading && hasMore && !isFetching.current) {
       await fetchRating(cursorID);

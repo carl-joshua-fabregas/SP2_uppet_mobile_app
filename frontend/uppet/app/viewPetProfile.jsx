@@ -20,7 +20,7 @@ import { useSocket } from "../context/SocketContext";
 import ImageView from "react-native-image-viewing";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
+import Tombstone from "../component/Tombstone";
 export default function ViewPetProfile() {
   const socket = useSocket();
   const { user } = useUser();
@@ -30,7 +30,7 @@ export default function ViewPetProfile() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isOwner, setIsOwner] = useState(
-    route?.params?.pet?.ownerId === user._id,
+    route?.params?.pet?.ownerId._id === user._id,
   );
   const [placeholderHeight, setPlaceholderHeight] = useState(70);
   const [adoptionApp, setAdoptionApp] = useState(null);
@@ -40,6 +40,7 @@ export default function ViewPetProfile() {
     y: 0,
     height: 0,
   });
+  console.log(pet, "THIS THE PET");
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const [showStickyButton, setShowStickyButton] = useState(false);
   const [placeholderY, setPlaceholderY] = useState(0);
@@ -120,10 +121,14 @@ export default function ViewPetProfile() {
     };
 
     const handleCancelApp = (data) => {
-      if (adoptionApp?._id === data.adoptionApp._id) {
-        setAdoptionApp(null);
-        setIsDeleted(true);
-      }
+      const incomingAppId = data.adoptionApp;
+
+      setAdoptionApp((prevApp) => {
+        if (prevApp && prevApp._id === incomingAppId) {
+          return null;
+        }
+        return prevApp;
+      });
     };
 
     const handleCreateApp = (data) => {
@@ -162,25 +167,37 @@ export default function ViewPetProfile() {
   };
 
   const handleMessage = async () => {
+    let chatThreadOrigin = null;
+
     try {
-      const res = await api.get(`/api/chatlist/get/${pet.ownerId}`);
-      const chatThreadOrigin = res.data.body;
-      if (!chatThreadOrigin)
-        console.log("No Chat Thread Origin Yet, sending: ", chatThreadOrigin);
+      const ownerIdString = pet.ownerId._id || pet.ownerId;
+      const res = await api.get(`/api/chatlist/get/${ownerIdString}`);
+      chatThreadOrigin = res.data.body;
+    } catch (err) {
+      // Specifically catch the 404 (No chat exists yet) silently
+      if (err.response && err.response.status === 404) {
+        console.log("No chat history with this owner yet.");
+      } else {
+        console.log("ERROR in handling Message", err.message);
+      }
+    } finally {
+      const ownerIdString = pet.ownerId._id || pet.ownerId;
+      // Grab the name if it's populated!
+      const ownerName = pet.ownerId.firstName
+        ? `${pet.ownerId.firstName} ${pet.ownerId.middleName} ${pet.ownerId.lastName}`
+        : "Owner";
 
       navigation.navigate("messageScreen", {
-        receiverID: pet.ownerId,
+        receiverID: ownerIdString,
         chatThreadOrigin: chatThreadOrigin,
+        receiverName: ownerName,
       });
-    } catch (err) {
-      console.log("ERROR in handling Message", err.message);
     }
   };
-
   const handleViewOwnerProfile = () => {
     console.log("View Owner Profile Clicked");
     navigation.navigate("viewAdopterProfile", {
-      id: pet.ownerId,
+      id: pet.ownerId._id,
     });
   };
 
@@ -363,6 +380,9 @@ export default function ViewPetProfile() {
     extrapolateRight: "extend",
   });
 
+  if (isDeleted) {
+    return <Tombstone page="Pet Profile" />;
+  }
   return (
     <View style={{ flex: 1 }}>
       <Animated.ScrollView

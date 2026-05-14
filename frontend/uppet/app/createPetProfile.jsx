@@ -20,7 +20,7 @@ import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 export default function CreateProfile() {
   const router = useRoute();
   const navigation = useNavigation();
@@ -29,6 +29,7 @@ export default function CreateProfile() {
   const { editPetData } = router.params ?? {};
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
+
   const [pet, setPet] = useState(
     editPetData ?? {
       name: "",

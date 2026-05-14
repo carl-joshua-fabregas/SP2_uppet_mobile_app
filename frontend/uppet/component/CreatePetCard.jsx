@@ -76,7 +76,7 @@ export default function CreatePetCard(props) {
         } else {
           console.log("DID POST");
 
-          // router.replace("(drawer)");
+          router.push("createPetProfile");
         }
       } catch (err) {
         console.log(err);

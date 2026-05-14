@@ -112,6 +112,7 @@ export default function PetModal({ pet, onClose }) {
               style={styles.meetButton}
               onPress={() => {
                 onClose();
+
                 navigator.navigate("viewPetProfile", { pet: pet });
               }}
             >

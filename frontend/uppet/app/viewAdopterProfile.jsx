@@ -10,8 +10,10 @@ import {
   ActivityIndicator, // <-- Add this
 } from "react-native";
 import Tombstone from "../component/Tombstone";
+
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
+
 import ProfileCard from "../component/AdopterProfileCard";
 import { api } from "../api/axios";
 import * as Themes from "../assets/themes/themes";
@@ -27,10 +29,12 @@ export default function ViewAdopterProfile({}) {
   const router = useRoute();
   const socket = useSocket();
   const navigation = useNavigation();
+
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
   );
   const { adoptionApp } = router.params;
+
   const screenHeight = Dimensions.get("window").height;
   const [scrollHeight, setScrollHeight] = useState(0);
   const [placeholderHeight, setPlaceholderHeight] = useState(70);
@@ -86,7 +90,15 @@ export default function ViewAdopterProfile({}) {
     }
   };
 
-  const [adopter, setAdopter] = useState({ _id: router.params.id });
+  const parseAdopterID = useMemo(() => {
+    try {
+      return JSON.parse(params.id);
+    } catch {
+      return null;
+    }
+  }, [params.id]);
+
+  const [adopter, setAdopter] = useState({ _id: parseAdopterID });
   const [isDeleted, setIsDeleted] = useState(false);
 
   if (isDeleted) {

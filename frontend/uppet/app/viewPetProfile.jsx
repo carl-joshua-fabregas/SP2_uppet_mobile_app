@@ -24,12 +24,15 @@ import Tombstone from "../component/Tombstone";
 export default function ViewPetProfile() {
   const socket = useSocket();
   const { user } = useUser();
+
   const route = useRoute();
   const navigation = useNavigation();
+
   const insets = useSafeAreaInsets();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   // Remove the useState wrapper:
+
   const isOwner =
     (route?.params?.pet?.ownerId?._id || route?.params?.pet?.ownerId) ===
     user._id;
@@ -37,6 +40,7 @@ export default function ViewPetProfile() {
   const [adoptionApp, setAdoptionApp] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pet, setPet] = useState(route.params.pet);
+
   const [gallerySectionLayout, setGallerySectionLayout] = useState({
     y: 0,
     height: 0,
@@ -172,7 +176,6 @@ export default function ViewPetProfile() {
       const res = await api.get(`/api/chatlist/get/${ownerIdString}`);
       chatThreadOrigin = res.data.body;
     } catch (err) {
-      // Specifically catch the 404 (No chat exists yet) silently
       if (err.response && err.response.status === 404) {
         console.log("No chat history with this owner yet.");
       } else {

@@ -16,6 +16,7 @@ export default function ViewMyApplicationCard({ adoptionApp }) {
 
   const onViewPetPress = () => {
     // Navigates to the pet's profile so you can see who you applied for
+
     navigator.navigate("viewPetProfile", { pet: pet });
   };
 

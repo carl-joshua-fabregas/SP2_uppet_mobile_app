@@ -279,7 +279,7 @@ export async function deleteAMessage(req, res) {
       const roomID = [message.sender, req.user.id].sort().join("_");
       io.to(roomID).emit("message_deleted", {
         message: "Updated a Message",
-        deletedID: updatedMessage,
+        deletedID: req.params.id,
       });
     }
     return res.status(200).json({

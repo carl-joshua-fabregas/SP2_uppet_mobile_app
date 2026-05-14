@@ -13,9 +13,11 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import * as Themes from "../../../assets/themes/themes";
 import { api } from "../../../api/axios";
 import { useSocket } from "../../../context/SocketContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 export default function MyAdoptee() {
   const socket = useSocket();
-
+  const insets = useSafeAreaInsets();
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.badgeText.fontSize,
   );
@@ -184,31 +186,24 @@ export default function MyAdoptee() {
       setPending(updatelist);
       setAdopted(updatelist);
     };
-    // Inside myAdoptee.jsx socket useEffect
     const handleAppApproved = (data) => {
-      // When an app is approved, it means the pet is adopted.
-      // We need to move the pet from the 'pending' list to the 'adopted' list.
       const petId =
         data.adoptionApp.petToAdopt._id || data.adoptionApp.petToAdopt;
 
-      // 1. First, find the pet in the pending list
-      let adoptedPet = null;
-      setPending((prev) => {
-        adoptedPet = prev.pets.find((p) => p._id === petId);
-        if (!adoptedPet) return prev; // If not found, do nothing
+      // Access pending.pets directly from the component's current render cycle
+      const adoptedPet = pending.pets.find((p) => p._id === petId);
 
-        // Return a new list without the newly adopted pet
-        return {
+      if (adoptedPet) {
+        // 1. Remove from pending
+        setPending((prev) => ({
           ...prev,
           pets: prev.pets.filter((p) => p._id !== petId),
-        };
-      });
+        }));
 
-      // 2. If we found it, move it to the adopted list
-      if (adoptedPet) {
+        // 2. Add to adopted
         setAdopted((prev) => ({
           ...prev,
-          pets: [adoptedPet, ...prev.pets], // Or update its status if needed before adding
+          pets: [adoptedPet, ...prev.pets],
         }));
       }
     };
@@ -281,7 +276,10 @@ export default function MyAdoptee() {
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => <ViewAdopteesCard pet={item} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: 50 + insets.bottom },
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={pending.refreshing}
@@ -318,7 +316,10 @@ export default function MyAdoptee() {
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => <ViewAdopteesCard pet={item} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: 50 + insets.bottom },
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={adopted.refreshing}

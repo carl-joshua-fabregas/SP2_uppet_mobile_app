@@ -122,7 +122,7 @@ export default function ViewAdopterProfile({}) {
 
   const handleRatingDelete = async (ratingID) => {
     try {
-      const res = await api.delete(`/api/rating/delete`, {
+      const res = await api.delete(`/api/rating/${ratingID}`, {
         params: {
           ratingID: ratingID,
         },
@@ -337,7 +337,7 @@ export default function ViewAdopterProfile({}) {
       socket.off("rating_updated", handleRatingUpdated);
       socket.off("rating_deleted", handleRatingDeleted);
     };
-  }, [socket, adopter]);
+  }, [socket, adopter._id]);
   const handleLoadMoreRating = async () => {
     if (!loading && hasMore && !isFetching.current) {
       await fetchRating(cursorID);
@@ -472,7 +472,7 @@ export default function ViewAdopterProfile({}) {
     console.log("adopter and user id", adopter._id, user);
     buttons.push({
       title: "Message Applicant",
-      onPress: () => handleMessage(adoptionApp.applicant),
+      onPress: () => handleMessage(adoptionApp?.applicant || adopter),
       styleType: "neutral",
     });
   } else {
@@ -535,7 +535,10 @@ export default function ViewAdopterProfile({}) {
         review={selectedReview}
       ></ViewRatingModal>
       <ScrollView
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={[
+          styles.scrollContainer,
+          { paddingBottom: (Themes.SPACING?.xl || 32) + insets.bottom }, // <-- Add inset here
+        ]}
         onScroll={(e) => handleReviewScroll(e)}
         scrollEventThrottle={16}
       >
@@ -608,9 +611,9 @@ export default function ViewAdopterProfile({}) {
           style={[
             styles.stickyWrapper,
             {
-              bottom: Themes.SPACING?.lg || 24,
+              bottom: (Themes.SPACING?.lg || 24) + insets.bottom,
               opacity: fadeAnim,
-              transform: [{ translateY: overlapTranslateY }], // <--- The magic push
+              transform: [{ translateY: overlapTranslateY }],
             },
           ]}
           pointerEvents="box-none"

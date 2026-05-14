@@ -22,7 +22,7 @@ export default function AdopterProfileInput(props) {
     lifeStyle: "",
     householdMem: "",
     currentOwnedPets: "",
-    hobies: "",
+    hobbies: "",
     gender: "",
   });
 
@@ -190,11 +190,11 @@ export default function AdopterProfileInput(props) {
         ></TextInput>
       </View>
       <View>
-        <Text>Hobies</Text>
+        <Text>Hobbies</Text>
         <TextInput
-          placeholder="Enter Hobies"
-          value={form.hobies}
-          onChangeText={(text) => handleChange("hobies", text)}
+          placeholder="Enter Hobbies"
+          value={form.hobbies}
+          onChangeText={(text) => handleChange("hobbies", text)}
         ></TextInput>
       </View>
       <View>

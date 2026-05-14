@@ -16,6 +16,6 @@ router.get("/otherRatings/:ratedID", findRatingsOfUser);
 router.post("/:ratedID", createRating);
 router.patch("/:ratingID", updateRating);
 
-router.delete("/delete", deleteRating);
+router.delete("/:ratingID", deleteRating);
 
 export default router;

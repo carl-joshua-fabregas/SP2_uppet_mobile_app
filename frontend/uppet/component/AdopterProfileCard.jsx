@@ -86,7 +86,7 @@ export default function ProfileCard({
           {adopter.lastName}
         </Text>
         <View style={styles.badgeContainer}>
-          <Text style={styles.badgeText}> {adopter.avarageRating}</Text>
+          <Text style={styles.badgeText}> {adopter.averageRating}</Text>
           <MaterialCommunityIcons
             name="star"
             size={14}

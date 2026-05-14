@@ -678,7 +678,7 @@ export async function cancelAdoptApp(req, res) {
       notification: newOwnNotifRes,
     });
 
-    io.to(req.user.id.toString()).emit("adoptionApp_created", {
+    io.to(req.user.id.toString()).emit("adoptionApp_cancelled", {
       message: "adoption app was created",
       adoptionApp: cancelledApp,
     });

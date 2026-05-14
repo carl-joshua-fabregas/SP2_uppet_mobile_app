@@ -245,7 +245,10 @@ export default function AdopterProfile() {
         review={selectedReview}
       />
       <ScrollView
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={[
+          styles.scrollContainer,
+          { paddingBottom: (Themes.SPACING?.xl || 32) + insets.bottom }, // <-- Add inset
+        ]}
         onScroll={handleReviewScroll}
         scrollEventThrottle={16}
       >

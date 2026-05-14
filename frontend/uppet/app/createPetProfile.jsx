@@ -20,7 +20,7 @@ import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { useState } from "react";
+import { useState, useRef } from "react";
 export default function CreateProfile() {
   const router = useRoute();
   const navigation = useNavigation();
@@ -48,6 +48,10 @@ export default function CreateProfile() {
       photos: [],
     },
   );
+  const scrollRef = useRef(null);
+  const scrollToTop = () => {
+    scrollRef.current.scrollTo({ y: 0, animated: true });
+  };
   const [errors, setErrors] = useState({});
   const STEPS = [
     { label: "Basic Info" },
@@ -90,7 +94,7 @@ export default function CreateProfile() {
         if (!pet.vaccination) {
           newErrors.vaccination = "Vaccination status is required";
         }
-        if (isNaN(Number(pet.weight))) {
+        if (!pet.weight || isNaN(Number(pet.weight))) {
           newErrors.weight = "Please enter a valid number for Weight";
         }
         if (!pet.sex) {
@@ -137,6 +141,7 @@ export default function CreateProfile() {
         await saveEditPet();
       }
       setCurrentStep((prev) => prev + 1);
+      scrollToTop();
     }
   };
   const handleBack = () => {
@@ -204,7 +209,7 @@ export default function CreateProfile() {
           }),
         );
       }
-      let finalPetArray = pet;
+      let finalPetArray = { ...pet };
       if (hasNewPhoto) {
         console.log("FOUND NEW PHOTOS");
         const uploadedPhotos = await Promise.all(
@@ -249,7 +254,7 @@ export default function CreateProfile() {
         // finalPetPhotosArray = finalPetPhotosArray.map((photo) => {
         //   const uploadedFinal = uploadedPhotos.find(
         //     (up) => up.key === photo.key,
-        //   );
+        //   )
         //   if (uploadedFinal) {
         //     return uploadedFinal;
         //   }
@@ -277,7 +282,7 @@ export default function CreateProfile() {
     console.log("Creating Pet");
     try {
       setUploading(true);
-      const petCreationRes = await api.post(`api/pet/post`, {
+      const petCreationRes = await api.post(`/api/pet/post`, {
         ...pet,
         photos: [],
       });
@@ -288,7 +293,7 @@ export default function CreateProfile() {
       const uploadedPhotos = await Promise.all(
         pet.photos.map(async (photo) => {
           console.log(photo);
-          const preSignRes = await api.post(`api/pet/presignUploadURL`, {
+          const preSignRes = await api.post(`/api/pet/presignUploadURL`, {
             fileName: photo.name,
             petID: petID,
             fileType: photo.type,
@@ -317,7 +322,7 @@ export default function CreateProfile() {
         }),
       );
 
-      await api.patch(`api/pet/${petID}`, {
+      await api.patch(`/api/pet/${petID}`, {
         ...pet,
         photos: uploadedPhotos,
         initialCreation: true,
@@ -388,6 +393,7 @@ export default function CreateProfile() {
         <ScrollView
           contentContainerStyle={styles.scrollContet}
           showsVerticalScrollIndicator={false}
+          ref={scrollRef}
         >
           {renderStep()}
 

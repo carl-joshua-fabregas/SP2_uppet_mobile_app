@@ -2,12 +2,12 @@ import { View, StyleSheet, Image, Text, TouchableOpacity } from "react-native";
 import { useUser } from "../context/UserContext";
 import * as Themes from "../assets/themes/themes";
 import { AntDesign } from "@expo/vector-icons";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function Login() {
   const { handleSignIn } = useUser();
 
   return (
-    <View style={styles.fullScreenContainer}>
+    <SafeAreaView style={styles.fullScreenContainer}>
       {/* Logo circle */}
       <View style={styles.logoWrapper}>
         <Image
@@ -44,7 +44,7 @@ export default function Login() {
       <Text style={styles.terms}>
         By signing in, you agree to our Terms &amp; Privacy Policy
       </Text>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -14,8 +14,10 @@ import * as Themes from "../../../assets/themes/themes";
 import { useSocket } from "../../../context/SocketContext";
 import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../../../context/UserContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ChatList() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [chatlist, setChatlist] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -33,8 +35,9 @@ export default function ChatList() {
   ) => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
-    setLoading(true);
-
+    if (!isRefreshing) {
+      setLoading(true);
+    }
     try {
       const res = await api.get("/api/chatlist/get", {
         params: {
@@ -217,7 +220,10 @@ export default function ChatList() {
         data={chatlist}
         keyExtractor={(item) => item._id}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: 50 + insets.bottom },
+        ]}
         ListEmptyComponent={<Text style={styles.emptyText}>Chat is Empty</Text>}
         ListFooterComponent={
           loading ? (

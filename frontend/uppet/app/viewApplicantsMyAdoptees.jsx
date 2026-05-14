@@ -14,9 +14,11 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useSocket } from "../context/SocketContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function ViewApplicantList(props) {
   const router = useRoute();
   const socket = useSocket();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("pending");
   const initialLimit = Math.ceil(
@@ -415,7 +417,10 @@ export default function ViewApplicantList(props) {
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => <ViewApplicantsCard adoptionApp={item} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: (Themes.SPACING?.xl || 32) + insets.bottom }, // <-- Add bottom padding dynamically
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={pending.refreshing}
@@ -452,7 +457,10 @@ export default function ViewApplicantList(props) {
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => <ViewApplicantsCard adoptionApp={item} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: (Themes.SPACING?.xl || 32) + insets.bottom }, // <-- Add bottom padding dynamically
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={approved.refreshing}
@@ -489,7 +497,10 @@ export default function ViewApplicantList(props) {
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => <ViewApplicantsCard adoptionApp={item} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: (Themes.SPACING?.xl || 32) + insets.bottom }, // <-- Add bottom padding dynamically
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={rejected.refreshing}

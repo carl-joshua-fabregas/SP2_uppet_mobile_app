@@ -10,6 +10,11 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: THEMES.COLORS.primary,
         headerShown: false,
+        tabBarStyle: {
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 4,
+        },
         tabBarLabelStyle: {
           fontSize: THEMES.TYPOGRAPHY.label.fontSize,
           fontFamily: THEMES.TYPOGRAPHY.label.fontFamily,

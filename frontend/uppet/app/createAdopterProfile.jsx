@@ -7,7 +7,7 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import { useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
@@ -22,7 +22,7 @@ import { useHeaderHeight } from "@react-navigation/elements";
 
 import { api } from "../api/axios";
 
-export default function createAdopterProfile() {
+export default function CreateAdopterProfile() {
   const { user, setNewUser, login, logout, setUser, newUser } = useUser();
   // const { adopterData } = route.params;
   const [currentStep, setCurrentStep] = useState(0);
@@ -32,7 +32,10 @@ export default function createAdopterProfile() {
   const [errors, setErrors] = useState({});
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight() || 0;
-
+  const scrollRef = useRef(null);
+  const scrollToTop = () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  };
   const validators = () => {
     const newErrors = {};
     switch (currentStep) {
@@ -62,8 +65,7 @@ export default function createAdopterProfile() {
         if (!adopterForm.bio?.trim()) {
           newErrors.bio = "Bio Error";
         }
-        const ageNum = Number(adopterForm.age, 10);
-        if (isNaN(ageNum)) {
+        if (!adopterForm.age || isNaN(Number(adopterForm.age))) {
           newErrors.age = "Age Error";
         }
         if (!adopterForm.gender?.trim()) {
@@ -78,8 +80,7 @@ export default function createAdopterProfile() {
         if (!adopterForm.occupation?.trim()) {
           newErrors.occupation = "Occupation Error";
         }
-        const incomeNum = Number(adopterForm.income, 10);
-        if (isNaN(incomeNum)) {
+        if (!adopterForm.income || isNaN(Number(adopterForm.income))) {
           newErrors.income = "Income Error";
         }
         if (!adopterForm.livingCon?.trim()) {
@@ -88,15 +89,19 @@ export default function createAdopterProfile() {
         if (!adopterForm.lifeStyle?.trim()) {
           newErrors.lifeStyle = "LifeStyle Error";
         }
-        const householdMem = Number(adopterForm.householdMem, 10);
-        if (isNaN(householdMem)) {
+        if (
+          !adopterForm.householdMem ||
+          isNaN(Number(adopterForm.householdMem))
+        ) {
           newErrors.householdMem = "Household Members Error";
         }
         break;
       }
       case 2: {
-        const currentOwnedPetsNum = Number(adopterForm.currentOwnedPets, 10);
-        if (isNaN(currentOwnedPetsNum)) {
+        if (
+          !adopterForm.currentOwnedPets ||
+          isNaN(Number(adopterForm.currentOwnedPets))
+        ) {
           newErrors.currentOwnedPets = "Current Owned Pets Error";
         }
         if (!adopterForm.hadPets?.trim()) {
@@ -244,7 +249,7 @@ export default function createAdopterProfile() {
         method: "PUT",
         body: blob,
         headers: {
-          "Content-Type": adopterForm.profilePhoto.fileType,
+          "Content-Type": adopterForm.profilePhoto.type,
         },
       });
 
@@ -331,6 +336,7 @@ export default function createAdopterProfile() {
         await saveEditAdopter();
       }
       setCurrentStep((prev) => prev + 1);
+      scrollToTop();
     }
     console.log(`update ${currentStep} `, adopterForm);
   };
@@ -360,6 +366,7 @@ export default function createAdopterProfile() {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          ref={scrollRef}
         >
           {renderStep()}
           {/* NAVIGATION BUTTONS */}
@@ -453,5 +460,9 @@ const styles = StyleSheet.create({
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
   },
-  scrollContet: { flexGrow: 1, padding: Themes.SPACING.md, paddingBottom: 100 },
+  scrollContent: {
+    flexGrow: 1,
+    padding: Themes.SPACING.md,
+    paddingBottom: 100,
+  },
 });

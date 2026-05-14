@@ -118,7 +118,7 @@ export async function findAllUserChatThread(req, res) {
     const { cursorUpdatedAt, cursorId } = req.query;
 
     // Base query: User must be a member
-    let query = { members: { $in: req.user.id } };
+    let query = { members: { $in: [req.user.id] } };
 
     // If cursors are provided, fetch threads older than the cursor
     if (cursorUpdatedAt && cursorId) {

@@ -29,10 +29,10 @@ export default function ViewPetProfile() {
   const insets = useSafeAreaInsets();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isOwner, setIsOwner] = useState(
+  // Remove the useState wrapper:
+  const isOwner =
     (route?.params?.pet?.ownerId?._id || route?.params?.pet?.ownerId) ===
-      user._id,
-  );
+    user._id;
   const [placeholderHeight, setPlaceholderHeight] = useState(70);
   const [adoptionApp, setAdoptionApp] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -157,7 +157,7 @@ export default function ViewPetProfile() {
       socket.off("adoptionApp_rejected", handleCreateApp);
       socket.off("adoptionApp_cancelled", handleCancelApp);
     };
-  }, [socket]);
+  }, [socket, pet?._id, adoptionApp?._id]);
 
   // --- NEW HANDLER FOR IMAGE PRESS ---
   const handlePressImage = (image, index) => {
@@ -279,7 +279,6 @@ export default function ViewPetProfile() {
         }),
       );
       const res = await api.delete(`/api/pet/${pet._id}`, {});
-      setAdoptionApp(res.data.body);
     } catch (err) {
       console.log("Error in deleting Pet", err);
       setLoading(false);
@@ -387,7 +386,10 @@ export default function ViewPetProfile() {
   return (
     <View style={{ flex: 1 }}>
       <Animated.ScrollView
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={[
+          styles.scrollContainer,
+          { paddingBottom: (Themes.SPACING?.xl || 32) + insets.bottom }, // <-- Add inset
+        ]}
         onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
         scrollEventThrottle={16}
         onScroll={Animated.event(
@@ -453,7 +455,7 @@ export default function ViewPetProfile() {
         style={[
           styles.stickyWrapper,
           {
-            bottom: Themes.SPACING?.lg || 24,
+            bottom: (Themes.SPACING?.lg || 24) + insets.bottom,
             opacity: fadeAnim,
             transform: [{ translateY: overlapTranslateY }],
           },

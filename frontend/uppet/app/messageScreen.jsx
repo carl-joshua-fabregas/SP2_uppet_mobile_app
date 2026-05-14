@@ -21,6 +21,7 @@ import {
   Dimensions,
   Image,
   Modal,
+  Animated,
 } from "react-native";
 import * as Themes from "../assets/themes/themes";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -28,7 +29,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 
-export default function messageScreen() {
+export default function MessageScreen() {
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.badgeText.fontSize,
   );
@@ -66,7 +67,34 @@ export default function messageScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const messageRef = useRef(messages);
 
-  // NEW STATE: Tracks the message currently being edited
+  const flatListRef = useRef(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const isButtonVisible = useRef(false);
+  const screenHeight = Dimensions.get("window").height;
+
+  const handleScroll = (event) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const shouldShow = offsetY > screenHeight;
+    if (shouldShow && !isButtonVisible.current) {
+      isButtonVisible.current = true;
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    } else if (!shouldShow && isButtonVisible.current) {
+      isButtonVisible.current = false;
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    }
+  };
+
+  const scrollToBottom = () => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
   const [editingMessage, setEditingMessage] = useState(null);
 
   const roomID = [user._id, receiverID].sort().join("_");
@@ -243,7 +271,7 @@ export default function messageScreen() {
       socket.off("message_updated");
       socket.off("message_deleted");
     };
-  }, [socket]);
+  }, [socket, chatThreadOrigin]);
 
   useEffect(() => {
     const initialMount = async () => {
@@ -346,7 +374,7 @@ export default function messageScreen() {
         });
 
         const uploadedMedia = await Promise.all(
-          selectedMedia.map(async (media) => {
+          selectedMedia.map(async (media, index) => {
             const presignedURL = await api.post(
               `/api/message/presignUploadURL`,
               {
@@ -373,7 +401,7 @@ export default function messageScreen() {
               url: finalUrl,
               type: media.type,
             };
-            const body = textInput ? textInput : " ";
+            const body = idx === 0 && textInput ? textInput : " ";
             handleSend(body, uploadetails, true);
             return true;
           }),
@@ -447,6 +475,11 @@ export default function messageScreen() {
           receiver: receiverID,
           sender: user._id,
         });
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === editingMessage._id ? { ...msg, body: body } : msg,
+          ),
+        );
       } catch (err) {
         console.log("ERROR IN EDITING MESSAGE", err.message);
       } finally {
@@ -525,6 +558,9 @@ export default function messageScreen() {
       keyboardVerticalOffset={headerHeight}
     >
       <FlatList
+        ref={flatListRef} // 👈 Add ref
+        onScroll={handleScroll} // 👈 Add scroll listener
+        scrollEventThrottle={16}
         style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -578,7 +614,23 @@ export default function messageScreen() {
           </TouchableOpacity>
         </View>
       )}
-
+      <Animated.View
+        style={[
+          styles.floatingButtonContainer,
+          {
+            opacity: fadeAnim,
+            bottom: Platform.OS === "ios" ? insets.bottom + 80 : 80,
+          },
+        ]}
+        pointerEvents={isButtonVisible.current ? "auto" : "none"} // Prevents invisible clicks
+      >
+        <TouchableOpacity
+          onPress={scrollToBottom}
+          style={styles.floatingButton}
+        >
+          <MaterialCommunityIcons name="chevron-down" size={30} color="#FFF" />
+        </TouchableOpacity>
+      </Animated.View>
       <View
         style={[
           styles.footerContainer,
@@ -837,5 +889,23 @@ const styles = StyleSheet.create({
   },
   editIndicatorClose: {
     padding: Themes.SPACING.xs,
+  },
+  floatingButtonContainer: {
+    position: "absolute",
+    right: 20,
+    zIndex: 10,
+  },
+  floatingButton: {
+    backgroundColor: Themes.COLORS.primary,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });

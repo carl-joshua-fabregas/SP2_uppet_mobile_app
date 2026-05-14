@@ -14,6 +14,7 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useSocket } from "../context/SocketContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ViewMyApplication(props) {
   const router = useRoute();
@@ -409,7 +410,10 @@ export default function ViewMyApplication(props) {
             <ViewMyApplicationCard adoptionApp={item} />
           )}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: (Themes.SPACING?.xl || 32) + insets.bottom }, // <-- Dynamic padding
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={pending.refreshing}

@@ -16,16 +16,15 @@ import * as Themes from "../../../assets/themes/themes";
 import { api } from "../../../api/axios";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSocket } from "../../../context/SocketContext";
-
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function Index() {
   const socket = useSocket();
   const router = useNavigation();
-
+  const insets = useSafeAreaInsets();
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.heading.fontSize,
   );
 
-  // Separate states for "All" and "Best Match" tabs
   const [all, setAll] = useState({
     pets: [],
     loading: false,
@@ -54,7 +53,6 @@ export default function Index() {
     setActiveTab(tab);
   };
 
-  // Determine current active state
   const currentData = activeTab === "all" ? all : bestMatch;
 
   const setSelectedPetLatest = selectedPet
@@ -182,10 +180,6 @@ export default function Index() {
         const isInArray = prev.pets.some((p) => p._id === data.pet._id);
         return isInArray ? prev : { ...prev, pets: [data.pet, ...prev.pets] };
       });
-      setBestMatch((prev) => {
-        const isInArray = prev.pets.some((p) => p._id === data.pet._id);
-        return isInArray ? prev : { ...prev, pets: [data.pet, ...prev.pets] };
-      });
     };
 
     const handlePetDeleted = (data) => {
@@ -272,7 +266,10 @@ export default function Index() {
         key={`all pets ${activeTab}`}
       >
         <FlatList
-          contentContainerStyle={styles.scrollContet}
+          contentContainerStyle={[
+            styles.scrollContet,
+            { paddingBottom: 80 + insets.bottom }, // Add bottom inset + clearance for the FAB
+          ]}
           data={all.pets}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
@@ -310,7 +307,10 @@ export default function Index() {
         key={`best matches ${activeTab}`}
       >
         <FlatList
-          contentContainerStyle={styles.scrollContet}
+          contentContainerStyle={[
+            styles.scrollContet,
+            { paddingBottom: 80 + insets.bottom }, // Add bottom inset + clearance for the FAB
+          ]}
           data={bestMatch.pets}
           keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
@@ -344,7 +344,7 @@ export default function Index() {
 
       {/* Floating Action Button (FAB) */}
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { bottom: 30 + insets.bottom }]}
         onPress={() => {
           console.log("Pressed home button");
           router.navigate("createPetProfile");

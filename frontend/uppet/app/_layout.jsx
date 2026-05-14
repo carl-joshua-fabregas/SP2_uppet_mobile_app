@@ -16,23 +16,19 @@ import {
 import * as Themes from "../assets/themes/themes";
 import { AppState } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
-// 1. IMPORT NETINFO AND ICONS
 import { useNetInfo } from "@react-native-community/netinfo";
 import { View, Text, StyleSheet } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-// 2. CUTE FLOATING NETWORK BANNER
 function NetworkBanner() {
   const { isConnected, isInternetReachable } = useNetInfo();
   const insets = useSafeAreaInsets();
 
-  // Hide the banner if connected or if it's still calculating
   if (isConnected !== false && isInternetReachable !== false) {
     return null;
   }
 
   return (
-    // We add a little extra gap (10px) so it floats nicely below the status bar
     <View style={[styles.offlineBannerWrapper, { top: insets.top + 10 }]}>
       <View style={styles.offlinePill}>
         <MaterialCommunityIcons name="paw" size={18} color="white" />
@@ -122,25 +118,31 @@ function NavigationStack() {
 export default function RootLayout() {
   useEffect(() => {
     const enforceHiddenNav = async () => {
-      // Hides the bar natively
       await NavigationBar.setVisibilityAsync("hidden");
-
-      // Makes it only appear when swiped from the bottom edge
-      // instead of appearing on every single screen tap
-      await NavigationBar.setBehaviorAsync("inset-swipe");
     };
 
-    // Run on application mount
     enforceHiddenNav();
 
-    // Re-enforce whenever the user backgrounds the app and returns
+    const subscription = NavigationBar.addVisibilityListener(
+      ({ visibility }) => {
+        if (visibility === "visible") {
+          setTimeout(() => {
+            NavigationBar.setVisibilityAsync("hidden");
+          }, 2000);
+        }
+      },
+    );
+
     const listener = AppState.addEventListener("change", (nextAppState) => {
       if (nextAppState === "active") {
         enforceHiddenNav();
       }
     });
 
-    return () => listener.remove();
+    return () => {
+      subscription.remove();
+      listener.remove();
+    };
   }, []);
   return (
     <UserProvider>

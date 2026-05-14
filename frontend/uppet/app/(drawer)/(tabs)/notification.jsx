@@ -14,10 +14,11 @@ import NotificationCard from "../../../component/notificationCard";
 import { api } from "../../../api/axios";
 import * as Themes from "../../../assets/themes/themes";
 import { useSocket } from "../../../context/SocketContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Notification() {
   const socket = useSocket();
-
+  const insets = useSafeAreaInsets();
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
   );
@@ -34,11 +35,14 @@ export default function Notification() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchNotification = async (cursorID, isRefreshing = false) => {
-    console.log(`Fetching notifications with cursor:`, cursorID);
+    if (isFetchingRef.current) return; // Add this early return
     isFetchingRef.current = true;
-    setLoading(true);
+    if (!isRefreshing) {
+      setLoading(true);
+    }
     try {
-      const limit = notification.length > 0 ? initialLimit : 10;
+      // Change it to this:
+      const limit = notification.length === 0 ? initialLimit : 10;
       const res = await api.get("/api/notification/notifications", {
         params: {
           cursorID: cursorID,
@@ -225,10 +229,16 @@ export default function Notification() {
   }, [socket]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: Themes.COLORS.background }}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: Themes.COLORS.background,
+      }}
+    >
       <FlatList
         data={notification}
         keyExtractor={(item) => item._id}
+        contentContainerStyle={{ paddingBottom: 50 + insets.bottom }}
         renderItem={({ item }) => {
           return (
             <NotificationCard

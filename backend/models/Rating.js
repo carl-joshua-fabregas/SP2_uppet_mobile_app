@@ -38,7 +38,7 @@ ratingSchema.statics.calculateAverageRatings = async function (userID) {
     {
       $group: {
         _id: "$ratedUser",
-        avarageRating: { $avg: "$score" },
+        averageRating: { $avg: "$score" },
         totalRating: { $sum: 1 },
       },
     },
@@ -46,12 +46,12 @@ ratingSchema.statics.calculateAverageRatings = async function (userID) {
   if (stats.length > 0) {
     await Adopter.findByIdAndUpdate(userID, {
       totalRating: stats[0].totalRating,
-      avarageRating: stats[0].avarageRating,
+      averageRating: stats[0].averageRating,
     });
   } else {
     await Adopter.findByIdAndUpdate(userID, {
       totalRating: 0,
-      avarageRating: 0,
+      averageRating: 0,
     });
   }
 };

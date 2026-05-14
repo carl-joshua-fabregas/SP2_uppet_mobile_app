@@ -40,19 +40,20 @@ export default function MessageScreen() {
 
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight() || 0;
-
   const router = useRoute();
   const isFetchingRef = useRef(false);
   const isSending = useRef(false);
   const { user } = useUser();
   const socket = useSocket();
   const { receiverID } = router.params;
-
   console.log(
     "Receiver ID in message screen:",
     receiverID,
     "receiverName:",
-    receiverName,
+    router.params.receiverName,
+  );
+  const [chatThreadOrigin, setChatThreadOrigin] = useState(
+    router.params.chatThreadOrigin,
   );
   const [messages, setMessages] = useState([]);
   const [textInput, setTextInput] = useState("");
@@ -138,6 +139,7 @@ export default function MessageScreen() {
   };
 
   const handleOpenOptions = (message) => {
+    console.log("MODAAAL 0, ", message, user._id);
     if (message.sender !== user._id) return;
     setSelectedMessageOptions(message);
     setIsModalVisible(true);

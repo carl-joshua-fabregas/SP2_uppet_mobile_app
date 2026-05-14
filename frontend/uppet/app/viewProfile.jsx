@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useState, useEffect, useRef } from "react";
-import { useNavigation } from "expo-router";
 import { useUser } from "../context/UserContext";
 import ProfileCard from "../component/AdopterProfileCard";
 import { api } from "../api/axios";
@@ -23,7 +22,6 @@ import { useSocket } from "../context/SocketContext.js";
 export default function AdopterProfile() {
   const socket = useSocket();
   const { user, logout } = useUser();
-
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [showDeleteModal, setShowDeleteModal] = useState(false);

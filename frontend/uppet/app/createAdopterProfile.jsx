@@ -40,6 +40,7 @@ export default function CreateAdopterProfile() {
     const newErrors = {};
     switch (currentStep) {
       case 0: {
+        console.log("AT VALIDATOR 0");
         if (
           !(
             adopterForm.profilePhoto &&
@@ -125,6 +126,7 @@ export default function CreateAdopterProfile() {
     navigation.navigate(`index`);
   };
   const onFinish = (newUser) => {
+    console.log("I AM FINISH UP, VAL OF NEW USER : ", newUser);
     if (!newUser) {
       navigation.replace("(drawer)");
     } else {
@@ -142,6 +144,7 @@ export default function CreateAdopterProfile() {
   ];
 
   const handleBack = () => {
+    console.log("HANDLE Back CALLED. CURRENT STEP:", currentStep);
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
     }
@@ -155,19 +158,24 @@ export default function CreateAdopterProfile() {
       JSON.stringify(oldUserForm) === JSON.stringify(newUserForm);
     const updatePhoto = newUserPhoto?.key !== oldUserPhoto?.key;
 
+    console.log("=================Saving Editing of Adopter");
+
     if (isFormUnchanged && !updatePhoto) {
+      console.log("No changes detected. Skipping API calls.");
       return true;
     }
     try {
       setUploading(true);
       let finalPhotoDetails = user.profilePhoto;
       if (updatePhoto) {
+        console.log("THERE WAS A NEED TO UPDATE");
         const presignDeleteUrl = await api.post(`/api/user/presignDeleteURL`, {
           key: user.profilePhoto.key,
         });
         const deleteUrl = presignDeleteUrl.data.body.url;
         const deleteKey = presignDeleteUrl.data.body.key;
         // const { url, key } = presignDeleteUrl.data.body;
+        console.log("Updating Photo with Key", deleteKey);
         const awsDelRes = await fetch(deleteUrl, {
           method: "DELETE",
         });
@@ -177,6 +185,7 @@ export default function CreateAdopterProfile() {
           fileType: adopterForm.profilePhoto.type,
           fileSize: adopterForm.profilePhoto.size,
         });
+        console.log("PROCEEDING TO UPLOAD");
         //You get the uploadURL First lol I forgot thats how this works
         const { url, key, finalUrl } = presignUploadUrl.data.body;
         const fetchImage = await fetch(adopterForm.profilePhoto.url);
@@ -194,6 +203,8 @@ export default function CreateAdopterProfile() {
           url: finalUrl,
           timeStamp: Date.now(),
         };
+
+        console.log("SUCCESSFULLY UPLOADED NEW PHOTOS");
       }
       const adopterUpdateRes = await api.patch(`/api/user/update`, {
         ...adopterForm,
@@ -201,6 +212,7 @@ export default function CreateAdopterProfile() {
       });
       const finalUserData = adopterUpdateRes.data.body;
 
+      console.log("DID PROCEED TO UPDATE MAKING FINAL CHANGES");
       setUser(finalUserData);
     } catch (error) {
       console.log("Error in saveEdit");
@@ -210,11 +222,15 @@ export default function CreateAdopterProfile() {
     }
   };
   const createAdopter = async () => {
+    console.log("Start saving");
+    console.log(adopterForm);
     try {
       setUploading(true);
       const adopterCreationRes = await api.post(`/api/user/post`, {
         ...adopterForm,
       });
+      console.log("ADOPTER IS CREATED IN THE DB");
+      console.log("Getting Presign URL for profile upload");
       await login(adopterCreationRes.data.body, adopterCreationRes.data.token);
 
       const presignUrl = await api.post(`/api/user/presignUploadUrl`, {
@@ -247,7 +263,10 @@ export default function CreateAdopterProfile() {
         profilePhoto: finalPhotoDetails,
         initialCreation: true,
       });
-
+      console.log(
+        "-------------------THE FINAL FORM IS ,",
+        finalAdopterFormRes.data.body,
+      );
       setUser(finalAdopterFormRes.data.body);
       return true;
     } catch (error) {
@@ -255,6 +274,7 @@ export default function CreateAdopterProfile() {
     } finally {
       setUploading(false);
       setNewUser(false);
+      console.log("DONE");
     }
   };
 
@@ -307,7 +327,9 @@ export default function CreateAdopterProfile() {
   };
 
   const handleNext = async () => {
+    console.log("HANDLE NEXT CALLED. CURRENT STEP:", currentStep, errors);
     if (currentStep < STEPS.length - 1 && validators()) {
+      console.log("DOES USER EXIST", user);
       if (currentStep === STEPS.length - 2 && newUser) {
         await createAdopter();
       } else if (currentStep === STEPS.length - 2 && !newUser) {

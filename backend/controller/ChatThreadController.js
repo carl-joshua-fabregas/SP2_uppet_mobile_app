@@ -48,15 +48,24 @@ export async function findAllChatThread(req, res) {
 }
 
 export async function findChatThreadOfUsers(req, res) {
+  console.log(
+    "F______________________U______________________D_________________G__________E",
+  );
   try {
     const chatThread = await ChatThread.findOne({
       members: { $all: [req.user.id, req.params.receiverID] },
     });
-
+    console.log("________________ETO______________NA");
+    console.log(
+      "Params ay etooooooooooooooo",
+      req.params.receiverID,
+      req.user.id,
+    );
     if (!chatThread)
       return res.status(404).json({
         message: "NO USER FOUND",
       });
+    console.log("___________________NAHANAP______________________NA");
 
     return res.status(200).json({
       message: "Successfully obtained ChatThread of Users",
@@ -101,6 +110,9 @@ export async function findChatThreadByID(req, res) {
 }
 
 export async function findAllUserChatThread(req, res) {
+  console.log(
+    "FINDING THE CHAT THREAD OF USER (CURSOR BASED)___________________",
+  );
   try {
     const limit = parseInt(req.query.limit) || 10;
     const { cursorUpdatedAt, cursorId } = req.query;

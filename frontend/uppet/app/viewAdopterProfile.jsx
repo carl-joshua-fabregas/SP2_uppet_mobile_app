@@ -10,10 +10,8 @@ import {
   ActivityIndicator, // <-- Add this
 } from "react-native";
 import Tombstone from "../component/Tombstone";
-
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
-
 import ProfileCard from "../component/AdopterProfileCard";
 import { api } from "../api/axios";
 import * as Themes from "../assets/themes/themes";
@@ -29,12 +27,10 @@ export default function ViewAdopterProfile({}) {
   const router = useRoute();
   const socket = useSocket();
   const navigation = useNavigation();
-
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
   );
   const { adoptionApp } = router.params;
-
   const screenHeight = Dimensions.get("window").height;
   const [scrollHeight, setScrollHeight] = useState(0);
   const [placeholderHeight, setPlaceholderHeight] = useState(70);
@@ -90,15 +86,7 @@ export default function ViewAdopterProfile({}) {
     }
   };
 
-  const parseAdopterID = useMemo(() => {
-    try {
-      return JSON.parse(params.id);
-    } catch {
-      return null;
-    }
-  }, [params.id]);
-
-  const [adopter, setAdopter] = useState({ _id: parseAdopterID });
+  const [adopter, setAdopter] = useState({ _id: router.params.id });
   const [isDeleted, setIsDeleted] = useState(false);
 
   if (isDeleted) {
@@ -201,6 +189,7 @@ export default function ViewAdopterProfile({}) {
       }
       const userData = res.data.body;
       setAdopter(userData);
+      console.log("Successfully obtained Adopter Profile");
     } catch (err) {
       // ONLY show the tombstone if the server explicitly says "Not Found"
       if (err.response && err.response.status === 404) {
@@ -480,6 +469,7 @@ export default function ViewAdopterProfile({}) {
   }
 
   if (adopter._id !== user._id) {
+    console.log("adopter and user id", adopter._id, user);
     buttons.push({
       title: "Message Applicant",
       onPress: () => handleMessage(adoptionApp?.applicant || adopter),

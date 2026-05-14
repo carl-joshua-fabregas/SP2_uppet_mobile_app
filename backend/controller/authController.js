@@ -44,6 +44,7 @@ export async function authGoogle(req, res) {
       process.env.JWT_SECRET,
       { expiresIn: "14d" },
     );
+    console.log("EVERYTHINH ID FINE2");
     return res.status(200).json({
       message: "User Found",
       token: jwttoken,
@@ -51,6 +52,7 @@ export async function authGoogle(req, res) {
       status: "old_user",
     });
   } catch (err) {
+    console.log("EVERYTHINH IS NOT FINE");
     return res.status(500).json({
       message: "Server Error",
       body: err.message,

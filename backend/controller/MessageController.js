@@ -1,9 +1,22 @@
 import ChatThread from "../models/ChatThread.js";
 import Message from "../models/Messages.js";
 import { ObjectId } from "mongodb";
-import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import s3 from "../config/aws.js";
+console.log("AWS REGION:", process.env.AWS_REGION);
+console.log("AWS ACCESS KEY ID:", process.env.AWS_ACCESS_KEY_ID);
+console.log("AWS SECRET ACCESS KEY:", process.env.AWS_SECRET_ACCESS_KEY);
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
 export async function presignUploadURL(req, res) {
   try {
@@ -17,9 +30,19 @@ export async function presignUploadURL(req, res) {
       //   name: req.body.name || ""
       // }
     });
+    console.log(
+      process.env.AWS_BUCKET_NAME,
+      process.env.AWS_REGION,
+      process.env.AWS_ACCESS_KEY_ID,
+      process.env.AWS_SECRET_ACCESS_KEY,
+    );
+    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
+    console.log("WITH COMMAND:", command);
 
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    console.log("PRESIGNED URL GENERATED:", url);
     const finalUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${key}`;
+    console.log("FINAL URL GENERATED:", finalUrl);
     return res.status(200).json({
       message: "Successfully obtained presigned URL",
       body: { url: url, key: key, finalUrl: finalUrl },
@@ -35,13 +58,23 @@ export async function presignUploadURL(req, res) {
 
 export async function presignDeleteURL(req, res) {
   try {
+    console.log("GENERATING presignDeleteURL");
     const key = req.body.key;
     const command = new DeleteObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
     });
+    console.log(
+      process.env.AWS_BUCKET_NAME,
+      process.env.AWS_REGION,
+      process.env.AWS_ACCESS_KEY_ID,
+      process.env.AWS_SECRET_ACCESS_KEY,
+    );
+    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
+    console.log("WITH COMMAND:", command);
 
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    console.log("PRESIGNED URL GENERATED:", url);
 
     return res.status(200).json({
       message: "Successfully obtained presigned URL",
@@ -63,6 +96,7 @@ export async function sendMessage(req, res) {
     };
     const { chatThreadOrigin, sender, receiver, body, media, isEdited } =
       req.body;
+    console.log("media is", media);
 
     const message = new Message({
       chatThreadOrigin: chatThreadOrigin,
@@ -97,7 +131,7 @@ export async function sendMessage(req, res) {
       body: newMessage,
     });
   } catch (err) {
-    ("Error in sending message", err.message);
+    console.log("Error in sending message", err.message);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
@@ -131,7 +165,12 @@ export async function findMessagesFromUser(req, res) {
         body: [],
       });
     }
-
+    console.log(
+      "MESSAGES----------------",
+      messages[0]._id,
+      req.query.lastMessageId,
+    );
+    console.log("MESSAGES2----------------", messages[messages.length - 1]._id);
     return res.status(200).json({
       message: "Here are the messages found",
       body: messages,
@@ -180,6 +219,7 @@ export async function findMessageById(req, res) {
 
 export async function editAMessage(req, res) {
   try {
+    console.log(req.params.messageID);
     const message = await Message.findById(req.params.messageID);
     if (!message) {
       return res.status(404).json({

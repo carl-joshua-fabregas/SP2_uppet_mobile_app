@@ -3,6 +3,7 @@ import * as Themes from "../../assets/themes/themes";
 
 export default function PCProgressBar({ currentStep, totalSteps }) {
   const progressPercentage = (currentStep / totalSteps) * 100;
+  console.log(currentStep, totalSteps);
   return (
     <View style={styles.progressTrack}>
       <View

@@ -9,17 +9,14 @@ import {
   TouchableOpacity,
 } from "react-native";
 import ViewApplicantsCard from "../component/ViewApplicantsListCard";
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRoute, useNavigation } from "@react-navigation/native";
-
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useSocket } from "../context/SocketContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function ViewApplicantList(props) {
   const router = useRoute();
-
   const socket = useSocket();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -67,15 +64,18 @@ export default function ViewApplicantList(props) {
     setPending((prev) => ({ ...prev, loading: true }));
     try {
       const limit = pending.applicants.length === 0 ? initialLimit : 10;
-      const res = await api.get(`/api/adoptionApp/${petID}/pending`, {
-        params: {
-          lastId: pending.tabCursorID ? pending.tabCursorID._id : null,
-          limit: limit,
-          lastAppUpdate: pending.tabCursorID
-            ? pending.tabCursorID.updatedAt
-            : null,
+      const res = await api.get(
+        `/api/adoptionApp/${router.params.petID}/pending`,
+        {
+          params: {
+            lastId: pending.tabCursorID ? pending.tabCursorID._id : null,
+            limit: limit,
+            lastAppUpdate: pending.tabCursorID
+              ? pending.tabCursorID.updatedAt
+              : null,
+          },
         },
-      });
+      );
       const applicantsArr = res.data.body;
 
       if (applicantsArr.length < limit) {
@@ -107,15 +107,18 @@ export default function ViewApplicantList(props) {
     setApproved((prev) => ({ ...prev, loading: true }));
     try {
       const limit = approved.applicants.length === 0 ? initialLimit : 10;
-      const res = await api.get(`/api/adoptionApp/${petID}/approved`, {
-        params: {
-          lastId: approved.tabCursorID ? approved.tabCursorID._id : null,
-          limit: limit,
-          lastAppUpdate: approved.tabCursorID
-            ? approved.tabCursorID.updatedAt
-            : null,
+      const res = await api.get(
+        `/api/adoptionApp/${router.params.petID}/approved`,
+        {
+          params: {
+            lastId: approved.tabCursorID ? approved.tabCursorID._id : null,
+            limit: limit,
+            lastAppUpdate: approved.tabCursorID
+              ? approved.tabCursorID.updatedAt
+              : null,
+          },
         },
-      });
+      );
       const applicantsArr = res.data.body;
 
       if (applicantsArr.length < limit) {
@@ -147,15 +150,18 @@ export default function ViewApplicantList(props) {
     setRejected((prev) => ({ ...prev, loading: true }));
     try {
       const limit = rejected.applicants.length === 0 ? initialLimit : 10;
-      const res = await api.get(`/api/adoptionApp/${petID}/rejected`, {
-        params: {
-          lastId: rejected.tabCursorID ? rejected.tabCursorID._id : null,
-          limit: limit,
-          lastAppUpdate: rejected.tabCursorID
-            ? rejected.tabCursorID.updatedAt
-            : null,
+      const res = await api.get(
+        `/api/adoptionApp/${router.params.petID}/rejected`,
+        {
+          params: {
+            lastId: rejected.tabCursorID ? rejected.tabCursorID._id : null,
+            limit: limit,
+            lastAppUpdate: rejected.tabCursorID
+              ? rejected.tabCursorID.updatedAt
+              : null,
+          },
         },
-      });
+      );
       const applicantsArr = res.data.body;
 
       if (applicantsArr.length < limit) {

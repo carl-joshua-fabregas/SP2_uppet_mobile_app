@@ -10,6 +10,8 @@ export default function ViewAdopteesCard({ pet }) {
   const statusBg = isAdopted ? Themes.COLORS.badge : "#FFF4E0";
   const photo = pet.photos.find((p) => p.isProfile);
 
+  console.log("THIS IS AN ID", pet._id);
+
   const onViewApplicantPress = () => {
     console.log("View My adoptees card is pressed", pet._id);
     navigation.navigate("viewApplicantsMyAdoptees", { petID: pet._id });

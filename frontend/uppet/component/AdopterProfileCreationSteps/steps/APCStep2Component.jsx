@@ -96,6 +96,7 @@ export default function APCStep2Component({
       setErrors({});
       // Proceed to next step
 
+      console.log("Pet Data is valid, proceeding to next step:", adopterData);
       onNext();
     }
   };

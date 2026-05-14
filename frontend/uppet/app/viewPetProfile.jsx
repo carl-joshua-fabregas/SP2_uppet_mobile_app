@@ -24,15 +24,12 @@ import Tombstone from "../component/Tombstone";
 export default function ViewPetProfile() {
   const socket = useSocket();
   const { user } = useUser();
-
   const route = useRoute();
   const navigation = useNavigation();
-
   const insets = useSafeAreaInsets();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   // Remove the useState wrapper:
-
   const isOwner =
     (route?.params?.pet?.ownerId?._id || route?.params?.pet?.ownerId) ===
     user._id;
@@ -40,11 +37,11 @@ export default function ViewPetProfile() {
   const [adoptionApp, setAdoptionApp] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pet, setPet] = useState(route.params.pet);
-
   const [gallerySectionLayout, setGallerySectionLayout] = useState({
     y: 0,
     height: 0,
   });
+  console.log(pet, "THIS THE PET");
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
   const [showStickyButton, setShowStickyButton] = useState(false);
   const [placeholderY, setPlaceholderY] = useState(0);
@@ -61,6 +58,7 @@ export default function ViewPetProfile() {
   const fetchAdoptionApp = async () => {
     try {
       const res = await api.get(`/api/adoptionApp/${pet._id}/applied`, {});
+      console.log("This is the adoption App", res.data);
       if (res.data.body) {
         setAdoptionApp(res.data.body);
       }
@@ -163,6 +161,7 @@ export default function ViewPetProfile() {
 
   // --- NEW HANDLER FOR IMAGE PRESS ---
   const handlePressImage = (image, index) => {
+    console.log("Image Pressed: ", image, index);
     setSelectedImage(image);
     setImageViewerIndex(index);
     setShowImageViewer(true);
@@ -176,6 +175,7 @@ export default function ViewPetProfile() {
       const res = await api.get(`/api/chatlist/get/${ownerIdString}`);
       chatThreadOrigin = res.data.body;
     } catch (err) {
+      // Specifically catch the 404 (No chat exists yet) silently
       if (err.response && err.response.status === 404) {
         console.log("No chat history with this owner yet.");
       } else {
@@ -183,6 +183,7 @@ export default function ViewPetProfile() {
       }
     } finally {
       const ownerIdString = pet.ownerId._id || pet.ownerId;
+      console.log(pet, "this is it");
       const ownerName = pet.ownerId.firstName
         ? `${pet.ownerId.firstName} ${pet.ownerId.middleName} ${pet.ownerId.lastName}`
         : "Owner";
@@ -212,12 +213,14 @@ export default function ViewPetProfile() {
             petToAdopt: pet._id,
           },
         );
+        console.log(res.data);
         setAdoptionApp(res.data.body);
       } else {
         const res = await api.post(`/api/adoptionApp/applied`, {
           petToAdopt: pet._id,
         });
         setAdoptionApp(res.data.body);
+        console.log(res.data);
       }
     } catch (err) {
       console.log("Error in handle Apply: ", err);
@@ -259,6 +262,7 @@ export default function ViewPetProfile() {
   };
 
   const handleDeletPetProfile = () => {
+    console.log("Handle Delete Profile Clicked");
     setShowDeleteModal(true);
   };
 

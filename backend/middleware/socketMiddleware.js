@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 
 export default async function socketMiddleware(socket, next) {
+  console.log("--------IN SOCKET MIDDLEWARE ----------------");
+
   try {
     const token = socket.handshake.auth.token;
 

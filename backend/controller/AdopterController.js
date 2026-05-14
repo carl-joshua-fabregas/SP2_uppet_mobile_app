@@ -7,6 +7,7 @@ import Pet from "../models/Pet.js";
 import Rating from "../models/Rating.js";
 import jwt from "jsonwebtoken";
 import {
+  S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
   DeleteObjectsCommand,
@@ -16,8 +17,17 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { generateBulkMatchForUser } from "../services/matchingServices.js";
 import Match from "../models/Match.js";
-import s3 from "../config/aws.js";
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
 export async function createAdopter(req, res) {
+  console.log("Create Adopter Called");
+  console.log("Req Body is", req.body);
   try {
     const {
       firstName,
@@ -95,6 +105,7 @@ export async function createAdopter(req, res) {
       token: jwttoken,
     });
   } catch (err) {
+    console.log("===========Creation Error===========");
     console.error(err);
     return res.status(500).json({
       message: "Server Error",
@@ -123,6 +134,7 @@ export async function findAllUser(req, res) {
       body: user,
     });
   } catch (err) {
+    console.log("-----FIND ALL USER ERROR----------");
     console.error(err);
     return res.status(500).json({
       message: "Server Error",
@@ -134,6 +146,8 @@ export async function findAllUser(req, res) {
 export async function findUserByID(req, res) {
   try {
     const user = await Adopter.findById(req.params.id);
+    console.log("FIND BY USER ID");
+    console.log(user);
     if (!user) {
       return res.status(404).json({
         message: "Not found",
@@ -144,6 +158,7 @@ export async function findUserByID(req, res) {
       body: user,
     });
   } catch (err) {
+    console.log("---------FIND USER BY ID ERROR----------");
     console.error(err);
     return res.status(500).json({
       message: "Server Error",
@@ -165,6 +180,7 @@ export async function findCurrentUser(req, res) {
       body: user,
     });
   } catch (err) {
+    console.log("===========FIND CURRENT USER ERROR==========");
     console.error(err);
 
     return res.status(500).json({
@@ -175,6 +191,7 @@ export async function findCurrentUser(req, res) {
 }
 
 export async function updateUser(req, res) {
+  console.log("---------------------UPDATING----------------");
   try {
     const options = {
       new: true,
@@ -241,6 +258,7 @@ export async function updateUser(req, res) {
       console.log("Background match failed:", err),
     );
   } catch (err) {
+    console.log("==========ERROR IN UPDATING=========");
     console.error(err);
     return res.status(500).json({
       message: "Server Error",
@@ -262,6 +280,7 @@ export async function deleteAllUser(req, res) {
       message: "Successfully deleted all user",
     });
   } catch (err) {
+    console.log("-----------DELETE ALL USER ERROR--------------");
     console.error(err);
     return res.status(500).json({
       message: "Server Error",
@@ -294,19 +313,23 @@ export async function deleteUser(req, res) {
     if (ownedPets && ownedPets.length > 0) {
       const deletedPetPhotos = await Promise.all(
         ownedPets.map(async (pet) => {
+          console.log(`Deleting AWS photo of ${pet.name}`);
           let isTruncated = true;
           let continuationToken = undefined;
           let totalDeleted = 0;
           const prefix = `pets/${pet._id}/`;
           try {
             while (isTruncated) {
+              console.log("ENTERED THE LOOP");
               const listCommand = new ListObjectsV2Command({
                 Bucket: process.env.AWS_BUCKET_NAME,
                 Prefix: prefix,
                 ContinuationToken: continuationToken,
                 EncodingType: "url",
               });
+              console.log("MADE THE LIST COMMAND", listCommand);
               const listResponse = await s3.send(listCommand);
+              console.log("List Response is", listResponse);
               if (
                 !listResponse.Contents ||
                 listResponse.Contents.length === 0
@@ -317,6 +340,7 @@ export async function deleteUser(req, res) {
               const objectsToDelete = listResponse.Contents.map((file) => ({
                 Key: decodeURIComponent(file.Key),
               }));
+              console.log(objectsToDelete);
               const deleteCommand = new DeleteObjectsCommand({
                 Bucket: process.env.AWS_BUCKET_NAME,
                 Delete: {
@@ -328,10 +352,14 @@ export async function deleteUser(req, res) {
               await s3.send(deleteCommand);
 
               totalDeleted += objectsToDelete.length;
+              console.log(`Deleted batch total ${objectsToDelete.length}`);
 
               isTruncated = listResponse.IsTruncated;
               continuationToken = listResponse.NextContinuationToken;
             }
+            console.log(
+              `Successfully deleted AWS files ${pet.name} ... ${totalDeleted}`,
+            );
           } catch (err) {
             console.log("Error on deletion", err.message, err);
           }
@@ -367,6 +395,7 @@ export async function deleteUser(req, res) {
         const objectsToDelete = listResponse.Contents.map((file) => ({
           Key: decodeURIComponent(file.Key),
         }));
+        console.log(objectsToDelete);
         const deleteCommand = new DeleteObjectsCommand({
           Bucket: process.env.AWS_BUCKET_NAME,
           Delete: {
@@ -378,9 +407,13 @@ export async function deleteUser(req, res) {
         await s3.send(deleteCommand);
         totalMessageDeleted += objectsToDelete.length;
 
+        console.log(`Deleted batch total ${objectsToDelete.length}`);
         isTruncated = listResponse.IsTruncated;
         continuationToken = listResponse.NextContinuationToken;
       }
+      console.log(
+        `Successfully deleted AWS files for messages of ${req.user.id} ${totalMessageDeleted}`,
+      );
     }
 
     const deletionTask = [
@@ -409,6 +442,7 @@ export async function deleteUser(req, res) {
       message: "Successfully deleted user",
     });
   } catch (err) {
+    console.log("---------------DELETE ACOUNT ERROR-------------");
     console.error(err);
 
     return res.status(500).json({
@@ -419,7 +453,10 @@ export async function deleteUser(req, res) {
 }
 
 export async function uploadAdopterPhoto(req, res) {
+  console.log("UPLOAD Adopter PHOTO CONTROLLER CALLED");
   try {
+    console.log("Adoper ID IN UPLOAD PET PHOTO CONTROLLER", req.user.id);
+
     const adopter = await Adopter.findById(req.user.id);
     if (!adopter) {
       return res.status(404).json({
@@ -441,6 +478,7 @@ export async function uploadAdopterPhoto(req, res) {
       timeStamp: req.body.timeStamp,
     };
 
+    console.log("BACKED END HERE UPLOADED PHOTOS ARE", uploadedPhoto);
     const updatedAdopter = await Adopter.findByIdAndUpdate(
       req.user.id,
       { $set: { profilePhoto: uploadedPhoto } },
@@ -461,6 +499,7 @@ export async function uploadAdopterPhoto(req, res) {
 }
 
 export async function presignUploadURL(req, res) {
+  console.log("IN THE UPLOAD PRESIGN URL");
   try {
     const key = `user/${req.user.id}/${req.body.fileSize}_${req.body.fileName}`;
     const command = new PutObjectCommand({
@@ -498,13 +537,24 @@ export async function presignUploadURL(req, res) {
 }
 export async function presignDeleteURL(req, res) {
   try {
+    console.log("GENERATING presignDeleteURL", req.body);
     const key = req.body.key;
+    console.log("THIS IS THE KEY", key);
     const command = new DeleteObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
     });
+    console.log(
+      process.env.AWS_BUCKET_NAME,
+      process.env.AWS_REGION,
+      process.env.AWS_ACCESS_KEY_ID,
+      process.env.AWS_SECRET_ACCESS_KEY,
+    );
+    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
+    console.log("WITH COMMAND:", command);
 
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    console.log("PRESIGNED URL GENERATED:", url);
 
     return res.status(200).json({
       message: "Successfully obtained presigned URL",

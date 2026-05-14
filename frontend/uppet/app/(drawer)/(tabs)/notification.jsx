@@ -128,6 +128,8 @@ export default function Notification() {
           item._id === id ? { ...item, isRead: true } : item,
         ),
       );
+
+      console.log("Notification marked as read:", id);
     } catch (err) {
       console.error("Error marking notification as read:", err.message);
       // Don't throw - let the notification stay in unread state on error

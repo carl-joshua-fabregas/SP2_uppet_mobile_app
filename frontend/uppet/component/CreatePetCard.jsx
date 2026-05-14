@@ -68,6 +68,7 @@ export default function CreatePetCard(props) {
     console.log(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
+      console.log("Create Pet Profile Valid");
       try {
         const response = await api.post("/api/pet/post", form);
         setRes(response)
@@ -76,7 +77,7 @@ export default function CreatePetCard(props) {
         } else {
           console.log("DID POST");
 
-          router.push("createPetProfile");
+          // router.replace("(drawer)");
         }
       } catch (err) {
         console.log(err);

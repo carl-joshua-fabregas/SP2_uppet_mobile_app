@@ -10,16 +10,16 @@ import {
 } from "react-native";
 import ViewMyApplicationCard from "../component/ViewMyApplicantsCard";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useSocket } from "../context/SocketContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ViewMyApplication(props) {
-  const router = useRoute();
+  const params = useLocalSearchParams();
   const socket = useSocket();
-  const navigation = useNavigation();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("pending");
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.badgeText.fontSize,

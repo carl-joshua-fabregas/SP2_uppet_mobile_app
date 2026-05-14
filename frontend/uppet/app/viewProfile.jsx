@@ -8,7 +8,7 @@ import {
   Modal,
   ActivityIndicator,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useState, useEffect, useRef } from "react";
 import { useUser } from "../context/UserContext";
 import ProfileCard from "../component/AdopterProfileCard";
@@ -22,7 +22,7 @@ import { useSocket } from "../context/SocketContext.js";
 export default function AdopterProfile() {
   const socket = useSocket();
   const { user, logout } = useUser();
-  const navigation = useNavigation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -52,7 +52,7 @@ export default function AdopterProfile() {
   const [showLoadMoreButton, setShowLoadMoreButton] = useState(false);
   // --- Existing Profile Handlers ---
   const handleEditing = () => {
-    navigation.navigate("createAdopterProfile");
+    router.push("createAdopterProfile");
   };
 
   const handleSignOut = () => {

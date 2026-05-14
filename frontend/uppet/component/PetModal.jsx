@@ -10,12 +10,12 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useUser } from "../context/UserContext";
 
 export default function PetModal({ pet, onClose }) {
   const { user } = useUser();
-  const navigator = useNavigation();
+  const navigator = useRouter();
   const isOwner = user._id === pet.ownerId._id;
 
   const petProfilePhoto = pet?.photos?.find((photo) => photo.isProfile);
@@ -112,7 +112,10 @@ export default function PetModal({ pet, onClose }) {
               style={styles.meetButton}
               onPress={() => {
                 onClose();
-                navigator.navigate("viewPetProfile", { pet: pet });
+                navigator.push({
+                  pathname: "viewPetProfile",
+                  params: { pet: pet },
+                });
               }}
             >
               <Text style={styles.meetButtonText}>

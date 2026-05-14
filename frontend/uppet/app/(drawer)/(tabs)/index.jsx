@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import PetCardHome from "../../../component/PetCardHome";
 import PetModal from "../../../component/PetModal";
 import * as Themes from "../../../assets/themes/themes";
@@ -19,7 +19,7 @@ import { useSocket } from "../../../context/SocketContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function Index() {
   const socket = useSocket();
-  const router = useNavigation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.heading.fontSize,
@@ -347,7 +347,7 @@ export default function Index() {
         style={[styles.fab, { bottom: 30 + insets.bottom }]}
         onPress={() => {
           console.log("Pressed home button");
-          router.navigate("createPetProfile");
+          router.push("createPetProfile");
         }}
       >
         <MaterialCommunityIcons name="plus" size={30} color="#FFF" />

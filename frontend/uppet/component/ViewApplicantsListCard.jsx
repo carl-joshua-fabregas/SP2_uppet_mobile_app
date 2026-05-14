@@ -1,15 +1,16 @@
 import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 
 export default function ViewApplicantsCard({ adoptionApp }) {
-  const navigator = useNavigation();
+  const navigator = useRouter();
   const applicant = adoptionApp.applicant;
   console.log("This is the adoption app", adoptionApp);
   const onViewApplicantPress = () => {
-    navigator.navigate("viewAdopterProfile", {
+    navigator.push({
+      pathname: "viewAdopterProfile",
       id: applicant._id,
       adoptionApp: adoptionApp,
     });

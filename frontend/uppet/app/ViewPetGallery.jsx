@@ -1,19 +1,18 @@
 import { Text, ScrollView, Button, View } from "react-native";
-import { useRoute } from "@react-navigation/native";
-import { useNavigation } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import PetProfileCardViewMore from "../component/PetProfileCard";
 import { useEffect, useState } from "react";
 import { api } from "../api/axios";
 
 export default function ViewPetProfile() {
-  const route = useRoute();
-  const navigation = useNavigation();
+  const params = useLocalSearchParams();
+  const router = useRouter();
   const [hasApplied, setHasApplied] = useState(false);
 
   const getHasApplied = async () => {
     try {
       const res = await api.get(
-        `/api/adoptionApp/${route.params.pet._id}/applied`,
+        `/api/adoptionApp/${params.pet._id}/applied`,
         {},
       );
       setHasApplied(res.data.hasApplied);
@@ -37,7 +36,7 @@ export default function ViewPetProfile() {
   };
   return (
     <View>
-      <PetProfileCardViewMore pet={route.params.pet}></PetProfileCardViewMore>
+      <PetProfileCardViewMore pet={params.pet}></PetProfileCardViewMore>
       <Button title="View Gallery" onPress={handleViewGallery}></Button>
       <Button title="Message" onPress={handleMessage}></Button>
       <Button title="Apply" onPress={handleApply}></Button>

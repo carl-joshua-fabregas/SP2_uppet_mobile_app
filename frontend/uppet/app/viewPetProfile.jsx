@@ -10,8 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useEffect, useState, useRef, useMemo } from "react";
-import { useRoute } from "@react-navigation/native";
-import { useNavigation } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import PetProfileCardViewMore from "../component/PetProfileCard";
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
@@ -24,19 +23,18 @@ import Tombstone from "../component/Tombstone";
 export default function ViewPetProfile() {
   const socket = useSocket();
   const { user } = useUser();
-  const route = useRoute();
-  const navigation = useNavigation();
+  const params = useLocalSearchParams();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   // Remove the useState wrapper:
   const isOwner =
-    (route?.params?.pet?.ownerId?._id || route?.params?.pet?.ownerId) ===
-    user._id;
+    (params?.pet?.ownerId?._id || params?.pet?.ownerId) === user._id;
   const [placeholderHeight, setPlaceholderHeight] = useState(70);
   const [adoptionApp, setAdoptionApp] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [pet, setPet] = useState(route.params.pet);
+  const [pet, setPet] = useState(params.pet);
   const [gallerySectionLayout, setGallerySectionLayout] = useState({
     y: 0,
     height: 0,
@@ -93,9 +91,7 @@ export default function ViewPetProfile() {
     if (pet._id) {
       fetchAdoptionApp();
     }
-    navigation.setOptions({
-      headerTitle: `${pet.name}'s Profile`,
-    });
+    // Header title can be set in the layout file for expo-router
   }, [pet._id]);
 
   useEffect(() => {
@@ -188,17 +184,23 @@ export default function ViewPetProfile() {
         ? `${pet.ownerId.firstName} ${pet.ownerId.middleName} ${pet.ownerId.lastName}`
         : "Owner";
 
-      navigation.navigate("messageScreen", {
-        receiverID: ownerIdString,
-        chatThreadOrigin: chatThreadOrigin,
-        receiverName: ownerName,
+      router.push({
+        pathname: "messageScreen",
+        params: {
+          receiverID: ownerIdString,
+          chatThreadOrigin: chatThreadOrigin,
+          receiverName: ownerName,
+        },
       });
     }
   };
   const handleViewOwnerProfile = () => {
     console.log("View Owner Profile Clicked");
-    navigation.navigate("viewAdopterProfile", {
-      id: pet.ownerId._id,
+    router.push({
+      pathname: "viewAdopterProfile",
+      params: {
+        id: pet.ownerId._id,
+      },
     });
   };
 
@@ -252,13 +254,19 @@ export default function ViewPetProfile() {
 
   const handleViewApplicants = () => {
     console.log("handleViewApplicantsClicked");
-    navigation.navigate("viewApplicantsMyAdoptees", {
-      petID: pet._id,
+    router.push({
+      pathname: "viewApplicantsMyAdoptees",
+      params: {
+        petID: pet._id,
+      },
     });
   };
 
   const handleEditPetProfile = () => {
-    navigation.navigate("createPetProfile", { editPetData: pet });
+    router.push({
+      pathname: "createPetProfile",
+      params: { editPetData: pet },
+    });
   };
 
   const handleDeletPetProfile = () => {
@@ -285,7 +293,7 @@ export default function ViewPetProfile() {
       setShowDeleteModal(false);
     } finally {
       setLoading(false);
-      navigation.goBack();
+      router.back();
     }
   };
 
@@ -401,7 +409,7 @@ export default function ViewPetProfile() {
         )}
       >
         <PetProfileCardViewMore
-          pet={route.params.pet}
+          pet={params.pet}
           isGalleryExpanded={isGalleryExpanded}
           setIsGalleryExpanded={setIsGalleryExpanded}
           handleGalleryLayout={handleGalleryLayout}

@@ -1,28 +1,24 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
 
 export default function ViewAdopteesCard({ pet }) {
-  const router = useRouter();
+  const navigation = useNavigation();
   const isAdopted = pet.adoptedStatus;
   const statusTextColor = isAdopted ? Themes.COLORS.badgeText : "#D97706";
   const statusBg = isAdopted ? Themes.COLORS.badge : "#FFF4E0";
   const photo = pet.photos.find((p) => p.isProfile);
 
   const onViewApplicantPress = () => {
-    router.push({
-      pathname: "viewApplicantsMyAdoptees",
-      params: { petID: pet._id },
-    });
+    console.log("View My adoptees card is pressed", pet._id);
+    navigation.navigate("viewApplicantsMyAdoptees", { petID: pet._id });
   };
 
   return (
     <TouchableOpacity
       style={styles.cardContainer}
-      onPress={() =>
-        router.push({ pathname: "viewPetProfile", params: { pet: pet } })
-      }
+      onPress={() => navigation.navigate("viewPetProfile", { pet: pet })}
       activeOpacity={0.8}
     >
       {/* Pet Thumbnail */}

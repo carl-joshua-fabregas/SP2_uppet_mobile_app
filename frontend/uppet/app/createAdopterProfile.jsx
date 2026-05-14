@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useState, useRef } from "react";
 import { useUser } from "../context/UserContext";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
 import APCProgressTracker from "../component/AdopterProfileCreationSteps/APCProgressTracker";
 import APCStep1Component from "../component/AdopterProfileCreationSteps/steps/APCStep1Component";
@@ -28,7 +28,7 @@ export default function CreateAdopterProfile() {
   const [currentStep, setCurrentStep] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [adopterForm, setAdopterForm] = useState(user);
-  const router = useRouter();
+  const navigation = useNavigation();
   const [errors, setErrors] = useState({});
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight() || 0;
@@ -122,14 +122,14 @@ export default function CreateAdopterProfile() {
   };
   const onChangeAccount = async () => {
     await logout();
-    router.push(`/`);
+    navigation.navigate(`index`);
   };
   const onFinish = (newUser) => {
     if (!newUser) {
-      router.replace("/(drawer)");
+      navigation.replace("(drawer)");
     } else {
       setNewUser(false);
-      router.back();
+      navigation.goBack();
     }
   };
 

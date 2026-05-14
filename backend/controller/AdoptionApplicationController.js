@@ -477,12 +477,12 @@ export async function reapplyUpdateAdoptionApp(req, res) {
       });
     }
     if (pet.adoptedStatus) {
-      return res.status(409).json({
+      return res.status(209).json({
         message: "Collission with data in reapply",
       });
     }
     if (adoptionApp.status === "Approved") {
-      return res.status(409).json({
+      return res.status(209).json({
         message: "Collission with data, it is approved",
       });
     }
@@ -616,7 +616,7 @@ export async function cancelAdoptApp(req, res) {
       });
     }
     if (!(app.status === "Pending")) {
-      return res.status(409).json({
+      return res.status(209).json({
         message: "Conflict in server, Cannot cancel not pending value",
       });
     }
@@ -628,7 +628,7 @@ export async function cancelAdoptApp(req, res) {
       });
 
     if (pet.adoptedStatus) {
-      return res.status(409).json({
+      return res.status(209).json({
         message:
           "Pet status conflict, cannot cancel pet that is already adoptedd",
       });

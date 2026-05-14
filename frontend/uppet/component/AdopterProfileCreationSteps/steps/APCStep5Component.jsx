@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Themes from "../../../assets/themes/themes";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useUser } from "../../../context/UserContext";
 export default function APCStep5Component({ onFinish }) {

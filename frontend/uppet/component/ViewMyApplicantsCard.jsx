@@ -1,11 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 
 export default function ViewMyApplicationCard({ adoptionApp }) {
-  const navigator = useRouter();
+  const navigator = useNavigation();
 
   // Assuming your backend populates the pet object in either .pet or .petID
   const pet = adoptionApp.petToAdopt;
@@ -16,10 +16,7 @@ export default function ViewMyApplicationCard({ adoptionApp }) {
 
   const onViewPetPress = () => {
     // Navigates to the pet's profile so you can see who you applied for
-    navigator.push({
-      pathname: "viewPetProfile",
-      params: { pet: pet },
-    });
+    navigator.navigate("viewPetProfile", { pet: pet });
   };
 
   const Badge = ({ status }) => {

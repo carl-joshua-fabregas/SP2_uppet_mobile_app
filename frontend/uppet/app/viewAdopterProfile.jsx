@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import Tombstone from "../component/Tombstone";
 import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import ProfileCard from "../component/AdopterProfileCard";
 import { api } from "../api/axios";
 import * as Themes from "../assets/themes/themes";
@@ -24,13 +24,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSocket } from "../context/SocketContext";
 export default function ViewAdopterProfile({}) {
-  const params = useLocalSearchParams();
-  const router = useRouter();
+  const router = useRoute();
   const socket = useSocket();
+  const navigation = useNavigation();
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.body.fontSize,
   );
-  const { adoptionApp } = params;
+  const { adoptionApp } = router.params;
   const screenHeight = Dimensions.get("window").height;
   const [scrollHeight, setScrollHeight] = useState(0);
   const [placeholderHeight, setPlaceholderHeight] = useState(70);
@@ -421,7 +421,7 @@ export default function ViewAdopterProfile({}) {
     try {
       await api.post(`api/adoptionApp/${adoptionApp._id}/approve`);
       setShowApproveModal(false);
-      router.back(); // Sends them back to the applicants list to see it move!
+      navigation.goBack(); // Sends them back to the applicants list to see it move!
     } catch (err) {
       console.log(err);
     } finally {
@@ -434,7 +434,7 @@ export default function ViewAdopterProfile({}) {
     try {
       await api.patch(`api/adoptionApp/${adoptionApp._id}/reject`);
       setShowRejectModal(false);
-      router.back(); // Sends them back to the applicants list
+      navigation.goBack(); // Sends them back to the applicants list
     } catch (err) {
       console.log(err);
     } finally {
@@ -443,13 +443,11 @@ export default function ViewAdopterProfile({}) {
   };
 
   const handleMessage = (entity) => {
-    router.push({
-      pathname: "messageScreen",
-      params: {
-        receiverID: entity._id,
-        chatThreadOrigin: null,
-        receiverName: `${entity.firstName} ${entity.middleName || ""} ${entity.lastName}`,
-      },
+    console.log("Messaging applicant with ID:", entity._id);
+    navigation.navigate("messageScreen", {
+      receiverID: entity._id,
+      chatThreadOrigin: null,
+      receiverName: `${entity.firstName} ${entity.middleName || ""} ${entity.lastName}`,
     });
   };
 

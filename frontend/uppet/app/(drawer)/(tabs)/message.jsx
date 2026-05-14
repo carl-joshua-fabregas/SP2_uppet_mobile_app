@@ -12,13 +12,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "../../../api/axios";
 import * as Themes from "../../../assets/themes/themes";
 import { useSocket } from "../../../context/SocketContext";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../../../context/UserContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ChatList() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
+  const navigation = useNavigation();
   const [chatlist, setChatlist] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -167,8 +167,7 @@ export default function ChatList() {
       <TouchableOpacity
         style={styles.card}
         onPress={() => {
-          router.push({
-            pathname: "messageScreen",
+          navigation.navigate("messageScreen", {
             chatThreadOrigin: item,
             receiverID: item.members[0]?._id,
             receiverName: `${item.members[0]?.firstName} ${item.members[0]?.middleName || ""} ${item.members[0]?.lastName}`,

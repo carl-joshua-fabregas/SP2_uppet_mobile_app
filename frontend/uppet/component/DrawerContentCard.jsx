@@ -1,15 +1,15 @@
 import { View, Text, Image, StyleSheet, Pressable } from "react-native";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
 import * as Themes from "../assets/themes/themes.js";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function ProfileDrawer(props) {
   const { user, logout } = useUser();
-  const router = useRouter();
+  const router = useNavigation();
 
   const handleProfileClick = () => {
-    router.push("viewProfile");
+    router.navigate("viewProfile");
   };
 
   const handleSignOut = async () => {
@@ -64,7 +64,7 @@ export default function ProfileDrawer(props) {
               styles.menuItem,
               pressed && styles.menuItemPressed,
             ]}
-            onPress={() => router.push("viewMyApplication")}
+            onPress={() => router.navigate("viewMyApplication")}
           >
             <Ionicons
               name="paw-outline"

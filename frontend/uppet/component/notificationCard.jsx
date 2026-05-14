@@ -1,13 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import { api } from "../api/axios";
 import { useState } from "react";
 
 export default function NotificationCard(props) {
   const { notification, onLongPress, markIsRead } = props;
-  const navigation = useRouter();
+  const navigation = useNavigation();
   const [isNavigating, setIsNavigating] = useState(false);
 
   // Validate notification object exists
@@ -130,15 +130,12 @@ export default function NotificationCard(props) {
       if (type.startsWith("ADOPTER_")) {
         // Navigate to the adopter's profile
         try {
-          navigation.push({
-            pathname: "viewAdopterProfile",
-            params: {
-              adopterId: entityId,
-            },
+          navigation.navigate("viewAdopterProfile", {
+            adopterId: entityId,
           });
         } catch (navErr) {
           console.error("Navigation error - trying viewProfile:", navErr);
-          navigation.push("viewProfile");
+          navigation.navigate("viewProfile");
         }
         return;
       }
@@ -153,10 +150,7 @@ export default function NotificationCard(props) {
         try {
           const res = await api.get(`/api/pet/${entityId}`);
           if (res.data?.body) {
-            navigation.push({
-              pathname: "viewPetProfile",
-              params: { pet: res.data.body },
-            });
+            navigation.navigate("viewPetProfile", { pet: res.data.body });
           } else {
             console.warn("Pet data not found in response");
           }
@@ -173,15 +167,12 @@ export default function NotificationCard(props) {
           const appData = res.data?.body;
 
           if (appData?.petToAdopt) {
-            navigation.push({
-              pathname: "viewApplicantsMyAdoptees",
-              params: {
-                petID: appData.petToAdopt,
-              },
+            navigation.navigate("viewApplicantsMyAdoptees", {
+              petID: appData.petToAdopt,
             });
           } else if (appData) {
             // Fallback: navigate to my applications view
-            navigation.push("viewMyApplication");
+            navigation.navigate("viewMyApplication");
           } else {
             console.warn("Adoption application data not found");
           }
@@ -189,7 +180,7 @@ export default function NotificationCard(props) {
           console.error("Error fetching adoption app data:", err.message);
           // Fallback to my applications view
           try {
-            navigation.push("viewMyApplication");
+            navigation.navigate("viewMyApplication");
           } catch (fallbackErr) {
             console.error("Fallback navigation failed:", fallbackErr);
           }

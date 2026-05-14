@@ -9,7 +9,7 @@ export async function findUserMatchedPet(req, res) {
         $or: [
           { score: { $lt: lastCursorScore } },
 
-          { score: lastCursorScore, _id: { $lt: lastCursorID } },
+          { score: lastCursorScore, _id: { $lt: { lastCursorID } } },
         ],
       };
     }

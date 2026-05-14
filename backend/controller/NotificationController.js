@@ -2,13 +2,13 @@ import Notification from "../models/Notification.js";
 
 export async function createNotification(req, res) {
   try {
-    const { notifRecipient, body, notifType, relatedEntity, entityModel } =
+    const { notifRecipient, body, notifType, relatedEntiy, entityModel } =
       req.body;
     const newNotif = new Notification({
       recipient: notifRecipient,
       body: body,
       notifType: notifType,
-      relatedEntity: relatedEntity,
+      relatedEntiy: relatedEntiy,
       entityModel: entityModel,
     });
 

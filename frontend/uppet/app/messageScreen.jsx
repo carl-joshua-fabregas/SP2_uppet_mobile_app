@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSocket } from "../context/SocketContext";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
 import * as ImagePicker from "expo-image-picker";
 import ImageView from "react-native-image-viewing";
@@ -33,15 +33,19 @@ export default function MessageScreen() {
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.badgeText.fontSize,
   );
-  const router = useRouter();
-  const params = useLocalSearchParams();
+  const navigation = useNavigation();
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [selectedMessageID, setSelectedMessageID] = useState(null);
 
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight() || 0;
-  const { receiverID } = params;
+  const router = useRoute();
+  const isFetchingRef = useRef(false);
+  const isSending = useRef(false);
+  const { user } = useUser();
+  const socket = useSocket();
+  const { receiverID } = router.params;
   console.log(
     "Receiver ID in message screen:",
     receiverID,

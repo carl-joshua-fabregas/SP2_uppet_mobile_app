@@ -85,7 +85,7 @@ const AdopterSchema = new mongoose.Schema(
     averageRating: {
       type: Number,
       default: 0,
-      set: (val) => Math.round(val * 10) / 10,
+      set: (val) => Math.round((val * 10) / 10),
     },
     totalRating: {
       type: Number,

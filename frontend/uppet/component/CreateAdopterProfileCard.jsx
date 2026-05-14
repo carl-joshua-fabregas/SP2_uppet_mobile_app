@@ -1,11 +1,12 @@
 import { View, Text, ScrollView, TextInput, Button } from "react-native";
 import { useState } from "react";
-import { useRouter } from "expo-router";
-import { api } from "../api/axios";
+import { useNavigation } from "@react-navigation/native";
+
+const api = require("../api/axios");
 
 export default function AdopterProfileInput(props) {
   const type = props.cardType;
-  const router = useRouter();
+  const router = useNavigation();
   const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
     firstName: "",

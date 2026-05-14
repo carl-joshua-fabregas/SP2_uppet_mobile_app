@@ -203,7 +203,7 @@ export async function updateUser(req, res) {
         sender: newUser._id,
         relatedEntity: newUser._id,
         entityModel: "Adopter",
-        message: "Successfully Created Profile",
+        message: "Successfully updated adopter profile",
         notifType: "ADOPTER_NEW",
       });
       const saveNotif = await notifcations.save();
@@ -220,7 +220,7 @@ export async function updateUser(req, res) {
         sender: newUser._id,
         relatedEntity: newUser._id,
         entityModel: "Adopter",
-        message: "Successfully Updated Profile",
+        message: "Successfully updated adopter profile",
         notifType: "ADOPTER_UPDATED",
       });
       const saveNotif = await notifcations.save();
@@ -490,7 +490,7 @@ export async function presignUploadURL(req, res) {
     });
   } catch (err) {
     console.log("ERROR IN GENERATING PRESIGNED URL:", err);
-    return res.status(500).json({
+    return res.status(505).json({
       message: "Server Error",
       body: err.message,
     });

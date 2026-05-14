@@ -189,7 +189,6 @@ export default function ViewAdopterProfile({}) {
       }
       const userData = res.data.body;
       setAdopter(userData);
-      console.log("Successfully obtained Adopter Profile");
     } catch (err) {
       // ONLY show the tombstone if the server explicitly says "Not Found"
       if (err.response && err.response.status === 404) {
@@ -444,7 +443,6 @@ export default function ViewAdopterProfile({}) {
   };
 
   const handleMessage = (entity) => {
-    console.log("Messaging applicant with ID:", entity._id);
     router.push({
       pathname: "messageScreen",
       params: {
@@ -472,7 +470,6 @@ export default function ViewAdopterProfile({}) {
   }
 
   if (adopter._id !== user._id) {
-    console.log("adopter and user id", adopter._id, user);
     buttons.push({
       title: "Message Applicant",
       onPress: () => handleMessage(adoptionApp?.applicant || adopter),

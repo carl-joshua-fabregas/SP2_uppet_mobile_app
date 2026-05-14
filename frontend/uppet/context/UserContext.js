@@ -24,7 +24,6 @@ export const UserProvider = ({ children }) => {
   const [newUser, setNewUser] = useState(false);
 
   const login = async (userData, userToken) => {
-    console.log("Logging In with", userData);
     setUser(userData);
     setToken(userToken);
     await SecureStore.setItemAsync("token", userToken);
@@ -42,7 +41,6 @@ export const UserProvider = ({ children }) => {
     if (signingIn) return;
 
     setSigningIn(true);
-    console.log("Handling signInr");
     try {
       if (Platform.OS === "android") {
         await GoogleSignin.hasPlayServices();
@@ -50,8 +48,6 @@ export const UserProvider = ({ children }) => {
       const resGoogle = await GoogleSignin.signIn();
 
       if (resGoogle && resGoogle.idToken) {
-        console.log(resGoogle);
-
         const { idToken } = resGoogle;
 
         const res = await api.post("/api/auth/google", {
@@ -60,18 +56,14 @@ export const UserProvider = ({ children }) => {
           },
         });
 
-        console.log(res.data.message);
-
         if (res.data.status.toString() === "new_user") {
           const adopterData = {
             googleId: res.data.googleData.googleId,
           };
-          console.log("THE USER IS NEW", res.data);
           setUser(adopterData);
           setNewUser(true);
         } else {
           setNewUser(false);
-          console.log("HERE IN ELSE LOGIN", res.data.body);
           await login(res.data.body, res.data.token);
         }
       }
@@ -96,12 +88,9 @@ export const UserProvider = ({ children }) => {
       setLoading(true);
       try {
         const savedToken = await SecureStore.getItemAsync("token");
-        console.log("SAVED TOKEN IS RETREIVED");
         if (savedToken) {
           const userInfo = await GoogleSignin.signInSilently();
-          console.log("CHECKING IF SAVED TOKEN IS VALID...");
           if (userInfo?.idToken) {
-            console.log("FOUND A TOKEN");
             const res = await api.post("/api/auth/google", {
               token: {
                 idToken: userInfo.idToken,
@@ -109,7 +98,6 @@ export const UserProvider = ({ children }) => {
             });
             if (res.data.status === "old_user") {
               await login(res.data.body, res.data.token);
-              console.log("USER IS AN OLD USER");
             }
           }
         }

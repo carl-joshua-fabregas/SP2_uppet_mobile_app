@@ -429,7 +429,6 @@ export async function findPetRejectedApplicants(req, res) {
 }
 export async function findPetUserApplication(req, res) {
   try {
-    console.log("FINDING PET USER ID APPLICATION");
     const app = await AdoptionApplication.findOne({
       applicant: req.user.id,
       petToAdopt: req.params.id,
@@ -610,15 +609,12 @@ export async function cancelAdoptApp(req, res) {
       new: true,
       runValidators: true,
     };
-    console.log("This is the cancel adoptApp, wite", req.params.id);
     const app = await AdoptionApplication.findById(req.params.id);
-    console.log("This is the app", app);
     if (!app) {
       return res.status(404).json({
         message: "Adoption Application Does not exists",
       });
     }
-    console.log("App exists");
     if (!(app.status === "Pending")) {
       return res.status(409).json({
         message: "Conflict in server, Cannot cancel not pending value",

@@ -2,9 +2,7 @@ import Match from "../models/Match.js";
 
 export async function findUserMatchedPet(req, res) {
   try {
-    console.log("I AM TRYING TO FIND THE BEST MATCH", req.user, req.query);
     const { lastCursorID, lastCursorScore, limit } = req.query;
-    console.log("THis are the params", lastCursorID, lastCursorScore, limit);
     let paginationQuery = {};
     if (lastCursorID && lastCursorScore) {
       paginationQuery = {
@@ -24,7 +22,6 @@ export async function findUserMatchedPet(req, res) {
       .sort({ score: -1, _id: -1 })
       .limit(limit)
       .populate("petID");
-    console.log("matchlist is", matchList);
 
     if (matchList.length === 0) {
       return res.status(200).json({
@@ -32,7 +29,6 @@ export async function findUserMatchedPet(req, res) {
         body: [],
       });
     }
-    console.log("matchlist is", matchList);
     return res.status(200).json({
       message: "Successful Matching query",
       body: matchList,

@@ -5,8 +5,6 @@ import { Ionicons } from "@expo/vector-icons";
 import ProfileDrawer from "../../component/DrawerContentCard";
 
 export default function Menu() {
-  console.log("THEY SEE ME ROLLING");
-
   return (
     <Drawer
       screenOptions={{
@@ -27,7 +25,7 @@ export default function Menu() {
                 width: 120,
                 height: 120,
                 marginLeft: -28,
-                resizeMode: "contain",
+                contentFit: "contain",
                 aspectRatio: 3 / 2,
               }}
             />

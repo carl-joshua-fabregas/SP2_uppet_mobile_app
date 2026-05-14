@@ -50,10 +50,8 @@ function NavigationStack() {
   useEffect(() => {
     if (fontsLoaded && !loading) {
       SplashScreen.hideAsync();
-      console.log("Fonts loaded successfully");
     } else {
       SplashScreen.preventAutoHideAsync();
-      console.log("Loading fonts...");
     }
   }, [fontsLoaded, loading]);
 

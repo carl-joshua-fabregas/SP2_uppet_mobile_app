@@ -1,12 +1,10 @@
 import jwt from "jsonwebtoken";
 
 export default async function authMiddleWare(req, res, next) {
-  console.log(`====================${req.path}=================`);
   if (req.path === `/api/user/post`) {
     return next();
   }
   if (!req.headers.authorization) {
-    console.log("---------------------NO HEADERS---------------------------");
     return res.status(500).json({
       message: "Authorization Error",
     });

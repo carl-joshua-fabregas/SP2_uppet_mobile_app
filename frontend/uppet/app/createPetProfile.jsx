@@ -151,8 +151,6 @@ export default function CreateProfile() {
   const saveEditPet = async () => {
     const { photos: oldPetPhotos, ...oldPetForm } = editPetData;
     const { photos: newPetPhotos, ...newPetForm } = pet;
-    console.log("SAVE AND EDIT OLD", editPetData);
-    console.log("NEW PET DATA", pet);
     const photosDeleted = oldPetPhotos.filter(
       (oldPhoto) =>
         !newPetPhotos.find((newPhoto) => newPhoto.key === oldPhoto.key),
@@ -183,7 +181,6 @@ export default function CreateProfile() {
       !hasDeleted && !hasNewCaptions && !hasNewPhoto && !hasMainPhotoChanged;
 
     if (isPhotoUnchanged && isFormUnchanged) {
-      console.log("NOTHING TO CHANGE");
       return;
     }
     try {
@@ -191,7 +188,6 @@ export default function CreateProfile() {
       if (hasDeleted) {
         const resDelete = await Promise.all(
           photosDeleted.map(async (photo) => {
-            console.log("THIS IS THE PHOTO TO DELETE", photo);
             const preSignDeletUrlRes = await api.post(
               `/api/pet/presignDeleteURL`,
               {
@@ -200,7 +196,6 @@ export default function CreateProfile() {
             );
 
             const { url, key } = preSignDeletUrlRes.data.body;
-            console.log("Starting to Delete Photo", key);
             const awsDelRes = await fetch(url, {
               method: "DELETE",
             });
@@ -213,7 +208,6 @@ export default function CreateProfile() {
         console.log("FOUND NEW PHOTOS");
         const uploadedPhotos = await Promise.all(
           photosAdded.map(async (photo) => {
-            console.log("This is the photo being updated", photo.key);
             const preSignRes = await api.post(`/api/pet/presignUploadURL`, {
               fileName: photo.name,
               petID: pet._id,
@@ -266,11 +260,9 @@ export default function CreateProfile() {
         // );
         // finalPetArray = finalPetPhotoRes.data.body;
       }
-      console.log("FINAL PHOTOS ARRAY", finalPetArray);
       const finalPetFormRes = await api.patch(`/api/pet/${pet._id}`, {
         ...finalPetArray,
       });
-      console.log("Final pet form Res", finalPetFormRes.data.body);
     } catch (err) {
       console.log("Error in save edit", err.message);
     } finally {

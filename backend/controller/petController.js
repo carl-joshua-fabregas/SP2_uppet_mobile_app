@@ -1,26 +1,12 @@
 import Pet from "../models/Pet.js";
 import AdoptionApplication from "../models/AdoptionApplication.js";
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import mongoose from "mongoose";
 import Adopter from "../models/Adopter.js";
 import Match from "../models/Match.js";
 import { generateBulkMatchForPet } from "../services/matchingServices.js";
-
-console.log("AWS REGION:", process.env.AWS_REGION);
-console.log("AWS ACCESS KEY ID:", process.env.AWS_ACCESS_KEY_ID);
-console.log("AWS SECRET ACCESS KEY:", process.env.AWS_SECRET_ACCESS_KEY);
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+import s3 from "../config/aws.js";
 
 export async function createPet(req, res) {
   try {
@@ -60,11 +46,8 @@ export async function createPet(req, res) {
       otherInfo: otherInfo,
       photos: photos,
     });
-    console.log("REQUEST BODY", req.body);
-    console.log("BEFORE PET GOT SAVED");
 
     const status = await newPet.save();
-    console.log("PET GOT SAVED", status);
     return res.status(200).json({
       message: "Succesfully Added",
       body: status,
@@ -92,7 +75,6 @@ export async function findAll(req, res) {
       message: "Successfully obtained all pets",
       body: allPets,
     });
-    console.log("DONE");
   } catch (err) {
     return res.status(500).json({
       message: "Server Error",
@@ -124,7 +106,6 @@ export async function findByID(req, res) {
 }
 
 export async function findByFilter(req, res) {
-  console.log("FIND BY FILTER CALLED");
   try {
     const { age, breed, species, sex, size, weight, adoptionStatus } =
       req.query;
@@ -163,7 +144,6 @@ export async function findAllAvailPets(req, res) {
   try {
     const { limit, lastPetID, lastPetUpdate } = req.query;
     if (!lastPetID) {
-      console.log("I am here");
       const avail = await Pet.find({ adoptedStatus: { $ne: true } })
         .sort({ updatedAt: -1 })
         .limit(limit)
@@ -187,16 +167,13 @@ export async function findAllAvailPets(req, res) {
     })
       .sort({ updatedAt: -1, createdAt: -1 })
       .populate("ownerId", "firstName middleName lastName");
-    console.log("Found pets:", avail.length);
 
     if (avail.length === 0) {
-      console.log("Found pets are nothing");
       return res.status(200).json({
         message: "AVAILABLE PETS ARE EMPTY",
         body: [],
       });
     }
-    console.log("SUCCESSFULL RETREIVAL");
     return res.status(200).json({
       message: "Successfully found all available pets",
       body: avail,
@@ -454,14 +431,12 @@ export async function deleteAll(req, res) {
 }
 
 export async function updatePet(req, res) {
-  console.log("We are updating in update Pet");
   try {
     const options = {
       new: true,
       runValidators: true,
     };
     const { initialCreation = false, ...updateData } = req.body;
-    console.log("This are the req.body", req.body, initialCreation, updateData);
     const pet = await Pet.findById(req.params.id);
 
     if (!pet) {
@@ -491,13 +466,11 @@ export async function updatePet(req, res) {
         message: "Message has been created",
         pet: updatedPet,
       });
-      console.log("we emitted pet created");
     } else {
       io.emit("pet_updated", {
         message: "Pet has been updated",
         pet: updatedPet,
       });
-      console.log("we emitted pet update");
     }
     res.status(200).json({
       message: "Successfully updated a pet",
@@ -527,25 +500,14 @@ export async function presignUploadURL(req, res) {
       //   name: req.body.name || ""
       // }
     });
-    console.log(
-      process.env.AWS_BUCKET_NAME,
-      process.env.AWS_REGION,
-      process.env.AWS_ACCESS_KEY_ID,
-      process.env.AWS_SECRET_ACCESS_KEY,
-    );
-    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
-    console.log("WITH COMMAND:", command);
 
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
-    console.log("PRESIGNED URL GENERATED:", url);
     const finalUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${key}`;
-    console.log("FINAL URL GENERATED:", finalUrl);
     return res.status(200).json({
       message: "Successfully obtained presigned URL",
       body: { url: url, key: key, finalUrl: finalUrl },
     });
   } catch (err) {
-    console.log("ERROR IN GENERATING PRESIGNED URL:", err);
     return res.status(505).json({
       message: "Server Error",
       body: err.message,
@@ -555,23 +517,13 @@ export async function presignUploadURL(req, res) {
 
 export async function presignDeleteURL(req, res) {
   try {
-    console.log("GENERATING presignDeleteURL");
     const key = req.body.key;
     const command = new DeleteObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
     });
-    console.log(
-      process.env.AWS_BUCKET_NAME,
-      process.env.AWS_REGION,
-      process.env.AWS_ACCESS_KEY_ID,
-      process.env.AWS_SECRET_ACCESS_KEY,
-    );
-    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
-    console.log("WITH COMMAND:", command);
 
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
-    console.log("PRESIGNED URL GENERATED:", url);
 
     return res.status(200).json({
       message: "Successfully obtained presigned URL",
@@ -586,10 +538,7 @@ export async function presignDeleteURL(req, res) {
   }
 }
 export async function uploadPetPhoto(req, res) {
-  console.log("UPLOAD PET PHOTO CONTROLLER CALLED");
   try {
-    console.log("PET ID IN UPLOAD PET PHOTO CONTROLLER", req.params.id);
-
     const pet = await Pet.findById(req.params.id).populate(
       "ownerId",
       "firstName middleName lastName",
@@ -617,7 +566,6 @@ export async function uploadPetPhoto(req, res) {
       timeStamp: p.timeStamp,
     }));
 
-    console.log("BACKED END HERE UPLOADED PHOTOS ARE", uploadedPhotos);
     const updatedPet = await Pet.findByIdAndUpdate(
       req.params.id,
       { $push: { photos: { $each: uploadedPhotos } } },

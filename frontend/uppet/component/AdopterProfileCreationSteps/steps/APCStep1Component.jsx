@@ -116,9 +116,7 @@ export default function APCStep1Component({
           size: asset.fileSize || 0,
           key: `user/${adopterData._id}/${asset.fileSize}_${asset.fileName}`,
         };
-        console.log("Selected zucc", newProfilePicture);
         update("profilePhoto", newProfilePicture);
-        console.log("Update zucc", adopterData);
       } else {
         console.log("The user has cancelled selection");
       }

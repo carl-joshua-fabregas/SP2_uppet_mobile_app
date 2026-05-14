@@ -26,7 +26,6 @@ export default function PCStep4Component({ petData, uploading }) {
   // We don't need the sticky button logic here, just an empty function so the prop is satisfied
   const handleGalleryLayout = (event) => {};
   const handlePressImage = (image, index) => {
-    console.log("Image Pressed: ", image, index);
     setSelectedImage(image);
     setImageViewerIndex(index);
     setShowImageViewer(true);

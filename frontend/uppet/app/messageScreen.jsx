@@ -135,7 +135,6 @@ export default function MessageScreen() {
   };
 
   const handleOpenOptions = (message) => {
-    console.log("MODAAAL 0, ", message, user._id);
     if (message.sender !== user._id) return;
     setSelectedMessageOptions(message);
     setIsModalVisible(true);

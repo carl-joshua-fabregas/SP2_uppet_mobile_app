@@ -43,7 +43,10 @@ export async function generateBulkMatchForUser(user) {
   let attempts = 0;
 
   try {
-    const allAvailablePets = await Pet.find({ adoptedStatus: { $ne: true } });
+    const allAvailablePets = await Pet.find({
+      adoptedStatus: { $ne: true },
+      ownerId: { $ne: user._id },
+    });
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash-lite",
       generationConfig: { responseMimeType: "application/json" },

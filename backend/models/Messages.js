@@ -48,7 +48,7 @@ const messageSchema = new mongoose.Schema(
 );
 
 messageSchema.virtual("isEdited").get(function () {
-  if (!this.createdAt || this.updatedAt) return false;
+  if (!this.createdAt || !this.updatedAt) return false;
   return this.updatedAt.getTime() > this.createdAt.getTime();
 });
 

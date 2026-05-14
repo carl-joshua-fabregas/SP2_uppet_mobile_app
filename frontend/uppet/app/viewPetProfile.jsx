@@ -185,7 +185,8 @@ export default function ViewPetProfile() {
       const ownerIdString = pet.ownerId._id || pet.ownerId;
       console.log(pet, "this is it");
       const ownerName = pet.ownerId.firstName
-        ? `${pet.ownerId.firstName} ${pet.ownerId.middleName} ${pet.ownerId.lastName}`
+        ? // To do, makesure ownerID is populated
+          `${pet.ownerId.firstName} ${pet.ownerId.middleName || ""} ${pet.ownerId.lastName}`
         : "Owner";
 
       navigation.navigate("messageScreen", {
@@ -197,8 +198,9 @@ export default function ViewPetProfile() {
   };
   const handleViewOwnerProfile = () => {
     console.log("View Owner Profile Clicked");
+    const ownerIdString = pet.ownerId._id || pet.ownerId;
     navigation.navigate("viewAdopterProfile", {
-      id: pet.ownerId._id,
+      id: ownerIdString,
     });
   };
 

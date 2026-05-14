@@ -6,7 +6,7 @@ import { api } from "../api/axios";
 import { useState } from "react";
 
 export default function NotificationCard(props) {
-  const { notification, onLongPress, markIsRead } = props;
+  const { notification, onLongPress, markIsRead, userRole } = props;
   const navigation = useNavigation();
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -166,24 +166,20 @@ export default function NotificationCard(props) {
           const res = await api.get(`/api/adoptionApp/${entityId}`);
           const appData = res.data?.body;
 
-          if (appData?.petToAdopt) {
+          if (userRole === "adopter") {
+            // Adopter always sees their own application view
+            navigation.navigate("viewMyApplication");
+          } else if (appData?.petToAdopt) {
+            // Owner sees their pet's applicants
             navigation.navigate("viewApplicantsMyAdoptees", {
               petID: appData.petToAdopt,
             });
-          } else if (appData) {
-            // Fallback: navigate to my applications view
-            navigation.navigate("viewMyApplication");
           } else {
             console.warn("Adoption application data not found");
           }
         } catch (err) {
           console.error("Error fetching adoption app data:", err.message);
-          // Fallback to my applications view
-          try {
-            navigation.navigate("viewMyApplication");
-          } catch (fallbackErr) {
-            console.error("Fallback navigation failed:", fallbackErr);
-          }
+          navigation.navigate("viewMyApplication");
         }
         return;
       }

@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ViewMyApplication(props) {
   const router = useRoute();
+  const insets = useSafeAreaInsets();
   const socket = useSocket();
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState("pending");

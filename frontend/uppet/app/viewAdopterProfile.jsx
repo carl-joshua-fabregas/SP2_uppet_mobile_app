@@ -471,7 +471,7 @@ export default function ViewAdopterProfile({}) {
   if (adopter._id !== user._id) {
     console.log("adopter and user id", adopter._id, user);
     buttons.push({
-      title: "Message Applicant",
+      title: "Message",
       onPress: () => handleMessage(adoptionApp?.applicant || adopter),
       styleType: "neutral",
     });

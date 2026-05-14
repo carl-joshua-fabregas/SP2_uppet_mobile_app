@@ -401,7 +401,7 @@ export default function MessageScreen() {
               url: finalUrl,
               type: media.type,
             };
-            const body = idx === 0 && textInput ? textInput : " ";
+            const body = index === 0 && textInput ? textInput : " ";
             handleSend(body, uploadetails, true);
             return true;
           }),

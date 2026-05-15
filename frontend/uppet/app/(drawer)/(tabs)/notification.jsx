@@ -213,7 +213,7 @@ export default function Notification() {
       }
 
       setNotification((prev) =>
-        prev.filter((notif) => notif._id !== data.notification),
+        prev.filter((notif) => notif._id.toString() !== data.notification),
       );
     };
 

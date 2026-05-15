@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TextInput, Button } from "react-native";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-const api = require("../api/axios");
+import { api } from "../api/axios";
 export default function CreatePetCard(props) {
   const router = useNavigation();
   const [error, setError] = useState({});
@@ -71,7 +71,7 @@ export default function CreatePetCard(props) {
       console.log("Create Pet Profile Valid");
       try {
         const response = await api.post("/api/pet/post", form);
-        setRes(response)
+        setRes(response);
         if (!response.data.body) {
           console.log("DID NOT POST");
         } else {
@@ -171,9 +171,14 @@ export default function CreatePetCard(props) {
           value={form.otherInfo}
           onChangeText={(text) => handleOnChange("otherInfo", text)}
         ></TextInput>
-        <Button title="Upload Photo Gallery" onPress={() => props.handleImageRead(res?.data?.body?._id, "This is a caption")}></Button>
+        <Button
+          title="Upload Photo Gallery"
+          onPress={() =>
+            props.handleImageRead(res?.data?.body?._id, "This is a caption")
+          }
+        ></Button>
         <Button title="Submit" onPress={handleSubmit}></Button>
       </ScrollView>
     </View>
   );
-}   
+}

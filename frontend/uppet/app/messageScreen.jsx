@@ -140,7 +140,7 @@ export default function MessageScreen() {
 
   const handleOpenOptions = (message) => {
     console.log("MODAAAL 0, ", message, user._id);
-    if (message.sender !== user._id) return;
+    if (message.sender?.toString() !== user._id?.toString()) return;
     setSelectedMessageOptions(message);
     setIsModalVisible(true);
   };
@@ -198,7 +198,7 @@ export default function MessageScreen() {
     if (chatThreadOrigin) {
       socket.emit("messages_read", {
         chatThreadOrigin: chatThreadOrigin._id || chatThreadOrigin,
-        receiverId: user._id,
+        receiverId: receiverID,
         roomID,
       });
     }
@@ -211,7 +211,11 @@ export default function MessageScreen() {
     });
 
     socket.on("receive_message", (newMessage) => {
-      if (newMessage.sender === user._id) return;
+      // ✅ FIX: Extract the ID whether sender is an object or a string
+      const incomingSenderId =
+        newMessage.sender?._id?.toString() || newMessage.sender?.toString();
+
+      if (incomingSenderId === user._id?.toString()) return;
 
       setMessages((prevMessages) => {
         if (prevMessages.some((msg) => msg._id === newMessage._id)) {
@@ -225,7 +229,7 @@ export default function MessageScreen() {
       if (chatThreadOrigin) {
         socket.emit("messages_read", {
           chatThreadOrigin: chatThreadOrigin._id || chatThreadOrigin,
-          receiverId: user._id,
+          receiverId: receiverID,
           roomID,
         });
       }
@@ -308,7 +312,8 @@ export default function MessageScreen() {
     setLoading(true);
     try {
       const limit = messages.length > 0 ? 15 : initialLimit;
-      const res = await api.get(`/api/message/${thread._id}`, {
+      const threadId = thread?._id || thread;
+      const res = await api.get(`/api/message/${threadId}`, {
         params: { lastMessageId: lastMessageId, limit: limit },
       });
       const moreMessages = res.data.body || [];
@@ -421,7 +426,9 @@ export default function MessageScreen() {
   };
 
   const renderMessages = ({ item, index }) => {
-    const isSender = item.sender === user._id;
+    const isSender =
+      item.sender?._id?.toString() === user._id?.toString() ||
+      item.sender?.toString() === user._id?.toString();
     const olderMessage = messages[index + 1];
     let showTimeHeader = false;
 

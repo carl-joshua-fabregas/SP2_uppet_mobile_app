@@ -1,3 +1,4 @@
+import { parse } from "dotenv";
 import Match from "../models/Match.js";
 
 export async function findUserMatchedPet(req, res) {
@@ -9,9 +10,9 @@ export async function findUserMatchedPet(req, res) {
     if (lastCursorID && lastCursorScore) {
       paginationQuery = {
         $or: [
-          { score: { $lt: lastCursorScore } },
+          { score: { $lt: Number(lastCursorScore) } },
 
-          { score: lastCursorScore, _id: { $lt: lastCursorID } },
+          { score: Number(lastCursorScore), _id: { $lt: lastCursorID } },
         ],
       };
     }
@@ -22,7 +23,7 @@ export async function findUserMatchedPet(req, res) {
       score: { $gte: 50 },
     })
       .sort({ score: -1, _id: -1 })
-      .limit(limit)
+      .limit(parseInt(limit) || 10)
       .populate("petID");
     console.log("matchlist is", matchList);
 

@@ -17,7 +17,7 @@ GoogleSignin.configure({
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [signingIn, setSigningIn] = useState(false);

@@ -285,7 +285,7 @@ export default function CreateAdopterProfile() {
     }
   }, [user?._id]);
   const updateAdopter = async () => {
-    console.log("Updating Adopter", adopter);
+    console.log("Updating Adopter", adopterForm);
   };
   const renderStep = () => {
     switch (currentStep) {

@@ -178,34 +178,35 @@ export default function MyAdoptee() {
     };
 
     const handleDelete = (data) => {
+      const deletedId =
+        data.pet?._id?.toString() || data.pet?.toString() || data.pet;
       const updatelist = (prev) => ({
         ...prev,
-        pets: prev.pets.filter((p) => p._id !== data.pet),
+        pets: prev.pets.filter((p) => p._id?.toString() !== deletedId),
       });
 
       setPending(updatelist);
       setAdopted(updatelist);
     };
     const handleAppApproved = (data) => {
-      const petId =
-        data.adoptionApp.petToAdopt._id || data.adoptionApp.petToAdopt;
+      const petId = (
+        data.adoptionApp.petToAdopt?._id || data.adoptionApp.petToAdopt
+      ).toString();
 
-      // Access pending.pets directly from the component's current render cycle
-      const adoptedPet = pending.pets.find((p) => p._id === petId);
+      setPending((prev) => {
+        const adoptedPet = prev.pets.find((p) => p._id.toString() === petId);
+        if (!adoptedPet) return prev;
 
-      if (adoptedPet) {
-        // 1. Remove from pending
-        setPending((prev) => ({
-          ...prev,
-          pets: prev.pets.filter((p) => p._id !== petId),
+        setAdopted((prevAdopted) => ({
+          ...prevAdopted,
+          pets: [{ ...adoptedPet, adoptedStatus: true }, ...prevAdopted.pets],
         }));
 
-        // 2. Add to adopted
-        setAdopted((prev) => ({
+        return {
           ...prev,
-          pets: [adoptedPet, ...prev.pets],
-        }));
-      }
+          pets: prev.pets.filter((p) => p._id.toString() !== petId),
+        };
+      });
     };
 
     socket.on("adoptionApp_approved", handleAppApproved);

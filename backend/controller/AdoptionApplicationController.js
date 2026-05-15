@@ -34,6 +34,10 @@ export async function createAdoptApp(req, res) {
     });
 
     const adoptStat = await adoptionApplication.save();
+    const populatedAdoptStat = await adoptStat.populate([
+      "applicant",
+      "petToAdopt",
+    ]);
     const io = req.app.get("io");
 
     const newOwnerNotification = new Notification({
@@ -59,7 +63,7 @@ export async function createAdoptApp(req, res) {
 
     io.to(pet.ownerId.toString()).emit("adoptionApp_created", {
       message: "adoption app was created",
-      adoptionApp: adoptStat,
+      adoptionApp: populatedAdoptStat,
     });
 
     io.to(pet.ownerId.toString()).emit("notification_created", {
@@ -69,7 +73,7 @@ export async function createAdoptApp(req, res) {
 
     io.to(req.user.id.toString()).emit("adoptionApp_created", {
       message: "adoption app was created",
-      adoptionApp: adoptStat,
+      adoptionApp: populatedAdoptStat,
     });
 
     io.to(req.user.id.toString()).emit("notification_created", {
@@ -976,7 +980,7 @@ export async function rejectApplicant(req, res) {
     io.to(rejectApplication.applicant._id.toString()).emit(
       "adoptionApp_rejected",
       {
-        message: "Adoption App emittion, it has been accepted",
+        message: "Adoption App has been rejected",
         adoptionApp: rejectApplication,
       },
     );
@@ -990,7 +994,7 @@ export async function rejectApplicant(req, res) {
     );
 
     io.to(pet.ownerId.toString()).emit("adoptionApp_rejected", {
-      message: "Adoption App emittion, it has been accepted",
+      message: "Adoption App has been rejected",
       adoptionApp: rejectApplication,
     });
 

@@ -1,8 +1,7 @@
 import { View, Text, ScrollView, TextInput, Button } from "react-native";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-
-const api = require("../api/axios");
+import { api } from "../api/axios";
 
 export default function AdopterProfileInput(props) {
   const type = props.cardType;

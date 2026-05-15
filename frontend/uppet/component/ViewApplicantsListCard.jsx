@@ -7,10 +7,12 @@ import * as Themes from "../assets/themes/themes";
 export default function ViewApplicantsCard({ adoptionApp }) {
   const navigator = useNavigation();
   const applicant = adoptionApp.applicant;
-  console.log("This is the adoption app", adoptionApp);
+  const applicantId = applicant?._id || applicant; // handles both object and raw ID
+
   const onViewApplicantPress = () => {
+    if (!applicant?._id) return; // guard: don't navigate if not populated
     navigator.navigate("viewAdopterProfile", {
-      id: applicant._id,
+      id: applicantId,
       adoptionApp: adoptionApp,
     });
   };

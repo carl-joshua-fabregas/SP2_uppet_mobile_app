@@ -166,17 +166,19 @@ export default function ChatList() {
   };
 
   const renderItem = ({ item }) => {
-    const isUnread =
-      item.lastMessage?.sender !== user._id &&
-      item.lastMessage?.status !== "read";
+    const senderId =
+      item.lastMessage?.sender?._id?.toString() ||
+      item.lastMessage?.sender?.toString();
 
+    const isUnread =
+      senderId !== user._id?.toString() && item.lastMessage?.status !== "read";
     return (
       <TouchableOpacity
         style={styles.card}
         onPress={() => {
           navigation.navigate("messageScreen", {
             chatThreadOrigin: item,
-            receiverID: item.members[0]?._id,
+            receiverID: item.members[0]?._id?.toString(),
             receiverName: `${item.members[0]?.firstName} ${item.members[0]?.middleName || ""} ${item.members[0]?.lastName}`,
           });
         }}

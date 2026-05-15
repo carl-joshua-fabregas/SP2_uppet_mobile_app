@@ -1,27 +1,12 @@
 import Pet from "../models/Pet.js";
 import AdoptionApplication from "../models/AdoptionApplication.js";
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import mongoose from "mongoose";
 import Adopter from "../models/Adopter.js";
 import Match from "../models/Match.js";
 import { generateBulkMatchForPet } from "../services/matchingServices.js";
-
-console.log("AWS REGION:", process.env.AWS_REGION);
-console.log("AWS ACCESS KEY ID:", process.env.AWS_ACCESS_KEY_ID);
-console.log("AWS SECRET ACCESS KEY:", process.env.AWS_SECRET_ACCESS_KEY);
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
-
+import s3 from "../config/aws.js";
 export async function createPet(req, res) {
   try {
     const {
@@ -546,7 +531,7 @@ export async function presignUploadURL(req, res) {
     });
   } catch (err) {
     console.log("ERROR IN GENERATING PRESIGNED URL:", err);
-    return res.status(505).json({
+    return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });
@@ -579,7 +564,7 @@ export async function presignDeleteURL(req, res) {
     });
   } catch (err) {
     console.log("ERROR IN GENERATING PRESIGNED URL:", err);
-    return res.status(505).json({
+    return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });

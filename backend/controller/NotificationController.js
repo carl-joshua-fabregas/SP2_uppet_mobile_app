@@ -177,7 +177,11 @@ export async function markIsRead(req, res) {
 export async function deleteUserNotification(req, res) {
   try {
     const user = await Notification.findById(req.params.id);
-
+    if (!user) {
+      return res.status(404).json({
+        message: "Notification Not Found",
+      });
+    }
     if (
       req.user.id.toString() !== user.recipient.toString() &&
       req.user.role.toString() !== "admin"
@@ -191,7 +195,7 @@ export async function deleteUserNotification(req, res) {
 
     io.to(req.user.id).emit("notification_deleted", {
       message: "A notification has been deleted",
-      notification: user.id,
+      notification: user._id.toString(),
     });
 
     return res.status(200).json({

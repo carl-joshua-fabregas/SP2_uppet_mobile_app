@@ -7,7 +7,7 @@ export default async function authMiddleWare(req, res, next) {
   }
   if (!req.headers.authorization) {
     console.log("---------------------NO HEADERS---------------------------");
-    return res.status(500).json({
+    return res.status(401).json({
       message: "Authorization Error",
     });
   }

@@ -329,9 +329,8 @@ export default function ViewPetProfile() {
 
       const isApplicant =
         adoptionApp &&
-        (adoptionApp.applicant === user._id ||
-          adoptionApp.applicant?._id === user._id);
-
+        (adoptionApp.applicant?.toString() === user._id?.toString() ||
+          adoptionApp.applicant?._id?.toString() === user._id?.toString());
       if (isApplicant) {
         switch (adoptionApp.status) {
           case "Approved":

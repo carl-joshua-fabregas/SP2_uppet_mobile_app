@@ -2,7 +2,7 @@ import Match from "../models/Match.js";
 import Pet from "../models/Pet.js";
 import Adopter from "../models/Adopter.js";
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
-
+import mongoose from "mongoose";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const chunkArray = (array, size) => {
@@ -136,7 +136,11 @@ export async function generateBulkMatchForUser(user) {
 
           const mongodbBulkOps = scores.map((match) => ({
             updateOne: {
-              filter: { adopterID: user._id, petID: match.id },
+              filter: {
+                adopterID: user._id,
+                petID: new mongoose.Types.ObjectId(match.id),
+              },
+
               update: { $set: { score: match.score } },
               upsert: true,
             },
@@ -252,7 +256,10 @@ export async function generateBulkMatchForPet(pet) {
           const scores = JSON.parse(cleanJson);
           const mongodbBulkOps = scores.map((match) => ({
             updateOne: {
-              filter: { adopterID: match.id, petID: pet._id }, // Using the mapped match.id
+              filter: {
+                adopterID: new mongoose.Types.ObjectId(match.id),
+                petID: pet._id,
+              },
               update: { $set: { score: match.score } },
               upsert: true,
             },

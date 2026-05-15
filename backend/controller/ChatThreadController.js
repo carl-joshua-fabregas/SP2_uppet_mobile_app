@@ -182,7 +182,7 @@ export async function deleteChatThread(req, res) {
     await Message.deleteMany({ chatThreadOrigin: req.params.id });
     await ChatThread.findByIdAndDelete(req.params.id);
 
-    io.to(otherMember).emit("chatThread_deleted", {
+    io.to(otherMember[0].toString()).emit("chatThread_deleted", {
       message: "Chat Thread has been deleted",
       chatThread: req.params.id,
     });

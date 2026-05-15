@@ -9,7 +9,7 @@ export async function createRating(req, res) {
       reviewer: req.user.id,
     });
     if (existingReview.length > 0) {
-      return res.status(200).json({
+      return res.status(409).json({
         message: "You have already rated this user",
         body: [],
       });

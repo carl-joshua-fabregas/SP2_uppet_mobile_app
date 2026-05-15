@@ -2,9 +2,8 @@ import ChatThread from "../models/ChatThread.js";
 import Message from "../models/Messages.js";
 const options = {
   new: true,
-  runValidator: true,
+  runValidators: true,
 };
-
 
 export async function setMessageStatusToDeliver(messageData) {
   try {
@@ -25,12 +24,12 @@ export async function setMessageStatusToRead(chatThreadOrigin, receiverId) {
   try {
     // Update all messages in this thread where the receiver is the one reading them, and they aren't 'read' yet
     const updateResult = await Message.updateMany(
-      { 
+      {
         chatThreadOrigin: chatThreadOrigin,
         sender: { $ne: receiverId }, // Only update messages the OTHER person sent
-        status: { $in: ["sent", "delivered"] }
+        status: { $in: ["sent", "delivered"] },
       },
-      { $set: { status: "read" } }
+      { $set: { status: "read" } },
     );
 
     return { updateResult };

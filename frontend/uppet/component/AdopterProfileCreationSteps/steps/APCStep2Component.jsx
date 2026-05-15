@@ -69,38 +69,6 @@ export default function APCStep2Component({
   const update = (key, value) =>
     setAdopterData((prev) => ({ ...prev, [key]: value }));
 
-  const handleNext = async () => {
-    let newErrors = {};
-    // Validate required fields
-
-    if (!adopterData.occupation.trim()) {
-      newErrors.occupation = "Occupation Error";
-    }
-    const incomeNum = Number(adopterData.income, 10);
-    if (isNaN(incomeNum)) {
-      newErrors.income = "Income Error";
-    }
-    if (!adopterData.livingCon.trim()) {
-      newErrors.livingCon = "Living Condition Error";
-    }
-    if (!adopterData.lifeStyle.trim()) {
-      newErrors.lifeStyle = "LifeStyle Error";
-    }
-    const householdMem = Number(adopterData.householdMem, 10);
-    if (isNaN(householdMem)) {
-      newErrors.householdMem = "Household Members Error";
-    }
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-    } else {
-      setErrors({});
-      // Proceed to next step
-
-      console.log("Pet Data is valid, proceeding to next step:", adopterData);
-      onNext();
-    }
-  };
-
   return (
     <View style={styles.APCStep2ComponentContainer}>
       <View style={styles.sectionCard}>

@@ -1,22 +1,9 @@
 import ChatThread from "../models/ChatThread.js";
 import Message from "../models/Messages.js";
 import { ObjectId } from "mongodb";
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-console.log("AWS REGION:", process.env.AWS_REGION);
-console.log("AWS ACCESS KEY ID:", process.env.AWS_ACCESS_KEY_ID);
-console.log("AWS SECRET ACCESS KEY:", process.env.AWS_SECRET_ACCESS_KEY);
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+import s3 from "../config/aws.js";
 
 export async function presignUploadURL(req, res) {
   try {
@@ -30,15 +17,6 @@ export async function presignUploadURL(req, res) {
       //   name: req.body.name || ""
       // }
     });
-    console.log(
-      process.env.AWS_BUCKET_NAME,
-      process.env.AWS_REGION,
-      process.env.AWS_ACCESS_KEY_ID,
-      process.env.AWS_SECRET_ACCESS_KEY,
-    );
-    console.log("GENERATING PRESIGNED URL FOR KEY:", key);
-    console.log("WITH COMMAND:", command);
-
     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
     console.log("PRESIGNED URL GENERATED:", url);
     const finalUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${key}`;
@@ -82,7 +60,7 @@ export async function presignDeleteURL(req, res) {
     });
   } catch (err) {
     console.log("ERROR IN GENERATING PRESIGNED URL:", err);
-    return res.status(505).json({
+    return res.status(500).json({
       message: "Server Error",
       body: err.message,
     });
@@ -92,12 +70,11 @@ export async function sendMessage(req, res) {
   try {
     const options = {
       new: true,
-      runValidator: true,
+      runValidators: true,
     };
-    const { chatThreadOrigin, sender, receiver, body, media, isEdited } =
-      req.body;
+    const { chatThreadOrigin, receiver, body, media, isEdited } = req.body;
     console.log("media is", media);
-
+    const sender = req.user.id;
     const message = new Message({
       chatThreadOrigin: chatThreadOrigin,
       sender: sender,
@@ -107,24 +84,31 @@ export async function sendMessage(req, res) {
     });
 
     const newMessage = await message.save();
+    const populatedMessage = await newMessage.populate(
+      "sender",
+      "_id firstName lastName profilePhoto",
+    );
 
     const updatedChatList = await ChatThread.findByIdAndUpdate(
       message.chatThreadOrigin,
-      {
-        $set: {
-          lastMessage: message._id,
-          timeStamp: Date.now(),
-        },
-      },
+      { $set: { lastMessage: message._id, timeStamp: Date.now() } },
       options,
-    ).populate("lastMessage");
-
+    )
+      .populate({
+        path: "lastMessage",
+        populate: { path: "sender", select: "_id" },
+      })
+      .populate({
+        path: "members",
+        match: { _id: { $ne: sender } },
+        select: "firstName middleName lastName profilePhoto",
+      });
     const io = req.app.get("io");
 
     // The frontend joins rooms named by sorting the two user IDs
-    const roomID = [sender, receiver].sort().join("_");
+    const roomID = [sender.toString(), receiver.toString()].sort().join("_");
 
-    io.to(roomID).emit("receive_message", newMessage);
+    io.to(roomID).emit("receive_message", populatedMessage);
     io.to(receiver).emit("update_chatlist", updatedChatList);
     io.to(sender).emit("update_chatlist", updatedChatList);
     return res.status(200).json({
@@ -239,7 +223,9 @@ export async function editAMessage(req, res) {
     );
 
     const io = req.app.get("io");
-    const roomID = [req.body.sender, req.body.receiver].sort().join("_");
+    const roomID = [req.body.sender.toString(), req.body.receiver.toString()]
+      .sort()
+      .join("_");
     io.to(roomID).emit("message_updated", {
       message: "Updated a Message",
       updmessage: updatedMessage,
@@ -286,7 +272,9 @@ export async function deleteAMessage(req, res) {
     }
     const io = req.app.get("io");
     if (io) {
-      const roomID = [message.sender, req.user.id].sort().join("_");
+      const roomID = [message.sender.toString(), req.user.id.toString()]
+        .sort()
+        .join("_");
       io.to(roomID).emit("message_deleted", {
         message: "Updated a Message",
         deletedID: req.params.id,

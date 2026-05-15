@@ -7,7 +7,7 @@ const getBaseURL = () => {
     const debuggerHost = Constants.expoConfig?.hostUri.split(":").shift();
     return `http://${debuggerHost}:5000`;
   }
-  return "http://10.20.25.254:5000";
+  return "https://sp2-uppet-mobile-app.onrender.com";
 };
 
 console.log("Base URL:", getBaseURL());

@@ -108,11 +108,18 @@ export default function ChatList() {
         const updatedChats = [...prevChats];
 
         if (chatIndexLoc !== -1) {
-          updatedChats[chatIndexLoc] = updatedConversation;
+          const existingChat = updatedChats[chatIndexLoc];
+          updatedChats[chatIndexLoc] = {
+            ...updatedConversation,
+            members: existingChat.members,
+          };
+
           const [moveChat] = updatedChats.splice(chatIndexLoc, 1);
           updatedChats.unshift(moveChat);
+          return updatedChats;
         } else {
-          updatedChats.unshift(updatedConversation);
+          fetchChatList(null, null, true);
+          return prevChats;
         }
         return updatedChats;
       });

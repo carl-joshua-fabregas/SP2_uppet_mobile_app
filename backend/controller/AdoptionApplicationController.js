@@ -1,7 +1,7 @@
 import AdoptionApplication from "../models/AdoptionApplication.js";
 import Notification from "../models/Notification.js";
 import Pet from "../models/Pet.js";
-
+import Match from "../models/Match.js";
 export async function createAdoptApp(req, res) {
   try {
     const { petToAdopt } = req.body;
@@ -42,7 +42,7 @@ export async function createAdoptApp(req, res) {
       notifType: "ADOP_APP_RECEIVED",
       entityModel: "AdoptionApplication",
       relatedEntity: adoptStat._id,
-      message: "Successfully Applied for a pet",
+      message: "Someone Applied for a pet",
     });
 
     const newApplicantNotification = new Notification({
@@ -493,7 +493,9 @@ export async function reapplyUpdateAdoptionApp(req, res) {
       req.params.id,
       { $set: { status: "Pending" } },
       options,
-    );
+    )
+      .populate("applicant")
+      .populate("petToAdopt");
 
     const io = req.app.get("io");
 
@@ -518,7 +520,8 @@ export async function reapplyUpdateAdoptionApp(req, res) {
     const newOwnNotifRes = await newOwnerNotification.save();
     const newAplNotifRes = await newApplicantNotification.save();
 
-    io.to(pet.ownerId.toString()).emit("adoptionApp_created", {
+    io.to(pet.ownerId.toString()).emit("adoptionApp_updated", {
+      // <-- Changed to updated
       message: "adoption app was updated",
       adoptionApp: newAdoptionApp,
     });
@@ -528,8 +531,9 @@ export async function reapplyUpdateAdoptionApp(req, res) {
       notification: newOwnNotifRes,
     });
 
-    io.to(req.user.id.toString()).emit("adoptionApp_created", {
-      message: "adoption app was created",
+    io.to(req.user.id.toString()).emit("adoptionApp_updated", {
+      // <-- Changed to updated
+      message: "adoption app was updated",
       adoptionApp: newAdoptionApp,
     });
 
@@ -646,7 +650,9 @@ export async function cancelAdoptApp(req, res) {
         $set: { status: "Cancelled" },
       },
       options,
-    );
+    )
+      .populate("applicant")
+      .populate("petToAdopt");
     const io = req.app.get("io");
 
     const newOwnerNotification = new Notification({
@@ -685,8 +691,8 @@ export async function cancelAdoptApp(req, res) {
       adoptionApp: cancelledApp,
     });
 
-    io.to(req.user.id.toString()).emit("adoptionApp_cancelled", {
-      message: "Notification created for applying",
+    io.to(req.user.id.toString()).emit("notification_created", {
+      message: "Notification created for cancelling",
       notification: newAplNotifRes,
     });
 
@@ -780,7 +786,9 @@ export async function approveAdoption(req, res) {
         acceptedApplication.id,
         { status: "Approved" },
         options,
-      );
+      )
+        .populate("applicant")
+        .populate("petToAdopt");
       const io = req.app.get("io");
 
       const newAcceptAplNotification = new Notification({
@@ -846,6 +854,8 @@ export async function approveAdoption(req, res) {
 
       const rejectOthers = await Promise.all(
         rejectedList.map(async (adopApp) => {
+          await adopApp.populate("applicant");
+          await adopApp.populate("petToAdopt");
           const rejectNotif = new Notification({
             recipient: adopApp.applicant._id,
             sender: req.user.id,
@@ -882,6 +892,7 @@ export async function approveAdoption(req, res) {
         });
       }
 
+      await Match.deleteMany({ petID: accept.petToAdopt._id });
       return res.status(200).json({
         message: "Approved",
         body: updatedList,
@@ -946,7 +957,9 @@ export async function rejectApplicant(req, res) {
         status: "Rejected",
       },
       options,
-    );
+    )
+      .populate("applicant")
+      .populate("petToAdopt");
 
     const rejectNotif = new Notification({
       recipient: rejectApplication.applicant._id,

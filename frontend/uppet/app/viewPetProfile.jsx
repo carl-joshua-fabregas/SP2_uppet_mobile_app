@@ -110,8 +110,8 @@ export default function ViewPetProfile() {
     if (!socket) return;
 
     const handleCreatePet = (data) => {
-      if (pet?._id === data.pet._id) {
-        setPet(data.pet);
+      if (adoptionApp?._id === data.adoptionApp._id) {
+        setAdoptionApp(data.adoptionApp);
       }
     };
     const handleDeletePet = (data) => {
@@ -122,11 +122,11 @@ export default function ViewPetProfile() {
     };
 
     const handleCancelApp = (data) => {
-      const incomingAppId = data.adoptionApp;
+      const cancelledApp = data.adoptionApp; // full populated object from server
 
       setAdoptionApp((prevApp) => {
-        if (prevApp && prevApp._id === incomingAppId) {
-          return null;
+        if (prevApp && prevApp._id === cancelledApp._id) {
+          return cancelledApp; // ✅ Update status to "Cancelled" instead of null
         }
         return prevApp;
       });
@@ -327,8 +327,10 @@ export default function ViewPetProfile() {
         },
       );
 
-      // Inside your useMemo block...
-      const isApplicant = adoptionApp && adoptionApp.applicant === user._id;
+      const isApplicant =
+        adoptionApp &&
+        (adoptionApp.applicant === user._id ||
+          adoptionApp.applicant?._id === user._id);
 
       if (isApplicant) {
         switch (adoptionApp.status) {

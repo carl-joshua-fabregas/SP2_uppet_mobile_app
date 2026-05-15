@@ -57,7 +57,7 @@ export async function createAdopter(req, res) {
       bio: bio,
       age: parseInt(age),
       occupation: occupation,
-      income: parseInt(income),
+      income: Number(income),
       address: address,
       contactInfo: contactInfo,
       livingCon: livingCon,
@@ -65,7 +65,7 @@ export async function createAdopter(req, res) {
       householdMem: parseInt(householdMem),
       currentOwnedPets: parseInt(currentOwnedPets),
       hobbies: hobbies,
-      userType: userType,
+      userType: "user",
       googleId: googleId,
       gender: gender,
       hadPets: hadPets,
@@ -107,6 +107,14 @@ export async function createAdopter(req, res) {
   } catch (err) {
     console.log("===========Creation Error===========");
     console.error(err);
+
+    if (err.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Validation Error",
+        body: err.message,
+      });
+    }
+
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
@@ -220,7 +228,7 @@ export async function updateUser(req, res) {
         sender: newUser._id,
         relatedEntity: newUser._id,
         entityModel: "Adopter",
-        message: "Successfully updated adopter profile",
+        message: "Successfully Created Profile",
         notifType: "ADOPTER_NEW",
       });
       const saveNotif = await notifcations.save();
@@ -237,7 +245,7 @@ export async function updateUser(req, res) {
         sender: newUser._id,
         relatedEntity: newUser._id,
         entityModel: "Adopter",
-        message: "Successfully updated adopter profile",
+        message: "Successfully Updated Profile",
         notifType: "ADOPTER_UPDATED",
       });
       const saveNotif = await notifcations.save();

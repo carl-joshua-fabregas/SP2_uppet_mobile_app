@@ -27,7 +27,7 @@ export default function Menu() {
                 width: 120,
                 height: 120,
                 marginLeft: -28,
-                resizeMode: "contain",
+                contentFit: "contain",
                 aspectRatio: 3 / 2,
               }}
             />

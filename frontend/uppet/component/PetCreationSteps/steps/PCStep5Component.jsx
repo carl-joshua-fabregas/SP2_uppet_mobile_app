@@ -25,7 +25,7 @@ export default function PCStep5Component({ petData, onFinish }) {
           onPress={() => onFinish(petData)}
           style={styles.finishButton}
         >
-          <Text style={styles.finishButtonText}>View My Adoptees</Text>
+          <Text style={styles.finishButtonText}>View Home</Text>
         </TouchableOpacity>
       </View>
     </View>

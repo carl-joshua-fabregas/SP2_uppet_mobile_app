@@ -108,7 +108,7 @@ export default function PCStep3Component({ petData, setPetData, errors }) {
         const newPhotos = result.assets.map((asset, index) => ({
           url: asset.uri,
           name: asset.fileName || `photo_${Date.now()}_${index}.jpg`,
-          type: asset.type || "image/jpeg",
+          type: asset.mimeType || "image/jpeg",
           caption: "",
           size: asset.fileSize || 0,
           id: `pets/${petData._id ?? Date.now()}/${asset.fileSize}_${asset.fileName}`,

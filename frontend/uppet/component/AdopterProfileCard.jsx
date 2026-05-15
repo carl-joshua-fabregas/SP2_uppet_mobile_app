@@ -163,7 +163,9 @@ export default function ProfileCard({
           <InfoSection
             icon="history"
             label="Has had pets before?"
-            value={adopter.hadPets ? "Yes, I have" : "First-time owner"}
+            value={
+              adopter.hadPets === "yes" ? "Yes, I have" : "First-time owner"
+            }
           />
           <InfoSection
             icon="paw"

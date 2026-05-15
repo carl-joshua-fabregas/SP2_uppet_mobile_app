@@ -366,7 +366,7 @@ export default function MessageScreen() {
           return {
             key: asset.fileName + asset.fileSize,
             url: asset.uri,
-            type: asset.type,
+            type: asset.mimeType,
             index: index,
             fileSize: asset.fileSize,
             fileName: asset.fileName,

@@ -323,12 +323,12 @@ export default function ViewApplicantList(props) {
     };
 
     const handleAppCancelled = (data) => {
-      // For pure deletions/cancellations where it should vanish entirely
+      const cancelledApp = data.adoptionApp; // always a full object from server
+      const cancelledId = cancelledApp._id; // ✅ always extract _id from the object
+
       const filterOutApp = (prev) => ({
         ...prev,
-        applicants: prev.applicants.filter(
-          (app) => app._id !== (data.adoptionApp._id || data.adoptionApp),
-        ),
+        applicants: prev.applicants.filter((app) => app._id !== cancelledId),
       });
 
       setPending(filterOutApp);

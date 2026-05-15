@@ -126,6 +126,7 @@ export async function sendMessage(req, res) {
 
     io.to(roomID).emit("receive_message", newMessage);
     io.to(receiver).emit("update_chatlist", updatedChatList);
+    io.to(sender).emit("update_chatlist", updatedChatList);
     return res.status(200).json({
       message: "Successfully",
       body: newMessage,
@@ -274,6 +275,15 @@ export async function deleteAMessage(req, res) {
     }
 
     await Message.findByIdAndDelete(req.params.id);
+    const thread = await ChatThread.findById(message.chatThreadOrigin);
+    if (thread.lastMessage.toString() === req.params.id) {
+      const newLastMessage = await Message.findOne({
+        chatThreadOrigin: thread._id,
+      }).sort({ createdAt: -1 });
+
+      thread.lastMessage = newLastMessage ? newLastMessage._id : null;
+      await thread.save();
+    }
     const io = req.app.get("io");
     if (io) {
       const roomID = [message.sender, req.user.id].sort().join("_");

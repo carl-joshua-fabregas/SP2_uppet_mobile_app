@@ -112,7 +112,7 @@ export default function APCStep1Component({
         const newProfilePicture = {
           url: asset.uri,
           name: asset.fileName || `photo_${Date.now()}.jpg`,
-          type: asset.type || "image/jpeg",
+          type: asset.mimeType || "image/jpeg",
           size: asset.fileSize || 0,
           key: `user/${adopterData._id}/${asset.fileSize}_${asset.fileName}`,
         };

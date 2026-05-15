@@ -140,7 +140,7 @@ export default function APCStep3Component({
               field="hadPets"
               adopterData={adopterData}
               onUpdate={update}
-              onPress={() => update("currentOwnedPets", 0)}
+              onPress={() => update("currentOwnedPets", "0")}
             />
           </View>
           {errors.hadPets && (

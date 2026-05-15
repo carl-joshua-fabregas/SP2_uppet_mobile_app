@@ -256,6 +256,7 @@ export default function ViewPetProfile() {
     console.log("handleViewApplicantsClicked");
     navigation.navigate("viewApplicantsMyAdoptees", {
       petID: pet._id,
+      petName: pet.name,
     });
   };
 

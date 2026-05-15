@@ -5,13 +5,20 @@ import * as Themes from "../assets/themes/themes";
 
 export default function RatingCard({ review, onPress }) {
   const reviewer = review?.reviewer || {};
-  const name = reviewer.firstName
-    ? `${reviewer.firstName}${reviewer.lastName ? ` ${reviewer.lastName}` : ""}`
-    : "Anonymous";
+  const isAnon = review?.isAnonymous;
+
+  const name = isAnon
+    ? "Anonymous"
+    : reviewer.firstName
+      ? `${reviewer.firstName}${reviewer.lastName ? ` ${reviewer.lastName}` : ""}`
+      : "Anonymous";
+
   const score = typeof review.score === "number" ? review.score : 0;
-  const avatarSource = reviewer.profilePhoto?.url
-    ? { uri: reviewer.profilePhoto.url }
-    : require("../assets/images/doggoe.jpg");
+
+  const avatarSource =
+    !isAnon && reviewer.profilePhoto?.url
+      ? { uri: reviewer.profilePhoto.url }
+      : require("../assets/images/doggoe.jpg");
 
   return (
     <TouchableOpacity

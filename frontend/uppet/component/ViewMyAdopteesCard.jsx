@@ -14,7 +14,10 @@ export default function ViewAdopteesCard({ pet }) {
 
   const onViewApplicantPress = () => {
     console.log("View My adoptees card is pressed", pet._id);
-    navigation.navigate("viewApplicantsMyAdoptees", { petID: pet._id });
+    navigation.navigate("viewApplicantsMyAdoptees", {
+      petID: pet._id,
+      petName: pet.name,
+    });
   };
 
   return (

@@ -6,13 +6,14 @@ import {
   findRatingsOfUser,
   updateRating,
   deleteRating,
+  findRatingByID,
 } from "../controller/RatingController.js";
 // import { findAllUserNotification } from "../controller/NotificationController.js";
 
 // router.get("/notifications", findAllUserNotification);
-// router.get("/rating");
 router.get("/myRating/:ratedID", findRatingByUserToUser);
 router.get("/otherRatings/:ratedID", findRatingsOfUser);
+router.get("/:id", findRatingByID);
 router.post("/:ratedID", createRating);
 router.patch("/:ratingID", updateRating);
 

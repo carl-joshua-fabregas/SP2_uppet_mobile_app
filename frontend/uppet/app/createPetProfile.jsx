@@ -19,8 +19,8 @@ import PCStep5Component from "../component/PetCreationSteps/steps/PCStep5Compone
 import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
-import { useState, useRef } from "react";
+import { HeaderTitle, useHeaderHeight } from "@react-navigation/elements";
+import { useState, useRef, useEffect } from "react";
 export default function CreateProfile() {
   const router = useRoute();
   const navigation = useNavigation();
@@ -372,6 +372,13 @@ export default function CreateProfile() {
         return null;
     }
   };
+  useEffect(() => {
+    if (editPetData) {
+      navigation.setOptions({
+        headerTitle: `Update ${pet.name}'s Profile`,
+      });
+    }
+  }, [editPetData]);
 
   return (
     <KeyboardAvoidingView

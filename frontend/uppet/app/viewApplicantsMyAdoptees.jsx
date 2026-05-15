@@ -15,8 +15,11 @@ import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useSocket } from "../context/SocketContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { HeaderTitle } from "@react-navigation/elements";
 export default function ViewApplicantList(props) {
   const router = useRoute();
+  console.log("View Applicants my adoptees called", router?.params);
+
   const socket = useSocket();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -265,6 +268,11 @@ export default function ViewApplicantList(props) {
     fetchPendingApplicants(null, true);
     fetchApprovedApplicants(null, true);
     fetchRejectedApplicants(null, true);
+    if (router?.params?.petName) {
+      navigation.setOptions({
+        headerTitle: `${router.params.petName}'s Applicants`,
+      });
+    }
   }, []);
 
   useEffect(() => {

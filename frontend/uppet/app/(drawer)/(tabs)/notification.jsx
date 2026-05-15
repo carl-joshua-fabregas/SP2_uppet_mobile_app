@@ -245,7 +245,6 @@ export default function Notification() {
               notification={item}
               onLongPress={handleLongPress}
               markIsRead={markIsRead}
-              userRole="adopter" // or pull from your auth context
             />
           );
         }}

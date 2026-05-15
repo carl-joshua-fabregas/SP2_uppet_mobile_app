@@ -143,7 +143,7 @@ export default function ViewAdopterProfile({}) {
     try {
       const isEditMode = myRating ? true : false;
       const res = isEditMode
-        ? await api.patch(`/api/rating/${selectedReview._id}`, {
+        ? await api.patch(`/api/rating/${myRating._id}`, {
             score,
             body,
             isAnonymous,
@@ -171,8 +171,11 @@ export default function ViewAdopterProfile({}) {
             return [res.data.body, ...prev]; // Prepend new review
           }
         });
+      } else {
+        console.log("MAY SOMEYHING CRISPY PATATA");
       }
     } catch (err) {
+      console.log("SHUTA MAY ERROR BEH");
       console.log(err, err.message);
     } finally {
       setUploading(false);
@@ -292,14 +295,19 @@ export default function ViewAdopterProfile({}) {
     };
 
     const handleRatingUpdated = (data) => {
-      // Update the text/score of an existing review without refreshing
       setAdopterRating((prev) =>
         prev.map((rating) =>
           rating._id === data.rating._id ? data.rating : rating,
         ),
       );
-    };
 
+      setMyRating((prevMyRating) => {
+        if (prevMyRating && prevMyRating._id === data.rating._id) {
+          return { ...prevMyRating, ...data.rating };
+        }
+        return prevMyRating;
+      });
+    };
     const handleRatingDeleted = (data) => {
       // Magically make the rating vanish from the list
       const deletedRatingId = data.rating._id || data.rating;

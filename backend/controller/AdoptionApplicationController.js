@@ -117,7 +117,9 @@ export async function findAllAdoptApp(req, res) {
 
 export async function findAdoptAppByID(req, res) {
   try {
-    const adoptApp = await AdoptionApplication.findById(req.params.id);
+    const adoptApp = await AdoptionApplication.findById(req.params.id)
+      .populate("applicant")
+      .populate("petToAdopt");
     if (!adoptApp) {
       return res.status(404).json({
         message: "No Applications Found",

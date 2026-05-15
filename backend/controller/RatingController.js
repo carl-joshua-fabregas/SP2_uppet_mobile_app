@@ -23,6 +23,7 @@ export async function createRating(req, res) {
     });
 
     const newRating = await rating.save();
+    await newRating.populate("reviewer");
     const io = req.app.get("io");
     const ratingNotification = new Notification({
       recipient: ratedUser,
@@ -63,6 +64,27 @@ export async function createRating(req, res) {
   }
 }
 
+export async function findRatingByID(req, res) {
+  try {
+    const rating = await Rating.findById(req.params.id)
+      .populate("reviewer")
+      .populate("ratedUser");
+    console.log(rating);
+    if (!rating) {
+      return res.status(404).json({
+        message: "Rating ID not found",
+      });
+    }
+    return res.status(200).json({
+      message: "Successful in obtaining Rating",
+      body: rating,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error in Ratings",
+    });
+  }
+}
 export async function findAllRating(req, res) {
   try {
     if (req.user.role !== "admin") {
@@ -94,7 +116,7 @@ export async function findRatingByUserToUser(req, res) {
     const rating = await Rating.findOne({
       ratedUser: ratedID,
       reviewer: req.user.id,
-    });
+    }).populate("reviewer");
     if (!rating) {
       return res.status(200).json({
         message: "Rating does not exist",
@@ -125,6 +147,7 @@ export async function findRatingsOfUser(req, res) {
         ratedUser: ratedID,
         reviewer: { $ne: req.user.id },
       })
+        .populate("reviewer")
         .sort({ updatedAt: -1, _id: -1 })
         .limit(limit);
 
@@ -159,6 +182,7 @@ export async function findRatingsOfUser(req, res) {
         },
       ],
     })
+      .populate("reviewer")
       .sort({ updatedAt: -1, _id: -1 })
       .limit(limit);
 
@@ -230,9 +254,10 @@ export async function updateRating(req, res) {
     ).populate("reviewer");
 
     const updateRatingNotification = new Notification({
-      recipient: newRating.ratedUser._id,
+      recipient: newRating.ratedUser,
       sender: req.user.id,
       relatedEntity: newRating._id,
+      notifType: "RATING_UPDATED",
       entityModel: "Rating",
       message: "A User has updated their review",
     });
@@ -240,12 +265,12 @@ export async function updateRating(req, res) {
     const upResNotRes = await updateRatingNotification.save();
     const io = req.app.get("io");
 
-    io.to(newRating.ratedUser._id.toString()).emit("rating_updated", {
+    io.to(newRating.ratedUser.toString()).emit("rating_updated", {
       message: "Rating has been updated",
       rating: newRating,
     });
 
-    io.to(newRating.ratedUser._id.toString()).emit("notification_created", {
+    io.to(newRating.ratedUser.toString()).emit("notification_created", {
       message: "Notification Created in rating",
       notification: upResNotRes,
     });
@@ -260,6 +285,7 @@ export async function updateRating(req, res) {
       body: newRating,
     });
   } catch (err) {
+    console.log("Theres an error", err);
     return res.status(500).json({
       message: "Server Error",
       body: err.message,
@@ -307,6 +333,11 @@ export async function deleteRating(req, res) {
       });
     }
     await Rating.findByIdAndDelete(req.params.ratingID);
+    const io = req.app.get("io");
+    io.to(rating.ratedUser.toString()).emit("rating_deleted", {
+      message: "A rating was deleted",
+      rating: rating, // Send the deleted rating document so the frontend knows WHICH one to remove
+    });
     return res.status(200).json({
       message: "Successfully deleted rating",
     });

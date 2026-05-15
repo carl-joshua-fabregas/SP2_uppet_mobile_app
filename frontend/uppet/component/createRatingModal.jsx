@@ -30,7 +30,8 @@ export default function CreateRatingModal({
   const [editButtonPressed, setEditButtonPressed] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
-  const isOwnReview = user?.id === review?.reviewer?._id;
+  const isOwnReview =
+    user?._id === review?.reviewer?._id || user?.id === review?.reviewer?._id;
 
   useEffect(() => {
     if (visible) {

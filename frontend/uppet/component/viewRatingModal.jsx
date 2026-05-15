@@ -11,24 +11,22 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 
-// Removed the default = {} here, we will handle it safely below
 export default function ViewRatingModal({ visible, onClose, review }) {
   const [expanded, setExpanded] = useState(false);
 
-  // 1. Safe fallback: If review is null or undefined, default to an empty object
   const safeReview = review || {};
   const reviewer = safeReview.reviewer || {};
 
-  // 2 & 3. Fixed spelling (isAnonymous) and swapped the logic so Anonymous hides the name
   const name = safeReview.isAnonymous
     ? "Anonymous"
     : `${reviewer.firstName || "Unknown"}${reviewer.lastName ? ` ${reviewer.lastName}` : ""}`;
 
   const score = typeof safeReview.score === "number" ? safeReview.score : 0;
 
-  const avatarSource = reviewer.profilePhoto?.url
-    ? { uri: reviewer.profilePhoto.url }
-    : require("../assets/images/doggoe.jpg");
+  const avatarSource =
+    !safeReview.isAnonymous && reviewer.profilePhoto?.url
+      ? { uri: reviewer.profilePhoto.url }
+      : require("../assets/images/doggoe.jpg");
 
   const isExpandable =
     !!safeReview.body &&

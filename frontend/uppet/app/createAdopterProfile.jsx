@@ -7,7 +7,7 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useUser } from "../context/UserContext";
 import { useNavigation } from "@react-navigation/native";
 import * as Themes from "../assets/themes/themes";
@@ -18,7 +18,7 @@ import APCStep3Component from "../component/AdopterProfileCreationSteps/steps/AP
 import APCStep4Component from "../component/AdopterProfileCreationSteps/steps/APCStep4Component";
 import APCStep5Component from "../component/AdopterProfileCreationSteps/steps/APCStep5Component";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
+import { HeaderTitle, useHeaderHeight } from "@react-navigation/elements";
 
 import { api } from "../api/axios";
 
@@ -277,7 +277,13 @@ export default function CreateAdopterProfile() {
       console.log("DONE");
     }
   };
-
+  useEffect(() => {
+    if (user?._id) {
+      navigation.setOptions({
+        headerTitle: `Update Your Profile`,
+      });
+    }
+  }, [user?._id]);
   const updateAdopter = async () => {
     console.log("Updating Adopter", adopter);
   };

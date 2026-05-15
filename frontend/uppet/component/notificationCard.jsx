@@ -4,12 +4,13 @@ import * as Themes from "../assets/themes/themes";
 import { useNavigation } from "@react-navigation/native";
 import { api } from "../api/axios";
 import { useState } from "react";
+import { useUser } from "../context/UserContext";
 
 export default function NotificationCard(props) {
-  const { notification, onLongPress, markIsRead, userRole } = props;
+  const { notification, onLongPress, markIsRead } = props;
   const navigation = useNavigation();
   const [isNavigating, setIsNavigating] = useState(false);
-
+  const { user } = useUser();
   // Validate notification object exists
   if (!notification || !notification._id) {
     console.warn("Invalid notification object:", notification);
@@ -122,20 +123,28 @@ export default function NotificationCard(props) {
 
       // Handle different notification types with proper navigation
       if (type.startsWith("RATING_")) {
-        // Ratings don't have a dedicated view, log and return
+        try {
+          const res = await api.get(`/api/rating/${entityId}`);
+          const rating = res.data?.body;
+          if (rating.ratedUser._id === user._id) {
+            navigation.navigate("viewProfile");
+          } else {
+            navigation.navigate("viewAdopterProfile", {
+              adopterId: entityId,
+            });
+          }
+        } catch (err) {
+          console.warn("Navigation Error in ratings", err);
+        }
         console.log("Rating notification - no dedicated view", type);
         return;
       }
 
       if (type.startsWith("ADOPTER_")) {
-        // Navigate to the adopter's profile
         try {
-          navigation.navigate("viewAdopterProfile", {
-            adopterId: entityId,
-          });
+          navigation.navigate("viewProfile");
         } catch (navErr) {
           console.error("Navigation error - trying viewProfile:", navErr);
-          navigation.navigate("viewProfile");
         }
         return;
       }
@@ -166,13 +175,12 @@ export default function NotificationCard(props) {
           const res = await api.get(`/api/adoptionApp/${entityId}`);
           const appData = res.data?.body;
 
-          if (userRole === "adopter") {
-            // Adopter always sees their own application view
+          if (appData.applicant._id === user._id) {
             navigation.navigate("viewMyApplication");
           } else if (appData?.petToAdopt) {
-            // Owner sees their pet's applicants
             navigation.navigate("viewApplicantsMyAdoptees", {
-              petID: appData.petToAdopt,
+              petID: appData.petToAdopt._id,
+              petName: appData.petToAdopt.name,
             });
           } else {
             console.warn("Adoption application data not found");

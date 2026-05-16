@@ -159,7 +159,7 @@ export async function generateBulkMatchForUser(user) {
           success = true;
 
           // Optional: Small delay between successful batches to respect API rate limits
-          await sleep(1000);
+          await sleep(6000);
         } catch (err) {
           if (
             err.status === 429 ||
@@ -169,7 +169,9 @@ export async function generateBulkMatchForUser(user) {
             console.log(
               `Hit 429 Rate Limit. Retrying attempt ${attempts + 1}...`,
             );
-            await sleep(2000 * attempts);
+            console.error("Scoring Error status:", err.status);
+            console.error("Scoring Error message:", err.message);
+            await sleep(15000 * attempts);
           } else {
             console.error("Scoring Error status:", err.status);
             console.error("Scoring Error message:", err.message);
@@ -285,14 +287,14 @@ export async function generateBulkMatchForPet(pet) {
           success = true;
 
           // Optional buffer to prevent hitting Google's rate limits
-          await sleep(1000);
+          await sleep(6000);
         } catch (err) {
           if (
             err.status === 429 ||
             (err.message && err.message.includes("429"))
           ) {
             attempts++;
-            await sleep(2000 * attempts);
+            await sleep(15000 * attempts);
           } else {
             console.error("Scoring Error in Batch: ", err);
             break; // Break the while loop to move on to the next batch

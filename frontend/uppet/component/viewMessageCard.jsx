@@ -126,9 +126,10 @@ export default function ViewMessageCard({
 }) {
   if (!message) return null;
 
-  const isMedia =
-    message.media?.type === "image" || message.media?.type === "video";
-  const isImage = message.media?.type === "image";
+  const isMedia = 
+  message.media?.type?.startsWith("image/") || 
+  message.media?.type?.startsWith("video/");
+
   const isPending = message.status === "pending";
 
   // Media always shows the timestamp. Text only shows it if clicked.

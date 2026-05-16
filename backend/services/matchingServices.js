@@ -46,7 +46,7 @@ export async function generateSingleMatch(user, pet) {
       { upsert: true, new: true },
     );
   } catch (err) {
-    console.log("Error generating matches", err.message);
+    console.log("Error generating matches", err);
   }
 }
 
@@ -170,7 +170,7 @@ export async function generateBulkMatchForUser(user) {
       }
     }
   } catch (err) {
-    console.error("Error generating matches", err.message);
+    console.error("Error generating matches", err);
   }
 }
 
@@ -289,6 +289,6 @@ export async function generateBulkMatchForPet(pet) {
       }
     }
   } catch (err) {
-    console.error("Error generating matches", err.message);
+    console.error("Error generating matches", err);
   }
 }

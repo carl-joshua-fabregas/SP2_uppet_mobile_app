@@ -51,14 +51,11 @@ export async function generateSingleMatch(user, pet) {
 }
 
 export async function generateBulkMatchForUser(user) {
+  console.log("Generating Bulk Matches for user");
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  let success = false;
-  let attempts = 0;
 
   try {
     const allAvailablePets = await Pet.find({
-      adoptedStatus: { $ne: true },
-      ownerId: { $ne: user._id },
     });
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash-lite",
@@ -177,6 +174,7 @@ export async function generateBulkMatchForUser(user) {
 // Renamed this function to avoid the duplicate name error
 export async function generateBulkMatchForPet(pet) {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  console.log("Generating Bulk Matches for user");
 
   try {
     const allUsers = await Adopter.find({ _id: { $ne: pet.ownerId } });

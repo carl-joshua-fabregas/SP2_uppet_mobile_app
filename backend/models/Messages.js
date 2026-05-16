@@ -12,14 +12,7 @@ const implicitMediaSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: [
-  'image/jpeg', 
-  'image/png', 
-  'image/heic', 
-  'image/webp', 
-  'image/gif', 
-  'video/mp4', 
-  'video/quicktime'
+      enum: [ 'image', 'video' 
 ]
 ,
     },

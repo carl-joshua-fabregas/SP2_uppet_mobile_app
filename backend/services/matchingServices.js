@@ -166,6 +166,9 @@ export async function generateBulkMatchForUser(user) {
             (err.message && err.message.includes("429"))
           ) {
             attempts++;
+            console.log(
+              `Hit 429 Rate Limit. Retrying attempt ${attempts + 1}...`,
+            );
             await sleep(2000 * attempts);
           } else {
             console.error("Scoring Error status:", err.status);

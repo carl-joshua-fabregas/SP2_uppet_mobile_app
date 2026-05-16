@@ -59,7 +59,6 @@ export async function generateBulkMatchForUser(user) {
       adoptedStatus: { $ne: true },
       ownerId: { $ne: user._id },
     });
-    console.log("all available", allAvailablePets);
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash-lite",
       generationConfig: {
@@ -113,7 +112,6 @@ export async function generateBulkMatchForUser(user) {
       otherInfo: pet.otherInfo,
     }));
     const petBatches = chunkArray(cleanPets, BATCH_SIZE);
-    console.log("petbatches are", petBatches);
     for (const batch of petBatches) {
       let success = false;
       let attempts = 0;
@@ -134,9 +132,7 @@ export async function generateBulkMatchForUser(user) {
             .text()
             .replace(/```json|```/g, "")
             .trim();
-          console.log("cleanJson is", cleanJson);
           const scores = JSON.parse(cleanJson);
-          console.log("scores are", scores);
           const mongodbBulkOps = scores.map((match) => ({
             updateOne: {
               filter: {
@@ -151,8 +147,6 @@ export async function generateBulkMatchForUser(user) {
 
           // Write to DB per batch to save memory
           if (mongodbBulkOps.length > 0) {
-            console.log("bulkwrite for user", mongodbBulkOps);
-
             await Match.bulkWrite(mongodbBulkOps);
           }
 
@@ -179,6 +173,12 @@ export async function generateBulkMatchForUser(user) {
             break;
           }
         }
+      }
+      // ADD THIS after the while loop, before the next batch iteration
+      if (!success) {
+        console.error(
+          `Batch failed after 3 attempts, skipping batch IDs: ${JSON.stringify(batch.map((b) => b._id))}`,
+        );
       }
     }
   } catch (err) {
@@ -280,7 +280,6 @@ export async function generateBulkMatchForPet(pet) {
 
           // 4. Write to the database per batch
           if (mongodbBulkOps.length > 0) {
-            console.log("bulkwrite for pet", mongodbBulkOps);
             await Match.bulkWrite(mongodbBulkOps);
           }
 
@@ -293,6 +292,11 @@ export async function generateBulkMatchForPet(pet) {
             err.status === 429 ||
             (err.message && err.message.includes("429"))
           ) {
+            console.warn(
+              `Hit 429 Rate Limit. Retrying attempt ${attempts + 1}/3...`,
+            );
+            console.error("Scoring Error status:", err.status);
+            console.error("Scoring Error message:", err.message);
             attempts++;
             await sleep(15000 * attempts);
           } else {
@@ -300,6 +304,12 @@ export async function generateBulkMatchForPet(pet) {
             break; // Break the while loop to move on to the next batch
           }
         }
+      }
+      // ADD THIS after the while loop, before the next batch iteration
+      if (!success) {
+        console.error(
+          `Batch failed after 3 attempts, skipping batch IDs: ${JSON.stringify(batch.map((b) => b._id))}`,
+        );
       }
     }
   } catch (err) {

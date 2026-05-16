@@ -55,8 +55,7 @@ export async function generateBulkMatchForUser(user) {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   try {
-    const allAvailablePets = await Pet.find({
-    });
+    const allAvailablePets = await Pet.find({});
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash-lite",
       generationConfig: {
@@ -145,6 +144,8 @@ export async function generateBulkMatchForUser(user) {
 
           // Write to DB per batch to save memory
           if (mongodbBulkOps.length > 0) {
+            console.log("bulkwrite for user", mongodbBulkOps);
+
             await Match.bulkWrite(mongodbBulkOps);
           }
 
@@ -174,7 +175,7 @@ export async function generateBulkMatchForUser(user) {
 // Renamed this function to avoid the duplicate name error
 export async function generateBulkMatchForPet(pet) {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-  console.log("Generating Bulk Matches for user");
+  console.log("Generating Bulk Matches for Pet");
 
   try {
     const allUsers = await Adopter.find({ _id: { $ne: pet.ownerId } });
@@ -265,6 +266,7 @@ export async function generateBulkMatchForPet(pet) {
 
           // 4. Write to the database per batch
           if (mongodbBulkOps.length > 0) {
+            console.log("bulkwrite for pet", mongodbBulkOps);
             await Match.bulkWrite(mongodbBulkOps);
           }
 

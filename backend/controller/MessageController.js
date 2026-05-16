@@ -74,6 +74,11 @@ export async function sendMessage(req, res) {
     };
     const { chatThreadOrigin, receiver, body, media, isEdited } = req.body;
     console.log("media is", media);
+
+if (media && media.type) {
+      // Splits "image/jpeg" into ["image", "jpeg"] and grabs the first item ("image")
+      media.type = media.type.split('/')[0]; 
+    }
     const sender = req.user.id;
     const message = new Message({
       chatThreadOrigin: chatThreadOrigin,

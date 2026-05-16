@@ -56,9 +56,10 @@ export async function generateBulkMatchForUser(user) {
 
   try {
     const allAvailablePets = await Pet.find({
-      adoptedStatus: { $ne: false },
+      adoptedStatus: { $ne: true },
       ownerId: { $ne: user._id },
     });
+    console.log("all available", allAvailablePets);
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash-lite",
       generationConfig: {
@@ -112,6 +113,7 @@ export async function generateBulkMatchForUser(user) {
       otherInfo: pet.otherInfo,
     }));
     const petBatches = chunkArray(cleanPets, BATCH_SIZE);
+    console.log("petbatches are", petBatches);
     for (const batch of petBatches) {
       let success = false;
       let attempts = 0;
@@ -132,7 +134,7 @@ export async function generateBulkMatchForUser(user) {
             .replace(/```json|```/g, "")
             .trim();
           const scores = JSON.parse(cleanJson);
-
+          console.log("scores are", scores);
           const mongodbBulkOps = scores.map((match) => ({
             updateOne: {
               filter: {

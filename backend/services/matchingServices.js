@@ -168,8 +168,10 @@ export async function generateBulkMatchForUser(user) {
             attempts++;
             await sleep(2000 * attempts);
           } else {
-            console.error("Scoring Error in Batch: ", err);
-            break; // Break the while loop and move to the next batch
+            console.error("Scoring Error status:", err.status);
+            console.error("Scoring Error message:", err.message);
+            console.error("Scoring Error full:", JSON.stringify(err, null, 2));
+            break;
           }
         }
       }

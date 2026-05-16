@@ -129,10 +129,12 @@ export async function generateBulkMatchForUser(user) {
       while (!success && attempts < 3) {
         try {
           const result = await model.generateContent(prompt);
+          console.log("result is", result);
           const cleanJson = result.response
             .text()
             .replace(/```json|```/g, "")
             .trim();
+          console.log("cleanJson is", cleanJson);
           const scores = JSON.parse(cleanJson);
           console.log("scores are", scores);
           const mongodbBulkOps = scores.map((match) => ({

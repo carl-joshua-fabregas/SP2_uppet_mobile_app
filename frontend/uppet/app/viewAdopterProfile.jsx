@@ -285,7 +285,6 @@ export default function ViewAdopterProfile({}) {
     };
 
     const handleRatingCreated = (data) => {
-      // Check if the new rating belongs to the profile currently being viewed
       if (
         data.rating.ratedUser === adopter._id ||
         data.rating.ratedUser._id === adopter._id
@@ -309,20 +308,16 @@ export default function ViewAdopterProfile({}) {
       });
     };
     const handleRatingDeleted = (data) => {
-      // Magically make the rating vanish from the list
       const deletedRatingId = data.rating._id || data.rating;
 
       setAdopterRating((prev) =>
         prev.filter((rating) => rating._id !== deletedRatingId),
       );
 
-      // PRO-TIP FIX: Use the functional updater to check the current state safely!
       setMyRating((prevMyRating) => {
-        // If the user's rating was the one that got deleted, set it to null
         if (prevMyRating && prevMyRating._id === deletedRatingId) {
           return null;
         }
-        // Otherwise, return it exactly as it was (do nothing)
         return prevMyRating;
       });
     };
@@ -559,7 +554,7 @@ export default function ViewAdopterProfile({}) {
           onReviewPress={handleViewReview}
           showRatingsAndReviews={showRatingsAndReviews}
           hasMoreReviews={hasMore}
-          onViewMoreReviews={() => setReviewsExpanded(true)}
+          onViewMoreReviews={() => setReviewsExpanded(!reviewsExpanded)}
           onCreateRatingPress={handleCreateReview}
           handleRatingLayout={handleRatingLayout}
           setShowImageViewer={setShowImageViewer}

@@ -229,9 +229,9 @@ export default function ProfileCard({
             >
               {/* --- UPDATED HEADER ROW --- */}
               <View style={styles.reviewHeaderRow}>
-                {adopter.totalRating > 0 && (
+                {adopterRating.length > 0 && (
                   <Text style={styles.reviewCountText}>
-                    {`${adopter.totalRating} ${adopter.totalRating > 1 ? "reviews" : "review"}`}
+                    {`${adopterRating.length} ${adopterRating.length > 1 ? "reviews" : "review"}`}
                   </Text>
                 )}
 
@@ -245,12 +245,12 @@ export default function ProfileCard({
               </View>
               {/* --------------------------- */}
 
-              {adopterRating.length === 0 ? (
+              {adopter.length === 0 ? (
                 <Text style={styles.emptyText}>
                   No reviews yet for this adopter.
                 </Text>
               ) : (
-                <View style={styles.reviewList}>
+                <>
                   {displayedReviews.map((review, index) => (
                     <RatingCard
                       key={review._id || index}
@@ -258,7 +258,7 @@ export default function ProfileCard({
                       onPress={() => onReviewPress(review)}
                     />
                   ))}
-                </View>
+                </>
               )}
               {reviewsExpanded && hasMoreReviews && (
                 <Text style={styles.loadMoreHint}>
@@ -437,9 +437,6 @@ const styles = StyleSheet.create({
     fontSize: Themes.TYPOGRAPHY.body.fontSize,
     color: Themes.COLORS.primary,
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
-  },
-  reviewList: {
-    maxHeight: 260,
   },
   reviewListContent: {
     paddingBottom: Themes.SPACING.sm,

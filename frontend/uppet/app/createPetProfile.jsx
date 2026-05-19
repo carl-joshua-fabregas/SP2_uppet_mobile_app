@@ -73,6 +73,10 @@ export default function CreateProfile() {
         if (isNaN(Number(pet.age))) {
           newErrors.age = "Please enter a valid number for Age";
         }
+        if (Number(pet.age) < 0 || Number(pet.age) > 500) {
+          newErrors.age = "Please enter a valid number age between [0-500]";
+        }
+
         if (!pet.sex) {
           newErrors.sex = "Sex is required";
         }
@@ -96,6 +100,10 @@ export default function CreateProfile() {
         }
         if (!pet.weight || isNaN(Number(pet.weight))) {
           newErrors.weight = "Please enter a valid number for Weight";
+        }
+        if (Number(pet.weight) <= 0 || Number(pet.weight) >= 1500) {
+          newErrors.weight =
+            "Please enter a weight with the range [weight > 0 && weight < 1500]";
         }
         if (!pet.sex) {
           newErrors.sex = "Please specify sex";

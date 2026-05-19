@@ -35,6 +35,7 @@ const FormInput = ({
   height,
   keyboardType,
   icon,
+  onBlur,
 }) => (
   <View style={styles.field}>
     <View style={styles.infoRow}>
@@ -57,6 +58,7 @@ const FormInput = ({
       placeholder={placeholder}
       multiline={multiline}
       keyboardType={keyboardType}
+      onBlur={onBlur}
     />
     {error && <Text style={styles.errorText}>{error}</Text>}
   </View>
@@ -66,6 +68,19 @@ export default function PCStep1Component({ petData, setPetData, errors }) {
   const update = (key, value) =>
     setPetData((prev) => ({ ...prev, [key]: value }));
 
+  const formatDecimalPlace = (key, place = 2) => {
+    const number = petData[key];
+
+    if (!number || number === ".") {
+      return update(key, "");
+    }
+    const formattedNumber = parseFloat(number).toFixed(place);
+    if (!isNaN(formattedNumber)) {
+      return update(key, formattedNumber);
+    } else {
+      return update(key, "");
+    }
+  };
   return (
     <View style={styles.PCStep1ComponentContainer}>
       {/* SECTION 1: BASIC INFORMATION */}
@@ -121,6 +136,7 @@ export default function PCStep1Component({ petData, setPetData, errors }) {
               placeholder="e.g. 2"
               keyboardType="numeric"
               icon="calendar"
+              onBlur={() => formatDecimalPlace("age", 1)}
             />
           </View>
           <View style={{ flex: 1.5 }}>

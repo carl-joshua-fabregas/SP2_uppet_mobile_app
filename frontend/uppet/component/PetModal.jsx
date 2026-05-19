@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   View,
   Text,
@@ -12,6 +13,46 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 import { useNavigation } from "@react-navigation/native";
 import { useUser } from "../context/UserContext";
+
+// --- ADDED: Reusable Toggle Component ---
+const ExpandableText = ({
+  text,
+  style,
+  maxLength = 120,
+  fallback = "None",
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!text) return <Text style={style}>{fallback}</Text>;
+
+  const shouldTruncate = text.length > maxLength;
+  const displayText =
+    isExpanded || !shouldTruncate
+      ? text
+      : `${text.substring(0, maxLength).trim()}...`;
+
+  return (
+    <View style={{ flexShrink: 1, width: "100%" }}>
+      <Text style={style}>{displayText}</Text>
+      {shouldTruncate && (
+        <TouchableOpacity
+          onPress={() => setIsExpanded(!isExpanded)}
+          style={{ marginTop: 4 }}
+        >
+          <Text
+            style={{
+              color: Themes.COLORS.primary,
+              fontSize: 12,
+              fontWeight: "600",
+            }}
+          >
+            {isExpanded ? "Show less" : "Read more"}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+};
 
 export default function PetModal({ pet, onClose }) {
   const { user } = useUser();
@@ -43,8 +84,11 @@ export default function PetModal({ pet, onClose }) {
             />
 
             <View style={styles.petDetailsContainer}>
-              <Text style={styles.petName}>{pet.name}</Text>
-              <Text style={styles.petBreed}>
+              {/* CHANGED: Safeguarded headers from extreme input lengths */}
+              <Text style={styles.petName} numberOfLines={2}>
+                {pet.name}
+              </Text>
+              <Text style={styles.petBreed} numberOfLines={2}>
                 {pet.species ? `${pet.species} • ` : ""}
                 {pet.breed} • {pet.sex}
               </Text>
@@ -60,7 +104,9 @@ export default function PetModal({ pet, onClose }) {
                     />
                     <Text style={styles.statLabel}>Age</Text>
                   </View>
-                  <Text style={styles.statValue}>{pet.age} yrs</Text>
+                  <Text style={styles.statValue} numberOfLines={1}>
+                    {pet.age ? parseFloat(pet.age).toFixed(1) : "0.0"} yrs
+                  </Text>
                 </View>
 
                 {pet.size ? (
@@ -73,7 +119,9 @@ export default function PetModal({ pet, onClose }) {
                       />
                       <Text style={styles.statLabel}>Size</Text>
                     </View>
-                    <Text style={styles.statValue}>{pet.size}</Text>
+                    <Text style={styles.statValue} numberOfLines={1}>
+                      {pet.size}
+                    </Text>
                   </View>
                 ) : null}
 
@@ -87,7 +135,10 @@ export default function PetModal({ pet, onClose }) {
                       />
                       <Text style={styles.statLabel}>Weight</Text>
                     </View>
-                    <Text style={styles.statValue}>{pet.weight}kg</Text>
+                    <Text style={styles.statValue} numberOfLines={1}>
+                      {pet.weight ? parseFloat(pet.weight).toFixed(2) : "0.00"}
+                      kg
+                    </Text>
                   </View>
                 ) : null}
               </View>
@@ -101,7 +152,13 @@ export default function PetModal({ pet, onClose }) {
                 />
                 <Text style={styles.sectionTitle}>Bio</Text>
               </View>
-              <Text style={styles.petBio}>{pet.bio}</Text>
+              {/* CHANGED: Applied ExpandableText component */}
+              <ExpandableText
+                text={pet.bio}
+                style={styles.petBio}
+                maxLength={150}
+                fallback="No bio provided."
+              />
             </View>
           </ScrollView>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -147,10 +204,10 @@ const styles = StyleSheet.create({
     aspectRatio: 4 / 3,
   },
   petDetailsContainer: {
-    padding: Themes.SPACING.lg, // increased padding to match profile
+    padding: Themes.SPACING.lg,
   },
   petName: {
-    fontSize: 32, // Matched profile font size
+    fontSize: 32,
     fontFamily: Themes.TYPOGRAPHY.heading.fontFamily,
     color: Themes.TYPOGRAPHY.heading.color,
     marginBottom: 4,
@@ -169,7 +226,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   statItem: {
-    width: "31%", // slightly wider to ensure text fits
+    width: "31%",
     backgroundColor: Themes.COLORS.soft,
     padding: Themes.SPACING.sm,
     borderRadius: Themes.RADIUS.sm,

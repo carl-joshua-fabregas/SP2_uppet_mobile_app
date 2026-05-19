@@ -23,6 +23,8 @@ const FormInput = ({
   height,
   keyboardType,
   icon,
+  formatText,
+  onBlur,
 }) => (
   <View style={styles.field}>
     <View style={styles.infoRow}>
@@ -45,6 +47,7 @@ const FormInput = ({
       placeholder={placeholder}
       multiline={multiline}
       keyboardType={keyboardType}
+      onBlur={onBlur}
     />
     {error && <Text style={styles.errorText}>{error}</Text>}
   </View>
@@ -74,6 +77,20 @@ export default function APCStep1Component({
 }) {
   const update = (key, value) =>
     setAdopterData((prev) => ({ ...prev, [key]: value }));
+
+  const formatDecimalPlace = (key, place = 2) => {
+    const number = adopterData[key];
+
+    if (!number || number === ".") {
+      return update(key, "");
+    }
+    const formattedNumber = parseFloat(number).toFixed(place);
+    if (!isNaN(formattedNumber)) {
+      return update(key, formattedNumber);
+    } else {
+      return update(key, "");
+    }
+  };
 
   const handleAddPhoto = async () => {
     try {
@@ -217,6 +234,7 @@ export default function APCStep1Component({
               placeholder="18+"
               keyboardType="numeric"
               icon="calendar-account"
+              onBlur={() => formatDecimalPlace("age", 1)}
             />
           </View>
           <View style={{ flex: 1.5 }}>

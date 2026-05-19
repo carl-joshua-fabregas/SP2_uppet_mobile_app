@@ -3,12 +3,60 @@ import { useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Themes from "../assets/themes/themes";
 
+// --- ADDED: Reusable Toggle Component with Alignment ---
+const ExpandableText = ({
+  text,
+  style,
+  maxLength = 80,
+  align = "left",
+  fallback = "None",
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!text)
+    return <Text style={[style, { textAlign: align }]}>{fallback}</Text>;
+
+  const shouldTruncate = text.length > maxLength;
+  const displayText =
+    isExpanded || !shouldTruncate
+      ? text
+      : `${text.substring(0, maxLength).trim()}...`;
+
+  return (
+    <View
+      style={{
+        flexShrink: 1,
+        width: "100%",
+        alignItems: align === "right" ? "flex-end" : "flex-start",
+      }}
+    >
+      <Text style={[style, { textAlign: align }]}>{displayText}</Text>
+      {shouldTruncate && (
+        <TouchableOpacity
+          onPress={() => setIsExpanded(!isExpanded)}
+          style={{ marginTop: 2 }}
+        >
+          <Text
+            style={{
+              color: Themes.COLORS.primary,
+              fontSize: 12,
+              fontWeight: "600",
+            }}
+          >
+            {isExpanded ? "Show less" : "Read more"}
+          </Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+};
+
 export default function PetProfileCardViewMore({
   pet,
   isGalleryExpanded,
   setIsGalleryExpanded,
   handleGalleryLayout,
-  handlePressImage, // <-- Make sure this is destructured here!
+  handlePressImage,
 }) {
   const profilePhoto =
     pet.photos && pet.photos.length > 0
@@ -61,7 +109,6 @@ export default function PetProfileCardViewMore({
     <View style={styles.profileContainer}>
       {/* 1. THE HEADER CARD */}
       <View style={styles.headerCard}>
-        {/* --- ADDED: Touchable for Header Image --- */}
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => {
@@ -79,8 +126,10 @@ export default function PetProfileCardViewMore({
         </TouchableOpacity>
 
         <View style={styles.headerTextContainer}>
-          <Text style={styles.petName}>{form.name}</Text>
-          <Text style={styles.petBreed}>
+          <Text style={styles.petName} numberOfLines={2}>
+            {form.name}
+          </Text>
+          <Text style={styles.petBreed} numberOfLines={2}>
             {form.species} • {form.breed} • {form.sex}
           </Text>
 
@@ -94,7 +143,9 @@ export default function PetProfileCardViewMore({
                 />
                 <Text style={styles.statLabel}>Age</Text>
               </View>
-              <Text style={styles.statValue}>{form.age} yrs</Text>
+              <Text style={styles.statValue} numberOfLines={1}>
+                {form.age ? parseFloat(form.age).toFixed(1) : "0.0"} yrs
+              </Text>
             </View>
             <View style={styles.statItem}>
               <View style={styles.iconLabelRow}>
@@ -105,7 +156,9 @@ export default function PetProfileCardViewMore({
                 />
                 <Text style={styles.statLabel}>Size</Text>
               </View>
-              <Text style={styles.statValue}>{form.size}</Text>
+              <Text style={styles.statValue} numberOfLines={1}>
+                {form.size}
+              </Text>
             </View>
             <View style={styles.statItem}>
               <View style={styles.iconLabelRow}>
@@ -116,7 +169,9 @@ export default function PetProfileCardViewMore({
                 />
                 <Text style={styles.statLabel}>Weight</Text>
               </View>
-              <Text style={styles.statValue}>{form.weight}kg</Text>
+              <Text style={styles.statValue} numberOfLines={1}>
+                {form.weight ? parseFloat(form.weight).toFixed(2) : "0.00"}kg
+              </Text>
             </View>
           </View>
 
@@ -125,18 +180,21 @@ export default function PetProfileCardViewMore({
             title="Bio"
             style={{ marginLeft: 0, marginTop: 4 }}
           />
-          <Text
-            style={[
-              styles.petBio,
-              {
-                borderBottomWidth: 1,
-                paddingBottom: 12,
-                borderBottomColor: "#F0F0F0",
-              },
-            ]}
+          {/* CHANGED: Wrapped bio in ExpandableText */}
+          <View
+            style={{
+              borderBottomWidth: 1,
+              paddingBottom: 12,
+              borderBottomColor: "#F0F0F0",
+            }}
           >
-            {form.bio}
-          </Text>
+            <ExpandableText
+              text={form.bio}
+              style={styles.petBio}
+              maxLength={150}
+              fallback="No bio provided."
+            />
+          </View>
         </View>
       </View>
 
@@ -144,25 +202,58 @@ export default function PetProfileCardViewMore({
         {/* 2. HEALTH & BEHAVIOR CARD */}
         <SectionHeader icon="heart-pulse" title="Health and Behavior" />
         <View style={styles.card}>
+          {/* CHANGED: All infoRows now contain infoValueContainer for safe wrapping */}
           <View style={styles.infoRow}>
             <InfoLabel icon="needle" title="Vaccination Status" />
-            <Text style={styles.infoValue}>{form.vaccination}</Text>
+            <View style={styles.infoValueContainer}>
+              <ExpandableText
+                text={form.vaccination}
+                style={styles.infoValue}
+                maxLength={40}
+                align="right"
+              />
+            </View>
           </View>
           <View style={styles.infoRow}>
             <InfoLabel icon="content-cut" title="Spayed/Neutered" />
-            <Text style={styles.infoValue}>{form.sn ? "Yes" : "No"}</Text>
+            <View style={styles.infoValueContainer}>
+              <Text style={[styles.infoValue, { textAlign: "right" }]}>
+                {form.sn ? "Yes" : "No"}
+              </Text>
+            </View>
           </View>
           <View style={styles.infoRow}>
             <InfoLabel icon="medical-bag" title="Health Condition" />
-            <Text style={styles.infoValue}>{form.healthCond || "None"}</Text>
+            <View style={styles.infoValueContainer}>
+              <ExpandableText
+                text={form.healthCond}
+                style={styles.infoValue}
+                maxLength={40}
+                align="right"
+              />
+            </View>
           </View>
           <View style={styles.infoRow}>
             <InfoLabel icon="dog" title="Behavior" />
-            <Text style={styles.infoValue}>{form.behavior}</Text>
+            <View style={styles.infoValueContainer}>
+              <ExpandableText
+                text={form.behavior}
+                style={styles.infoValue}
+                maxLength={40}
+                align="right"
+              />
+            </View>
           </View>
           <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
             <InfoLabel icon="alert-circle-outline" title="Special Needs" />
-            <Text style={styles.infoValue}>{form.specialNeeds || "None"}</Text>
+            <View style={styles.infoValueContainer}>
+              <ExpandableText
+                text={form.specialNeeds}
+                style={styles.infoValue}
+                maxLength={40}
+                align="right"
+              />
+            </View>
           </View>
         </View>
 
@@ -189,7 +280,11 @@ export default function PetProfileCardViewMore({
                   title="Other Details"
                   style={{ marginBottom: 8 }}
                 />
-                <Text style={styles.petBio}>{form.otherInfo}</Text>
+                <ExpandableText
+                  text={form.otherInfo}
+                  style={styles.petBio}
+                  maxLength={150}
+                />
               </View>
             </View>
           </>
@@ -230,7 +325,6 @@ export default function PetProfileCardViewMore({
               </View>
 
               {!isGalleryExpanded ? (
-                // --- COLLAPSED CAROUSEL ---
                 <View
                   style={[
                     styles.carouselContainer,
@@ -238,7 +332,6 @@ export default function PetProfileCardViewMore({
                   ]}
                   key={`carousel- ${isGalleryExpanded}`}
                 >
-                  {/* --- ADDED: Touchable for Carousel Image --- */}
                   <TouchableOpacity
                     activeOpacity={0.9}
                     onPress={() => {
@@ -302,7 +395,6 @@ export default function PetProfileCardViewMore({
                   )}
                 </View>
               ) : (
-                // --- EXPANDED VERTICAL FEED ---
                 <View
                   style={styles.expandedGalleryContainer}
                   key={`gallery-${isGalleryExpanded}`}
@@ -312,7 +404,6 @@ export default function PetProfileCardViewMore({
                       key={`photo-${photo.key}`}
                       style={styles.photoFeedItem}
                     >
-                      {/* --- ADDED: Touchable for Feed Image --- */}
                       <TouchableOpacity
                         activeOpacity={0.9}
                         onPress={() => handlePressImage(form.photos, index)}
@@ -334,10 +425,12 @@ export default function PetProfileCardViewMore({
                             About this photo
                           </Text>
                         </View>
-                        <Text style={styles.photoCardCaption}>
-                          {photo.caption ||
-                            "Just being cute! No caption provided yet."}
-                        </Text>
+                        <ExpandableText
+                          text={photo.caption}
+                          style={styles.photoCardCaption}
+                          maxLength={80}
+                          fallback="Just being cute! No caption provided yet."
+                        />
                       </View>
                     </View>
                   ))}
@@ -442,14 +535,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 5,
   },
+
+  // CHANGED: Fixed Flexbox settings to properly wrap dynamic user input
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "flex-start", // changed from center so values expand down, not out
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
+    gap: 16, // prevents label and value from colliding
   },
-  infoLabelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  infoLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 0, // prevents label from shrinking when value is huge
+  },
+  infoValueContainer: {
+    flex: 1, // lets the user answer take the remaining space and wrap downward
+    alignItems: "flex-end",
+  },
+
   infoLabel: {
     fontFamily: Themes.TYPOGRAPHY.body.fontFamily,
     color: Themes.COLORS.textMuted,

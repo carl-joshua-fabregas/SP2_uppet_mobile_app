@@ -68,6 +68,10 @@ export default function CreateAdopterProfile() {
         if (!adopterForm.age || isNaN(Number(adopterForm.age))) {
           newErrors.age = "Age Error";
         }
+        if (Number(adopterForm.age) < 1 || Number(adopterForm.age) > 150) {
+          newErrors.age = "Please Enter Appropriate Age";
+        }
+
         if (!adopterForm.gender?.trim()) {
           newErrors.gender = "Gender Error";
         }

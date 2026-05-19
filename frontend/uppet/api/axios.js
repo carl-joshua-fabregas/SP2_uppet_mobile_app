@@ -5,7 +5,7 @@ import Constants from "expo-constants";
 const getBaseURL = () => {
   if (Constants.expoConfig?.hostUri) {
     const debuggerHost = Constants.expoConfig?.hostUri.split(":").shift();
-    return `http://${debuggerHost}:5000`;
+    return `https://sp2-uppet-mobile-app.onrender.com`;
   }
   return "https://sp2-uppet-mobile-app.onrender.com";
 };

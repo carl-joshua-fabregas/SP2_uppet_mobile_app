@@ -133,6 +133,14 @@ export default function APCStep3Component({
               field="hadPets"
               adopterData={adopterData}
               onUpdate={update}
+              onPress={() =>
+                update(
+                  "currentOwnedPets",
+                  adopterData.currentOwnedPets
+                    ? adopterData.currentOwnedPets
+                    : "0",
+                )
+              }
             />
             <SelectionChip
               label="No, first time"

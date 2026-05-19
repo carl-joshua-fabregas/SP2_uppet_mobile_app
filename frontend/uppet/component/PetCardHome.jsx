@@ -16,13 +16,15 @@ export default function PetCardHome({ pet, onPress }) {
       />
 
       <View style={styles.petDetailsContainer}>
-        <Text style={styles.petName}>{pet.name}</Text>
-        <Text style={styles.petBreed}>
+        {/* Headers protected to 1 line so the card doesn't stretch */}
+        <Text style={styles.petName} numberOfLines={1}>
+          {pet.name}
+        </Text>
+        <Text style={styles.petBreed} numberOfLines={1}>
           {pet.species ? `${pet.species} • ` : ""}
           {pet.breed} • {pet.sex}
         </Text>
 
-        {/* Simplified Stats Row mimicking the Profile Card */}
         <View style={styles.miniStatsRow}>
           <View style={styles.miniStatItem}>
             <MaterialCommunityIcons
@@ -30,8 +32,11 @@ export default function PetCardHome({ pet, onPress }) {
               size={14}
               color={Themes.COLORS.textMuted}
             />
-            <Text style={styles.miniStatText}>{pet.age} yrs</Text>
+            <Text style={styles.miniStatText} numberOfLines={1}>
+              {pet.age} yrs
+            </Text>
           </View>
+
           {pet.size ? (
             <View style={styles.miniStatItem}>
               <MaterialCommunityIcons
@@ -39,11 +44,12 @@ export default function PetCardHome({ pet, onPress }) {
                 size={14}
                 color={Themes.COLORS.textMuted}
               />
-              <Text style={styles.miniStatText}>{pet.size}</Text>
+              <Text style={styles.miniStatText} numberOfLines={1}>
+                {pet.size}
+              </Text>
             </View>
           ) : null}
 
-          {/* FIXED: Changed && to ternary ? : null */}
           {pet.weight ? (
             <View style={styles.miniStatItem}>
               <MaterialCommunityIcons
@@ -51,12 +57,14 @@ export default function PetCardHome({ pet, onPress }) {
                 size={14}
                 color={Themes.COLORS.textMuted}
               />
-              <Text style={styles.miniStatText}>{pet.weight}kg</Text>
+              <Text style={styles.miniStatText} numberOfLines={1}>
+                {pet.weight}kg
+              </Text>
             </View>
           ) : null}
         </View>
 
-        {/* Inline About Me */}
+        {/* Bio reverted to a simple, clean 2-line preview */}
         <Text style={styles.petBio} numberOfLines={2}>
           <MaterialCommunityIcons
             name="paw"
@@ -101,7 +109,7 @@ const styles = StyleSheet.create({
   petBreed: {
     fontSize: Themes.TYPOGRAPHY.subsubheading.fontSize,
     fontFamily: Themes.TYPOGRAPHY.subsubheading.fontFamily,
-    color: Themes.COLORS.primary, // Updated to match profile primary color
+    color: Themes.COLORS.primary,
     marginBottom: Themes.SPACING.sm,
   },
   miniStatsRow: {

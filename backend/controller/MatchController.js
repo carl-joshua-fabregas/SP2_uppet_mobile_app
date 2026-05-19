@@ -24,9 +24,14 @@ export async function findUserMatchedPet(req, res) {
     })
       .sort({ score: -1, _id: -1 })
       .limit(parseInt(limit) || 10)
-      .populate("petID");
-    console.log("matchlist is", matchList);
+      .populate({
+        path: "petID",
+        populate: {
+          path: "ownerId",
+        },
+      });
 
+    console.log("matchlist is", matchList);
     if (matchList.length === 0) {
       return res.status(200).json({
         message: "No more matches",

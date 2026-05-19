@@ -15,9 +15,11 @@ import * as Themes from "../assets/themes/themes";
 import { api } from "../api/axios";
 import { useSocket } from "../context/SocketContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useUser } from "../context/UserContext";
 
 export default function ViewMyApplication(props) {
   const router = useRoute();
+  const { user } = useUser();
   const insets = useSafeAreaInsets();
   const socket = useSocket();
   const navigation = useNavigation();

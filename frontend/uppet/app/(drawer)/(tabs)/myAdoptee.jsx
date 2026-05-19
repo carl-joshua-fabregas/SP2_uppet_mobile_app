@@ -14,9 +14,10 @@ import * as Themes from "../../../assets/themes/themes";
 import { api } from "../../../api/axios";
 import { useSocket } from "../../../context/SocketContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
+import { useUser } from "../../../context/UserContext";
 export default function MyAdoptee() {
   const socket = useSocket();
+  const { user } = useUser();
   const insets = useSafeAreaInsets();
   const initialLimit = Math.ceil(
     Dimensions.get("window").height / Themes.TYPOGRAPHY.badgeText.fontSize,
@@ -161,8 +162,14 @@ export default function MyAdoptee() {
 
     const handleCreate = (data) => {
       console.log("PET CREATED AND MESSAGE IS", data.message);
+
       setPending((prev) => {
         if (prev.pets.some((p) => p._id === data.pet._id)) return prev;
+
+        const petOwnerId = data.pet.ownerId?._id || data.pet.ownerId;
+
+        if (petOwnerId.toString() !== user._id.toString()) return prev;
+
         return { ...prev, pets: [data.pet, ...prev.pets] };
       });
     };

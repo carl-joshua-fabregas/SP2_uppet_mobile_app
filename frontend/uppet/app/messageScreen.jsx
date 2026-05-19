@@ -307,6 +307,11 @@ export default function MessageScreen() {
   }, []);
 
   const fetchMessages = async (thread, lastMessageId, isRefreshing = false) => {
+    if (!thread) {
+      setHasMore(false);
+      setLoading(false);
+      return;
+    }
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
     setLoading(true);
@@ -367,50 +372,112 @@ export default function MessageScreen() {
       });
 
       if (!result.canceled) {
-        const selectedMedia = result.assets.map((asset, index) => {
-          return {
-            key: asset.fileName + asset.fileSize,
-            url: asset.uri,
-            type: asset.mimeType,
-            index: index,
-            fileSize: asset.fileSize,
-            fileName: asset.fileName,
-          };
-        });
+        // 1. FIX MULTIPLE CHAT CREATION: Ensure the thread exists ONCE before processing
+        let dbChatThread = chatThreadOrigin;
 
-        const uploadedMedia = await Promise.all(
-          selectedMedia.map(async (media, index) => {
+        if (!chatThreadOrigin) {
+          try {
+            const res = await api.post(`api/chatlist/make`, {
+              members: [user._id, receiverID],
+            });
+            dbChatThread = res.data.body;
+            setChatThreadOrigin(dbChatThread);
+          } catch (err) {
+            console.log("Error in making chatlist", err.message);
+            return; // Stop if we can't create the thread
+          }
+        }
+
+        // 2. Capture the text input for the first image, then clear it instantly
+        const currentText = textInput;
+        setTextInput("");
+
+        // 3. Process each selected image/video independently
+        result.assets.forEach(async (asset, index) => {
+          // A. Generate a temp ID for Optimistic UI
+          const tempId = `temp-media-${Math.random().toString(36).substr(2, 9)}-${index}`;
+          const bodyText = index === 0 && currentText ? currentText : " ";
+          const fileType = asset.mimeType || "image/jpeg"; // Fallback just in case
+
+          // B. Create a Temp Message using the LOCAL URI
+          const tempMessage = {
+            _id: tempId,
+            body: bodyText,
+            media: {
+              url: asset.uri, // This is the local file path! It loads instantly.
+              type: fileType,
+            },
+            sender: user._id,
+            timestamp: new Date().toISOString(),
+            status: "pending", // Use this status in ViewMessageCard to show a spinner!
+            roomID: roomID,
+            chatThreadOrigin: dbChatThread,
+            receiverID: receiverID,
+          };
+
+          // C. Instantly update the UI so the user sees the photo immediately
+          setMessages((prev) => [tempMessage, ...prev]);
+
+          // D. Perform the background upload
+          try {
+            // Get Presigned URL
             const presignedURL = await api.post(
               `/api/message/presignUploadURL`,
               {
-                fileSize: media.fileSize,
-                fileType: media.type,
-                fileName: media.fileName,
+                fileSize: asset.fileSize || 0,
+                fileType: fileType,
+                fileName: asset.fileName || `media-${Date.now()}`,
               },
             );
 
             const { url, key, finalUrl } = presignedURL.data.body;
 
-            const fetchMedia = await fetch(media.url);
+            // Fetch Local File and Convert to Blob
+            const fetchMedia = await fetch(asset.uri);
             const blob = await fetchMedia.blob();
 
+            // Upload to AWS S3
             await fetch(url, {
               method: "PUT",
               body: blob,
               headers: {
-                "Content-Type": media.type,
+                "Content-Type": fileType,
               },
             });
-            const uploadetails = {
+
+            const finalMediaDetails = {
               key: key,
               url: finalUrl,
-              type: media.type,
+              type: fileType,
             };
-            const body = index === 0 && textInput ? textInput : " ";
-            handleSend(body, uploadetails, true);
-            return true;
-          }),
-        );
+
+            // Send the actual message to your Database
+            const messageRes = await api.post(`/api/message/send`, {
+              chatThreadOrigin: dbChatThread._id || dbChatThread,
+              receiver: receiverID,
+              sender: user._id,
+              body: bodyText,
+              media: finalMediaDetails,
+            });
+
+            // E. Replace the Temp Message with the Real Database Message
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg._id === tempId
+                  ? { ...messageRes.data.body, status: "sent" }
+                  : msg,
+              ),
+            );
+          } catch (err) {
+            console.error("Error uploading media chunk:", err);
+            // F. If it fails, mark the temp message as failed so the user knows
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg._id === tempId ? { ...msg, status: "failed" } : msg,
+              ),
+            );
+          }
+        });
       }
     } catch (err) {
       console.error("Error picking media:", err);

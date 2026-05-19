@@ -282,12 +282,12 @@ export default function CreateAdopterProfile() {
     }
   };
   useEffect(() => {
-    if (user?._id) {
+    if (!newUser) {
       navigation.setOptions({
         headerTitle: `Update Your Profile`,
       });
     }
-  }, [user?._id]);
+  }, [newUser]);
   const updateAdopter = async () => {
     console.log("Updating Adopter", adopterForm);
   };

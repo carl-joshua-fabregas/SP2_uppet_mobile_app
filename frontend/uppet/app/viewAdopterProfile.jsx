@@ -160,17 +160,17 @@ export default function ViewAdopterProfile({}) {
         setMyRating(res.data.body);
         setSelectedReview(res.data.body);
 
-        setAdopterRating((prev) => {
-          if (isEditMode) {
-            return prev.map((r) =>
-              r._id === res.data.body._id ? res.data.body : r,
-            );
-          } else {
-            const exists = prev.find((r) => r._id === res.data.body._id);
-            if (exists) return prev;
-            return [res.data.body, ...prev]; // Prepend new review
-          }
-        });
+        // setAdopterRating((prev) => {
+        //   if (isEditMode) {
+        //     return prev.map((r) =>
+        //       r._id === res.data.body._id ? res.data.body : r,
+        //     );
+        //   } else {
+        //     const exists = prev.find((r) => r._id === res.data.body._id);
+        //     if (exists) return prev;
+        //     return [res.data.body, ...prev]; // Prepend new review
+        //   }
+        // });
       } else {
         console.log("MAY SOMEYHING CRISPY PATATA");
       }
@@ -289,11 +289,21 @@ export default function ViewAdopterProfile({}) {
         data.rating.ratedUser === adopter._id ||
         data.rating.ratedUser._id === adopter._id
       ) {
-        setAdopterRating((prev) => [data.rating, ...prev]);
+        const reviewerId = data.rating.reviewer?._id || data.rating.reviewer;
+        if (reviewerId === currentUserId) return;
+
+        setAdopterRating((prev) => {
+          const exists = prev.some((r) => r._id === data.rating._id);
+          if (exists) return prev;
+          return [data.rating, ...prev];
+        });
       }
     };
 
     const handleRatingUpdated = (data) => {
+      const reviewerId = data.rating.reviewer?._id || data.rating.reviewer;
+      if (reviewerId === currentUserId) return;
+
       setAdopterRating((prev) =>
         prev.map((rating) =>
           rating._id === data.rating._id ? data.rating : rating,
@@ -307,9 +317,9 @@ export default function ViewAdopterProfile({}) {
         return prevMyRating;
       });
     };
+
     const handleRatingDeleted = (data) => {
       const deletedRatingId = data.rating._id || data.rating;
-
       setAdopterRating((prev) =>
         prev.filter((rating) => rating._id !== deletedRatingId),
       );

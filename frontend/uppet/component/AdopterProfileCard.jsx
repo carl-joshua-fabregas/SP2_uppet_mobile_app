@@ -245,7 +245,7 @@ export default function ProfileCard({
               </View>
               {/* --------------------------- */}
 
-              {adopter.length === 0 ? (
+              {adopterRating.length === 0 ? (
                 <Text style={styles.emptyText}>
                   No reviews yet for this adopter.
                 </Text>
